@@ -55,6 +55,9 @@ void generateTestData();
 void setup() {
     Serial.begin(115200);
     
+    // Reduce ESP-IDF component log verbosity (nvs, wifi, nimble, etc)
+    esp_log_level_set("*", ESP_LOG_WARN);  // Set all components to WARN or higher
+    
     Serial.println("=== PCNT HARDWARE TREADMILL ===");
     checkAndFixNVS();
 
@@ -220,4 +223,7 @@ void loop() {
         
         lastCpuUpdate = now;
     }
+    
+    // Yield to prevent watchdog timeout on CPU 1
+    delay(1);
 }
