@@ -427,8 +427,23 @@ void initPCNT() {
     const uint16_t APB_CLK_MHZ = 80;
     
     // Calculate glitch filter values (default 12 µs, range 1-12 µs)
+    // PCNT glitch filter limits: max 1023 APB clock cycles
+    // At 80 MHz APB: 1023 cycles = 12.7875 µs = 12787 ns
+    const uint32_t MAX_FILTER_NS = 12787;
+    
     uint32_t filter_ns_band = storedGlobals.DEBOUNCE_THRESHOLD_US * 1000;  // Convert µs to ns
     uint32_t filter_ns_motor = storedGlobals.DEBOUNCE_THRESHOLD_US * 1000;
+    
+    // Clamp to hardware maximum
+    if (filter_ns_band > MAX_FILTER_NS) {
+        Serial.printf("⚠️ DEBOUNCE_THRESHOLD_US too large (%lu µs), clamping to %lu ns\n", 
+                      (unsigned long)storedGlobals.DEBOUNCE_THRESHOLD_US, 
+                      (unsigned long)MAX_FILTER_NS);
+        filter_ns_band = MAX_FILTER_NS;
+    }
+    if (filter_ns_motor > MAX_FILTER_NS) {
+        filter_ns_motor = MAX_FILTER_NS;
+    }
     
     // ===== Configure PCNT Unit for Band Sensor =====
     pcnt_unit_config_t unit_config_band = {
@@ -438,11 +453,13 @@ void initPCNT() {
     };
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config_band, &pcnt_band_handle));
     
-    // Configure glitch filter for Band sensor
-    pcnt_glitch_filter_config_t filter_config_band = {
-        .max_glitch_ns = filter_ns_band
-    };
-    ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_band_handle, &filter_config_band));
+    // Configure glitch filter for Band sensor (only if value is reasonable)
+    if (filter_ns_band > 0 && filter_ns_band <= MAX_FILTER_NS) {
+        pcnt_glitch_filter_config_t filter_config_band = {
+            .max_glitch_ns = filter_ns_band
+        };
+        ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_band_handle, &filter_config_band));
+    }
     
     // Configure channel for Band sensor
     pcnt_chan_config_t chan_config_band = {
@@ -470,11 +487,13 @@ void initPCNT() {
     };
     ESP_ERROR_CHECK(pcnt_new_unit(&unit_config_motor, &pcnt_motor_handle));
     
-    // Configure glitch filter for Motor sensor
-    pcnt_glitch_filter_config_t filter_config_motor = {
-        .max_glitch_ns = filter_ns_motor
-    };
-    ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_motor_handle, &filter_config_motor));
+    // Configure glitch filter for Motor sensor (only if value is reasonable)
+    if (filter_ns_motor > 0 && filter_ns_motor <= MAX_FILTER_NS) {
+        pcnt_glitch_filter_config_t filter_config_motor = {
+            .max_glitch_ns = filter_ns_motor
+        };
+        ESP_ERROR_CHECK(pcnt_unit_set_glitch_filter(pcnt_motor_handle, &filter_config_motor));
+    }
     
     // Configure channel for Motor sensor
     pcnt_chan_config_t chan_config_motor = {
