@@ -149,7 +149,7 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       <h2><i class="fas fa-cog"></i> System</h2>
       <div class="metric">
         <div class="metric-label">CPU Nutzung</div>
-        <div class="metric-value"><span id="cpuusage">0</span>%%</div>
+        <div class="metric-value"><span id="cpuusage">0</span>%</div>
       </div>
       <div class="metric" style="margin-top:15px;">
         <div class="metric-label">Motor RPM</div>

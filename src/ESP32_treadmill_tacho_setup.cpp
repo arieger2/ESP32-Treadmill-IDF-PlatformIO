@@ -61,14 +61,14 @@ const char* NVSKeys::SPEED_DN_RATE = "spdDnRate";         // km/h per second but
 const char* NVSKeys::INERTIA_MS    = "inertiaMs";         // Stabilization delay after release
 const char* NVSKeys::OVERSHOOT     = "overshoot";         // Overshoot multiplier factor
 
-// Template function for putOrReplace - handles float, int32_t, uint32_t, int64_t
+// Template function for putOrReplace - handles float, int, int32_t, uint32_t, int64_t
 template<typename T>
 static size_t putOrReplace(Preferences& p, const char* key, T value) {
   size_t written = 0;
   if (std::is_same<T, float>::value) {
     written = p.putFloat(key, static_cast<float>(value));
     if (written == 0) { p.remove(key); written = p.putFloat(key, static_cast<float>(value)); }
-  } else if (std::is_same<T, int32_t>::value) {
+  } else if (std::is_same<T, int>::value || std::is_same<T, int32_t>::value) {
     written = p.putInt(key, static_cast<int32_t>(value));
     if (written == 0) { p.remove(key); written = p.putInt(key, static_cast<int32_t>(value)); }
   } else if (std::is_same<T, uint32_t>::value) {

@@ -57,6 +57,9 @@ void setup() {
     
     // Reduce ESP-IDF component log verbosity (nvs, wifi, nimble, etc)
     esp_log_level_set("*", ESP_LOG_WARN);  // Set all components to WARN or higher
+    esp_log_level_set("Preferences", ESP_LOG_NONE);  // Suppress NVS "NOT_FOUND" errors on first boot
+    esp_log_level_set("NimBLE", ESP_LOG_NONE);       // Suppress BLE scan advertiser logs
+    esp_log_level_set("NimBLEScan", ESP_LOG_NONE);   // Suppress "New advertiser" messages
     
     Serial.println("=== PCNT HARDWARE TREADMILL ===");
     checkAndFixNVS();
