@@ -1,0 +1,7 @@
+# Custom 16MB layout — Single factory app (3MB) + 8MB SPIFFS
+# If your project still uses SPIFFS instead of LittleFS
+# Name,     Type, SubType,  Offset,  Size,   Flags
+nvs,        data, nvs,               256K
+coredump,   data, coredump,          64K
+app0,       app,  factory,           3072K
+spiffs,     data, spiffs,            8192K

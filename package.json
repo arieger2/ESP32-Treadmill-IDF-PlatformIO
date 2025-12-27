@@ -1,0 +1,18 @@
+{
+  "name": "esp32-treadmill-web-ui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:workout && npm run build:monitor && npm run build:settings",
+    "build:workout": "tsc --outFile build/workout-app.js typescript-workout/*.ts && terser build/workout-app.js -o build/workout-app.min.js -c -m",
+    "build:monitor": "tsc --outFile build/monitor-app.js typescript-monitor/*.ts && terser build/monitor-app.js -o build/monitor-app.min.js -c -m",
+    "build:settings": "tsc --outFile build/settings-app.js typescript-settings/*.ts && terser build/settings-app.js -o build/settings-app.min.js -c -m",
+    "watch": "tsc --watch",
+    "clean": "rm -rf build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "terser": "^5.36.0",
+    "typescript": "^5.3.3"
+  }
+}

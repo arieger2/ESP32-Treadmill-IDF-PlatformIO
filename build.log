@@ -1,0 +1,2034 @@
+Processing esp32-s3-16mb (platform: espressif32; board: esp32-s3-devkitc-1; framework: espidf, arduino)
+--------------------------------------------------------------------------------
+Tool Manager: Installing https://github.com/pioarduino/registry/releases/download/0.0.1/mklittlefs-3.2.0-new.zip
+Unpacking 0% 10% 20%
+Tool Manager: tool-mklittlefs@3.2.0 has been installed!
+Library Manager: Installing bblanchon/ArduinoJson @ ^7.4.2
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: ArduinoJson@7.4.2 has been installed!
+Library Manager: Installing rlogiacco/CircularBuffer @ ^1.4.0
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: CircularBuffer@1.4.0 has been installed!
+Library Manager: Installing paulstoffregen/Time @ ^1.6.1
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: Time@1.6.1 has been installed!
+Library Manager: Installing esp32async/AsyncTCP @ ^3.4.9
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: AsyncTCP@3.4.9 has been installed!
+Library Manager: Installing esp32async/ESPAsyncWebServer @ ^3.9.3
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: ESPAsyncWebServer@3.9.3 has been installed!
+Library Manager: Resolving dependencies...
+Library Manager: Installing h2zero/NimBLE-Arduino @ ^2.3.7
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: NimBLE-Arduino@2.3.7 has been installed!
+Library Manager: Installing ayushsharma82/ElegantOTA @ ^3.1.7
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: ElegantOTA@3.1.7 has been installed!
+Library Manager: Resolving dependencies...
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (55.3.34) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - contrib-piohome @ 3.4.4 
+ - framework-arduinoespressif32 @ 3.3.4 
+ - framework-arduinoespressif32-libs @ 5.5.0+sha.8410210c9a 
+ - framework-espidf @ 3.50501.0 (5.5.1) 
+ - tool-cmake @ 4.0.3 
+ - tool-esp-rom-elfs @ 2024.10.11 
+ - tool-esptoolpy @ 5.1.0 
+ - tool-ninja @ 1.13.1 
+ - tool-scons @ 4.40801.0 (4.8.1) 
+ - toolchain-xtensa-esp-elf @ 14.2.0+20250730
+Reading CMake configuration...
+Generating assembly for certificate bundle...
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 49 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 7.4.2
+|-- CircularBuffer @ 1.4.0
+|-- Time @ 1.6.1
+|-- AsyncTCP @ 3.4.9
+|-- ESPAsyncWebServer @ 3.9.3
+|-- NimBLE-Arduino @ 2.3.7
+|-- ElegantOTA @ 3.1.7
+|-- ESPmDNS @ 3.3.4
+|-- Preferences @ 3.3.4
+Building in release mode
+Generating assembly for .pio/build/esp32-s3-16mb/https_server.crt.S
+Generating assembly for .pio/build/esp32-s3-16mb/rmaker_mqtt_server.crt.S
+Generating assembly for .pio/build/esp32-s3-16mb/rmaker_claim_service_server.crt.S
+Generating assembly for .pio/build/esp32-s3-16mb/rmaker_ota_server.crt.S
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_ble_control.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_ble_ftms_control.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_ble_ftms_data.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_ble_ftms_init.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_ble_server.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_hr_client.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_band.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_filters.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_helpers.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_motor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_sensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_setup.cpp.o
+In file included from src/ESP32_treadmill_tacho_setup.cpp:6:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+In file included from include/ESP32_treadmill_tacho_sensor_common.h:9,
+                 from src/ESP32_treadmill_tacho_band.cpp:7:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+In file included from include/ESP32_treadmill_tacho_sensor_common.h:9,
+                 from src/ESP32_treadmill_tacho_helpers.cpp:6:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+In file included from include/ESP32_treadmill_tacho_sensor_common.h:9,
+                 from src/ESP32_treadmill_tacho_motor.cpp:7:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_test.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_wifi.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP32_treadmill_tacho_workout.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/ESP_treadmil_tacho_web_interface.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/web_monitor/web_api_monitor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/web_monitor/web_chart_builders.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/web_monitor/web_template.cpp.o
+Compiling .pio/build/esp32-s3-16mb/src/web_monitor/web_validation.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib26c/Time/DateStrings.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib26c/Time/Time.cpp.o
+In file included from src/ESP32_treadmill_tacho_test.cpp:6:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+In file included from include/ESP32_treadmill_tacho_sensor_common.h:9,
+                 from src/ESP32_treadmill_tacho.cpp:16:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/driver/deprecated/driver/pcnt.h:15:2: warning: #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h" [-Wcpp]
+   15 | #warning "legacy pcnt driver is deprecated, please migrate to use driver/pulse_cnt.h"
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkClient.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkEvents.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkInterface.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkManager.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib8eb/Network/NetworkUdp.cpp.o
+In file included from src/ESP32_treadmill_tacho_setup.cpp:13:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/spi_flash/include/esp_spi_flash.h:6:2: warning: #warning esp_spi_flash.h is deprecated, please use spi_flash_mmap.h instead [-Wcpp]
+    6 | #warning esp_spi_flash.h is deprecated, please use spi_flash_mmap.h instead
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/lib1b3/AsyncTCP/AsyncTCP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib86b/Hash/PBKDF2_HMACBuilder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib86b/Hash/SHA1Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib86b/Hash/SHA2Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib86b/Hash/SHA3Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/libc4f/FS/FS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/libc4f/FS/vfs_api.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/Parsing.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/detail/mimetable.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/middleware/AuthenticationMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/middleware/CorsMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/middleware/LoggingMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/liba79/WebServer/middleware/MiddlewareChain.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/AP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/STA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFi.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFiAP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFiGeneric.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFiMulti.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFiSTA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib322/WiFi/WiFiScan.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/AsyncEventSource.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/AsyncJson.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/AsyncWebHeader.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/AsyncWebServerRequest.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/AsyncWebSocket.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/BackPort_SHA1Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/ChunkPrint.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/Middleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/WebAuthentication.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/WebHandlers.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/WebRequest.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/WebResponses.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib177/ESPAsyncWebServer/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLE2904.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEAddress.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEAdvertisementData.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEAdvertising.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEAttValue.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEBeacon.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLECharacteristic.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEClient.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEDescriptor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEExtAdvertising.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEHIDDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEL2CAPChannel.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEL2CAPServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLERemoteService.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLERemoteValueAttribute.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEScan.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEService.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEUUID.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/NimBLEUtils.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/esp_port/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_driver.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_transport.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/esp_port/port/src/exp_nimble_mem.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_decrypt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_encrypt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/cbc_mode.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ccm_mode.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/cmac_mode.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_mode.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_prng.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dh.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dsa.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_platform_specific.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac_prng.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/sha256.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/ext/tinycrypt/src/utils.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_adv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_crypto.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_dtm.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_ev.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_supp_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_vs.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso_big.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_isoal.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_pdu.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rand.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_resolv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rfmgmt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan_aux.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sched.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sync.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_trace.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_whitelist.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_hw.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_phy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_hw.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy_trace.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf52/phy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf53/phy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/access.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_ext.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/aes-ccm.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/app_keys.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/beacon.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/cdb.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_cli.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_srv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/crypto.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/friend.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/glue.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_cli.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_srv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/heartbeat.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/light_model.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/lpn.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/mesh.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_cli.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_srv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/msg.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/net.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_adv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt_srv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov_device.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/provisioner.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_msg.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_srv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/rpl.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/settings.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/shell.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/subnet.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/testing.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/mesh/src/transport.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_dtm.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-s3-16mb/lib3b6/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-s3-16mb/libe18/LittleFS/LittleFS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib734/Update/HttpsOTAUpdate.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib734/Update/Updater.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib826/ElegantOTA/ElegantOTA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib826/ElegantOTA/elop.cpp.o
+Compiling .pio/build/esp32-s3-16mb/lib67d/ESPmDNS/ESPmDNS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/libe33/Preferences/Preferences.cpp.o
+Generating LD script .pio/build/esp32-s3-16mb/esp-idf/esp_system/ld/memory.ld.in
+Generating LD script .pio/build/esp32-s3-16mb/esp-idf/esp_system/ld/sections.ld.in
+Compiling .pio/build/esp32-s3-16mb/app_trace/app_trace.c.o
+Compiling .pio/build/esp32-s3-16mb/app_trace/app_trace_util.c.o
+Compiling .pio/build/esp32-s3-16mb/app_trace/host_file_io.c.o
+Generating LD script .pio/build/esp32-s3-16mb/memory.ld
+Compiling .pio/build/esp32-s3-16mb/app_trace/port/port_uart.c.o
+Compiling .pio/build/esp32-s3-16mb/app_update/esp_ota_ops.c.o
+Compiling .pio/build/esp32-s3-16mb/app_update/esp_ota_app_desc.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_common.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_common_loader.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/app_trace/libapp_trace.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/app_trace/libapp_trace.a
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_clock_init.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_mem.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_random.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/app_update/libapp_update.a
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_efuse.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/app_update/libapp_update.a
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/flash_encrypt.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/secure_boot.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_random_esp32s3.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/bootloader_flash/src/bootloader_flash.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/bootloader_flash/src/flash_qio_mode.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/bootloader_flash/src/bootloader_flash_config_esp32s3.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_utility.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/flash_partitions.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/esp_image_format.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/bootloader_sha.c.o
+Compiling .pio/build/esp32-s3-16mb/bootloader_support/src/esp32s3/secure_boot_secure_features.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/controller/esp32c3/bt.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/core/btc_alarm.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/api/esp_blufi_api.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/hci_log/bt_hci_log.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/bootloader_support/libbootloader_support.a
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/core/btc_manage.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/bootloader_support/libbootloader_support.a
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/core/btc_task.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/profile/esp/blufi/blufi_prf.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/profile/esp/blufi/blufi_protocol.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/alarm.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/allocator.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/buffer.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/config.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/fixed_queue.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/pkt_queue.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/fixed_pkt_queue.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/future.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/hash_functions.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/hash_map.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/list.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/mutex.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/thread.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/osi.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/osi/semaphore.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/porting/mem/bt_osi_mem.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/ble_log/ble_log_spi_out.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/ble_log/ble_log_uhci_out.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/tps/src/ble_svc_tps.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/ias/src/ble_svc_ias.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/ipss/src/ble_svc_ipss.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/ans/src/ble_svc_ans.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/hr/src/ble_svc_hr.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/htp/src/ble_svc_htp.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/bas/src/ble_svc_bas.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/dis/src/ble_svc_dis.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/lls/src/ble_svc_lls.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/prox/src/ble_svc_prox.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/cts/src/ble_svc_cts.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/hid/src/ble_svc_hid.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/sps/src/ble_svc_sps.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/cte/src/ble_svc_cte.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/services/ras/src/ble_svc_ras.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_cs.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/port/src/nvs_port.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/host/nimble/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/bt/common/btc/profile/esp/blufi/nimble_host/esp_blufi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/mp3dec.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/mp3tabs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/bitstream.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/buffers.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/dct32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/dequant.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/dqchan.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/huffman.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/hufftabs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/imdct.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/polyphase.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/scalfact.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/bt/libbt.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/stproc.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/subband.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/chmorgan__esp-libhelix-mp3/libhelix-mp3/real/trigtabs.c.o
+Compiling .pio/build/esp32-s3-16mb/cmock/CMock/src/cmock.c.o
+Compiling .pio/build/esp32-s3-16mb/console/commands.c.o
+Compiling .pio/build/esp32-s3-16mb/console/esp_console_common.c.o
+Compiling .pio/build/esp32-s3-16mb/console/esp_console_repl_internal.c.o
+Compiling .pio/build/esp32-s3-16mb/console/split_argv.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/bt/libbt.a
+Compiling .pio/build/esp32-s3-16mb/console/linenoise/linenoise.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/cmock/libcmock.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/chmorgan__esp-libhelix-mp3/libchmorgan__esp-libhelix-mp3.a
+Compiling .pio/build/esp32-s3-16mb/console/esp_console_repl_chip.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_cmd.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/chmorgan__esp-libhelix-mp3/libchmorgan__esp-libhelix-mp3.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/cmock/libcmock.a
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_date.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_dbl.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_dstr.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_end.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_file.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_hashtable.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_int.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_lit.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_rem.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_rex.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_str.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/arg_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/console/argtable3/argtable3.c.o
+Compiling .pio/build/esp32-s3-16mb/cxx/cxx_exception_stubs.cpp.o
+Compiling .pio/build/esp32-s3-16mb/cxx/cxx_guards.cpp.o
+Compiling .pio/build/esp32-s3-16mb/cxx/cxx_init.cpp.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/adc_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/adc_dma_legacy.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/console/libconsole.a
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/timer_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/i2c/i2c.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/console/libconsole.a
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/i2s_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/mcpwm_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/pcnt_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/rmt_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/sigma_delta_legacy.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/cxx/libcxx.a
+Compiling .pio/build/esp32-s3-16mb/driver/deprecated/rtc_temperature_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/touch_sensor/touch_sensor_common.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/cxx/libcxx.a
+Compiling .pio/build/esp32-s3-16mb/driver/touch_sensor/esp32s3/touch_sensor.c.o
+Compiling .pio/build/esp32-s3-16mb/driver/twai/twai.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/esp32s3/esp_efuse_table.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/esp32s3/esp_efuse_fields.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/esp32s3/esp_efuse_rtc_calib.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/esp32s3/esp_efuse_utility.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/src/esp_efuse_api.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/src/esp_efuse_fields.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/src/esp_efuse_utility.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/src/efuse_controller/keys/with_key_purposes/esp_efuse_api_key.c.o
+Compiling .pio/build/esp32-s3-16mb/efuse/src/esp_efuse_startup.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/driver/libdriver.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/driver/libdriver.a
+Compiling .pio/build/esp32-s3-16mb/esp-tls/esp_tls.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/efuse/libefuse.a
+Compiling .pio/build/esp32-s3-16mb/esp-tls/esp-tls-crypto/esp_tls_crypto.c.o
+Compiling .pio/build/esp32-s3-16mb/esp-tls/esp_tls_error_capture.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/efuse/libefuse.a
+Compiling .pio/build/esp32-s3-16mb/esp-tls/esp_tls_platform_port.c.o
+Compiling .pio/build/esp32-s3-16mb/esp-tls/esp_tls_mbedtls.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_oneshot.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_cali.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_cali_curve_fitting.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/deprecated/esp_adc_cal_common_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_continuous.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_monitor.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/gdma/adc_dma.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/adc_filter.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/esp32s3/curve_fitting_coefficients.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_adc/deprecated/esp32s3/esp_adc_cal_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_app_format/esp_app_desc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_bootloader_format/esp_bootloader_desc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_coex/src/coexist.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_coex/src/lib_printf.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_coex/esp32s3/esp_coex_adapter.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_bootloader_format/libesp_bootloader_format.a
+Compiling .pio/build/esp32-s3-16mb/esp_coex/src/coexist_debug_diagram.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_bootloader_format/libesp_bootloader_format.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_app_format/libesp_app_format.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_adc/libesp_adc.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp-tls/libesp-tls.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_app_format/libesp_app_format.a
+Compiling .pio/build/esp32-s3-16mb/esp_coex/src/coexist_debug.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_adc/libesp_adc.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp-tls/libesp-tls.a
+Compiling .pio/build/esp32-s3-16mb/esp_common/src/esp_err_to_name.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_coex/libesp_coex.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_cam/esp_cam_ctlr.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_coex/libesp_coex.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_cam/dvp_share_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_cam/dvp/src/esp_cam_ctlr_dvp_gdma.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_cam/dvp/src/esp_cam_ctlr_dvp_cam.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gpio/src/gpio.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gpio/src/gpio_glitch_filter_ops.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gpio/src/rtc_io.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gpio/src/dedic_gpio.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gpio/src/gpio_pin_glitch_filter.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gptimer/src/gptimer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_gptimer/src/gptimer_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2c/i2c_master.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2c/i2c_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2c/i2c_slave.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2s/i2s_common.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_cam/libesp_driver_cam.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2s/i2s_std.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2s/i2s_pdm.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_cam/libesp_driver_cam.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2s/i2s_tdm.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_gpio/libesp_driver_gpio.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_i2s/i2s_platform.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_gpio/libesp_driver_gpio.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_ledc/src/ledc.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_gptimer/libesp_driver_gptimer.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_common/libesp_common.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_gptimer/libesp_driver_gptimer.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_cap.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_common/libesp_common.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_cmpr.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_com.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_i2c/libesp_driver_i2c.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_i2s/libesp_driver_i2s.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_fault.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_gen.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_i2s/libesp_driver_i2s.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_i2c/libesp_driver_i2c.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_oper.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_sync.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_mcpwm/src/mcpwm_timer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_pcnt/src/pulse_cnt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_encoder.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_ledc/libesp_driver_ledc.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_encoder_bytes.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_encoder_copy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_encoder_simple.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_ledc/libesp_driver_ledc.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_rx.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_rmt/src/rmt_tx.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_mcpwm/libesp_driver_mcpwm.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdm/src/sdm.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_mcpwm/libesp_driver_mcpwm.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdmmc/src/sdmmc_transaction.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_pcnt/libesp_driver_pcnt.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdmmc/src/sdmmc_host.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdspi/src/sdspi_crc.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_pcnt/libesp_driver_pcnt.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdspi/src/sdspi_host.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_sdspi/src/sdspi_transaction.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_spi/src/gpspi/spi_common.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdm/libesp_driver_sdm.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_spi/src/gpspi/spi_master.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_spi/src/gpspi/spi_slave.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdm/libesp_driver_sdm.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_spi/src/gpspi/spi_slave_hd.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_rmt/libesp_driver_rmt.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_touch_sens/common/touch_sens_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_touch_sens/hw_ver2/touch_version_specific.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_rmt/libesp_driver_rmt.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_tsens/src/temperature_sensor.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdmmc/libesp_driver_sdmmc.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdspi/libesp_driver_sdspi.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdmmc/libesp_driver_sdmmc.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_sdspi/libesp_driver_sdspi.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_twai/esp_twai.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_twai/esp_twai_onchip.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_uart/src/uart.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_spi/libesp_driver_spi.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_touch_sens/libesp_driver_touch_sens.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_tsens/libesp_driver_tsens.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_uart/src/uart_wakeup.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_spi/libesp_driver_spi.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_touch_sens/libesp_driver_touch_sens.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_tsens/libesp_driver_tsens.a
+Compiling .pio/build/esp32-s3-16mb/esp_driver_uart/src/uhci.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_uart/src/uart_vfs.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_usb_serial_jtag/src/usb_serial_jtag.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_usb_serial_jtag/src/usb_serial_jtag_connection_monitor.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_driver_usb_serial_jtag/src/usb_serial_jtag_vfs.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_twai/libesp_driver_twai.a
+Compiling .pio/build/esp32-s3-16mb/esp_eth/src/esp_eth.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_twai/libesp_driver_twai.a
+Compiling .pio/build/esp32-s3-16mb/esp_eth/src/phy/esp_eth_phy_802_3.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_eth/src/esp_eth_netif_glue.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_event/default_event_loop.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_event/esp_event.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_event/esp_event_private.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/gdbstub.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_driver_uart/libesp_driver_uart.a
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/gdbstub_transport.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/packet.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_driver_uart/libesp_driver_uart.a
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/port/xtensa/gdbstub_xtensa.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/port/xtensa/gdbstub-entry.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_gdbstub/src/port/xtensa/xt_debugexception.S.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_eth/libesp_eth.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_event/libesp_event.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_eth/libesp_eth.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_event/libesp_event.a
+Compiling .pio/build/esp32-s3-16mb/esp_hid/src/esp_hidd.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hid/src/esp_hidh.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_gdbstub/libesp_gdbstub.a
+Compiling .pio/build/esp32-s3-16mb/esp_hid/src/esp_hid_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hid/src/nimble_hidd.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_gdbstub/libesp_gdbstub.a
+Compiling .pio/build/esp32-s3-16mb/esp_hid/src/nimble_hidh.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_client/esp_http_client.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_client/lib/http_auth.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_client/lib/http_header.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_client/lib/http_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_main.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_parse.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_sess.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_txrx.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_uri.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/httpd_ws.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_http_server/src/util/ctrl_sock.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_hid/libesp_hid.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_hid/libesp_hid.a
+Compiling .pio/build/esp32-s3-16mb/esp_https_ota/src/esp_https_ota.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_https_server/src/https_server.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/cpu.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/esp_cpu_intr.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/esp_memory_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/cpu_region_protect.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_http_server/libesp_http_server.a
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/esp_clk.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_https_server/libesp_https_server.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_http_server/libesp_http_server.a
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/clk_ctrl_os.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_https_server/libesp_https_server.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_https_ota/libesp_https_ota.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_http_client/libesp_http_client.a
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/hw_random.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_https_ota/libesp_https_ota.a
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/intr_alloc.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_http_client/libesp_http_client.a
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/mac_addr.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/periph_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/revision.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/rtc_module.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/regi2c_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/esp_gpio_reserve.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sar_periph_ctrl_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/io_mux.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/esp_clk_tree.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/dma/esp_dma_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/dma/gdma_link.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/spi_bus_lock.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/clk_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp_clk_tree_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/spi_share_hw_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/adc_share_hw_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_modem.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_modes.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_console.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_mspi.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_usb.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_gpio.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_event.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/dma/gdma.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/deprecated/gdma_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/dma/esp_async_memcpy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/dma/async_memcpy_gdma.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/systimer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/mspi_timing_tuning/mspi_timing_tuning.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/sleep_wake_stub.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/esp_clock_output.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/power_supply/brownout.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/rtc_clk.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/rtc_clk_init.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/rtc_init.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/rtc_sleep.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/rtc_time.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/chip_info.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/sar_periph_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp32s3/esp_memprot.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/port/esp_memprot_conv.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/mspi_timing_tuning/port/esp32s3/mspi_timing_config.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/mspi_timing_tuning/port/esp32s3/mspi_timing_by_mspi_delay.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_hw_support/lowpower/port/esp32s3/sleep_cpu.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_panel_io.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_panel_nt35510.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_panel_ssd1306.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_panel_st7789.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/src/esp_lcd_panel_ops.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/i2c/esp_lcd_panel_io_i2c_v1.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/i2c/esp_lcd_panel_io_i2c_v2.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/spi/esp_lcd_panel_io_spi.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/i80/esp_lcd_panel_io_i80.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_lcd/rgb/esp_lcd_panel_rgb.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_hw_support/libesp_hw_support.a
+Compiling .pio/build/esp32-s3-16mb/esp_local_ctrl/src/esp_local_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_local_ctrl/src/esp_local_ctrl_handler.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_local_ctrl/proto-c/esp_local_ctrl.pb-c.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_hw_support/libesp_hw_support.a
+Compiling .pio/build/esp32-s3-16mb/esp_local_ctrl/src/esp_local_ctrl_transport_ble.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_local_ctrl/src/esp_local_ctrl_transport_httpd.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_mm/esp_mmu_map.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_mm/port/esp32s3/ext_mem_layout.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_mm/esp_cache_msync.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_mm/esp_cache_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_mm/heap_align_hw.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_netif/esp_netif_handlers.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_netif/esp_netif_objects.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_lcd/libesp_lcd.a
+Compiling .pio/build/esp32-s3-16mb/esp_netif/esp_netif_defaults.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_lcd/libesp_lcd.a
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/esp_netif_lwip.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_mm/libesp_mm.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_local_ctrl/libesp_local_ctrl.a
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/esp_netif_sntp.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_mm/libesp_mm.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_local_ctrl/libesp_local_ctrl.a
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/esp_netif_lwip_defaults.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/netif/wlanif.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/netif/ethernetif.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_netif/lwip/netif/esp_pbuf_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_partition/partition.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_partition/partition_target.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/src/phy_override.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/src/lib_printf.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/src/phy_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/src/phy_init.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/esp32s3/phy_init_data.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_phy/src/btbb_init.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_pm/pm_locks.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_pm/pm_trace.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_netif/libesp_netif.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_partition/libesp_partition.a
+Compiling .pio/build/esp32-s3-16mb/esp_pm/pm_impl.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_netif/libesp_netif.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_partition/libesp_partition.a
+Compiling .pio/build/esp32-s3-16mb/esp_psram/system_layer/esp_psram.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_phy/libesp_phy.a
+Compiling .pio/build/esp32-s3-16mb/esp_psram/esp32s3/esp_psram_impl_octal.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_psram/xip_impl/mmu_psram_flash.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_phy/libesp_phy.a
+Compiling .pio/build/esp32-s3-16mb/esp_ringbuf/ringbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_sys.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_print.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_crc.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_pm/libesp_pm.a
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_uart.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_spiflash.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_efuse.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_pm/libesp_pm.a
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_gpio.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_longjmp.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_systimer.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_psram/libesp_psram.a
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_wdt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_cache_esp32s2_esp32s3.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_psram/libesp_psram.a
+Compiling .pio/build/esp32-s3-16mb/esp_rom/patches/esp_rom_cache_writeback_esp32s3.S.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_ringbuf/libesp_ringbuf.a
+Compiling .pio/build/esp32-s3-16mb/esp_security/src/init.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_ringbuf/libesp_ringbuf.a
+Compiling .pio/build/esp32-s3-16mb/esp_security/src/esp_hmac.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_security/src/esp_ds.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_rom/libesp_rom.a
+Compiling .pio/build/esp32-s3-16mb/esp_security/src/esp_crypto_lock.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_security/src/esp_crypto_periph_clk.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_rom/libesp_rom.a
+Compiling .pio/build/esp32-s3-16mb/esp_system/esp_err.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/crosscore_int.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/esp_ipc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/esp_system_console.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/freertos_hooks.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_security/libesp_security.a
+Compiling .pio/build/esp32-s3-16mb/esp_system/int_wdt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/panic.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_security/libesp_security.a
+Compiling .pio/build/esp32-s3-16mb/esp_system/esp_system.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/startup.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/startup_funcs.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/system_time.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/stack_check.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/ubsan.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/xt_wdt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/task_wdt/task_wdt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/task_wdt/task_wdt_impl_timergroup.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/cpu_start.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/panic_handler.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/esp_system_chip.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/image_process.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/esp_ipc_isr.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/esp_ipc_isr_port.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/esp_ipc_isr_handler.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/esp_ipc_isr_routines.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/panic_arch.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/panic_handler_asm.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/expression_with_stack.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/expression_with_stack_asm.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/debug_helpers.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/debug_helpers_asm.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/debug_stubs.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/arch/xtensa/trax.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/highint_hdl.S.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/clk.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/reset_reason.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/system_internal.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/cache_err_int.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_system/port/soc/esp32s3/apb_backup_dma.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/esp_timer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/esp_timer_init.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/ets_timer_legacy.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/system_time.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/esp_timer_impl_common.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_timer/src/esp_timer_impl_systimer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_vfs_console/vfs_console.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/lib_printf.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/mesh_event.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_system/libesp_system.a
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/smartconfig.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_timer/libesp_timer.a
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/wifi_init.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_vfs_console/libesp_vfs_console.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_timer/libesp_timer.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_system/libesp_system.a
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/wifi_default.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_vfs_console/libesp_vfs_console.a
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/wifi_netif.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/wifi_default_ap.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/esp32s3/esp_adapter.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/regulatory/esp_wifi_regulatory.c.o
+Compiling .pio/build/esp32-s3-16mb/esp_wifi/src/smartconfig_ack.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_init.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_common.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_flash.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_uart.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_elf.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_binary.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_sha.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/core_dump_crc.c.o
+Compiling .pio/build/esp32-s3-16mb/espcoredump/src/port/xtensa/core_dump_port.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborencoder_close_container_checked.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborencoder.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborencoder_float.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborerrorstrings.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborparser_dup_string.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/esp_wifi/libesp_wifi.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborparser.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborparser_float.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborpretty_stdio.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborpretty.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/esp_wifi/libesp_wifi.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cbortojson.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espcoredump/libespcoredump.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/cborvalidation.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__cbor/tinycbor/src/open_memstream.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espcoredump/libespcoredump.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/dl_fft_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/dl_fft_s16.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/dl_rfft_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/dl_rfft_s16.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/dl_fft2r_fc32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/dl_fft4r_fc32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/dl_fft2r_sc16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/dl_fft_base.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/isa/esp32s3/dl_fft2r_fc32_aes3.S.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__cbor/libespressif__cbor.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__dl_fft/base/isa/esp32s3/dl_fft4r_fc32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/common/misc/dsps_pwroftwo.cpp.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__cbor/libespressif__cbor.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/common/misc/aes3_tie_log.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprod_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprod_f32_m_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprode_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprode_f32_m_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprod_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprode_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprod_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprod_f32_arp4.S.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__dl_fft/libespressif__dl_fft.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dsps_dotprode_f32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dsps_dotprod_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dsps_dotprod_s16_m_ae32.S.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__dl_fft/libespressif__dl_fft.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dsps_dotprod_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dsps_dotprod_s16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dspi_dotprod_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/float/dspi_dotprod_off_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_s8_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_u8_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_s8_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dotprod/fixed/dspi_dotprod_off_u8_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_3x3x1_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_3x3x3_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_4x4x1_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_4x4x4_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_f32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_ex_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_ex_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_ex_f32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/float/dspm_mult_ex_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_m_ae32_vector.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_m_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mul/fixed/dspm_mult_s16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/add/float/dspm_add_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/add/float/dspm_add_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/addc/float/dspm_addc_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/addc/float/dspm_addc_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mulc/float/dspm_mulc_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mulc/float/dspm_mulc_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/sub/float/dspm_sub_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/sub/float/dspm_sub_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/matrix/mat/mat.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mulc/float/dsps_mulc_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/addc/float/dsps_addc_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mulc/fixed/dsps_mulc_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mulc/fixed/dsps_mulc_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/float/dsps_add_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/fixed/dsps_add_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/fixed/dsps_add_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/fixed/dsps_add_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/fixed/dsps_add_s8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/fixed/dsps_add_s8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/float/dsps_sub_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/fixed/dsps_sub_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/fixed/dsps_sub_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/fixed/dsps_sub_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/fixed/dsps_sub_s8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/fixed/dsps_sub_s8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/float/dsps_mul_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/fixed/dsps_mul_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/fixed/dsps_mul_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/fixed/dsps_mul_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/fixed/dsps_mul_s8_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/fixed/dsps_mul_s8_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mulc/float/dsps_mulc_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/addc/float/dsps_addc_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/add/float/dsps_add_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sub/float/dsps_sub_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/mul/float/dsps_mul_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/math/sqrt/float/dsps_sqrt_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_fc32_ae32_.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_fc32_aes3_.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_fc32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_fc32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_fc32_ae32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_bit_rev_lookup_fc32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_fc32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_fc32_ae32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_fc32_ae32_.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_fc32_aes3_.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_fc32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft2r_bitrev_tables_fc32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/float/dsps_fft4r_bitrev_tables_fc32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/fixed/dsps_fft2r_sc16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/fixed/dsps_fft2r_sc16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/fixed/dsps_fft2r_sc16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fft/fixed/dsps_fft2r_sc16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dct/float/dsps_dct_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dct/float/dsps_dctiv_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/dct/float/dsps_dstiv_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/snr/float/dsps_snr_f32.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/sfdr/float/dsps_sfdr_f32.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/misc/dsps_d_gen.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/misc/dsps_h_gen.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/misc/dsps_tone_gen.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/cplx_gen/dsps_cplx_gen.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/cplx_gen/dsps_cplx_gen.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/cplx_gen/dsps_cplx_gen_init.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/mem/esp32s3/dsps_memset_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/mem/esp32s3/dsps_memcpy_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/support/view/dsps_view.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/hann/float/dsps_wind_hann_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/blackman/float/dsps_wind_blackman_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/blackman_harris/float/dsps_wind_blackman_harris_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/blackman_nuttall/float/dsps_wind_blackman_nuttall_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/nuttall/float/dsps_wind_nuttall_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/windows/flat_top/float/dsps_wind_flat_top_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_conv_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dspi_conv_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_conv_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_corr_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_corr_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_ccorr_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/conv/float/dsps_ccorr_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_sf32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_f32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_sf32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_sf32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/iir/biquad/dsps_biquad_gen_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fir_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fir_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fird_f32_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fird_f32_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fird_f32_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fir_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fir_init_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fird_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_fird_init_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fird_init_s16.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fird_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fird_s16_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fir_s16_m_ae32.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fird_s16_aes3.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_fird_s16_arp4.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_firmr_init_f32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/float/dsps_firmr_f32_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_firmr_init_s16.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/fixed/dsps_firmr_s16_ansi.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/resampler/dsps_resampler_mr.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/fir/resampler/dsps_resampler_ph.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/kalman/ekf/common/ekf.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-dsp/modules/kalman/ekf_imu13states/ekf_imu13states.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_master.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_slave.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/mb.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/mb_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/ascii/mbascii.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/ascii/mbascii_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/rtu/mbrtu_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/rtu/mbrtu.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/rtu/mbcrc.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/tcp/mbtcp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/tcp/mbtcp_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/port.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portevent.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portevent_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portother.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portother_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portserial.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/portserial_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/porttimer.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/port/porttimer_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfunccoils.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfunccoils_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncdiag.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncdisc.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncdisc_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncholding.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncholding_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncinput.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncinput_m.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbfuncother.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/modbus/functions/mbutils.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/serial_slave/modbus_controller/mbc_serial_slave.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/serial_master/modbus_controller/mbc_serial_master.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/tcp_slave/port/port_tcp_slave.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/tcp_slave/modbus_controller/mbc_tcp_slave.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/tcp_master/modbus_controller/mbc_tcp_master.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/tcp_master/port/port_tcp_master.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-dsp/libespressif__esp-dsp.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_master_tcp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_slave_tcp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_master_serial.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-modbus/freemodbus/common/esp_modbus_slave_serial.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/src/esp_loader.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/src/esp_targets.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/src/md5_hash.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/src/protocol.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/src/slip.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-dsp/libespressif__esp-dsp.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-serial-flasher/port/esp32_port.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-sr/src/model_path.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-sr/src/esp_sr_debug.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-modbus/libespressif__esp-modbus.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-sr/src/esp_mn_speech_commands.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp-sr/src/esp_process_sdkconfig.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-modbus/libespressif__esp-modbus.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_diag_data_store/src/esp_diag_data_store.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-sr/libespressif__esp-sr.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-serial-flasher/libespressif__esp-serial-flasher.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_diag_data_store/src/rtc_store/rtc_store.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-sr/libespressif__esp-sr.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp-serial-flasher/libespressif__esp-serial-flasher.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_diagnostics/src/esp_diagnostics_log_hook.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_diagnostics/src/esp_diagnostics_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_transport.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_client_data.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_encoder.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_diag_data_store/libespressif__esp_diag_data_store.a
+In file included from managed_components/espressif__esp_diagnostics/src/esp_diagnostics_utils.c:52:
+/Users/rra1imb/.platformio/packages/framework-espidf/components/freertos/esp_additions/include/freertos/task_snapshot.h:8:2: warning: #warning freertos/task_snapshot.h header is no longer used, and will be removed in future versions. [-Wcpp]
+    8 | #warning freertos/task_snapshot.h header is no longer used, and will be removed in future versions.
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_cmd_resp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_cbor_decoder.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/esp_insights_cbor_encoder.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_diag_data_store/libespressif__esp_diag_data_store.a
+Compiling .pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/https_server.crt.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_insights/src/transport/esp_insights_https.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_diagnostics/libespressif__esp_diagnostics.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_diagnostics/libespressif__esp_diagnostics.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_primitives_freertos.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_api_target.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_uart.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_term_uart.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_netif.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_dte.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_dce.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_api.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_c_api.cpp.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_insights/libespressif__esp_insights.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_factory.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_cmux.cpp.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_insights/libespressif__esp_insights.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_command_library.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_term_fs.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_vfs_uart_creator.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_vfs_socket_creator.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_modem/src/esp_modem_modules.cpp.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_core.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_node.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_device.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_param.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_node_config.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_client_data.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_time_service.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_system_service.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_user_mapping.pb-c.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_user_mapping.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_node_auth.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_schedule.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_scenes.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_cmd_resp_manager.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_secure_boot_digest.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/core/esp_rmaker_claim.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/mqtt/esp_rmaker_mqtt.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/mqtt/esp_rmaker_mqtt_budget.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/ota/esp_rmaker_ota.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/ota/esp_rmaker_ota_using_params.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/ota/esp_rmaker_ota_using_topics.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/standard_types/esp_rmaker_standard_params.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_modem/libespressif__esp_modem.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/standard_types/esp_rmaker_standard_devices.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_modem/libespressif__esp_modem.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/standard_types/esp_rmaker_standard_services.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/console/esp_rmaker_console.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rainmaker/src/console/esp_rmaker_commands.c.o
+Compiling .pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/rmaker_mqtt_server.crt.S.o
+Compiling .pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/rmaker_claim_service_server.crt.S.o
+Compiling .pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/rmaker_ota_server.crt.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_rcp_update/src/esp_rcp_update.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_schedule/src/esp_schedule.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_schedule/src/esp_schedule_nvs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_secure_cert_mgr/srcs/esp_secure_cert_tlv_read.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__esp_secure_cert_mgr/srcs/esp_secure_cert_crypto.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__json_generator/src/json_generator.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__json_parser/src/json_parser.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/xchacha20poly1305/aead_xchacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/aegis256/aead_aegis256.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_rcp_update/libespressif__esp_rcp_update.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__json_generator/libespressif__json_generator.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__json_parser/libespressif__json_parser.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_rcp_update/libespressif__esp_rcp_update.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__json_generator/libespressif__json_generator.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__json_parser/libespressif__json_parser.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/aegis256/aegis256_soft.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_rainmaker/libespressif__esp_rainmaker.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_secure_cert_mgr/libespressif__esp_secure_cert_mgr.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_schedule/libespressif__esp_schedule.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_secure_cert_mgr/libespressif__esp_secure_cert_mgr.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_schedule/libespressif__esp_schedule.a
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__esp_rainmaker/libespressif__esp_rainmaker.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/aegis128l/aead_aegis128l.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_aead/aegis128l/aegis128l_soft.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_auth/crypto_auth.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_auth/hmacsha256/auth_hmacsha256.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_auth/hmacsha512/auth_hmacsha512.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_auth/hmacsha512256/auth_hmacsha512256.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/crypto_box.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/crypto_box_easy.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/crypto_box_seal.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/curve25519xchacha20poly1305/box_curve25519xchacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/curve25519xchacha20poly1305/box_seal_curve25519xchacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_box/curve25519xsalsa20poly1305/box_curve25519xsalsa20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/ed25519/core_ed25519.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/ed25519/core_ristretto255.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/hchacha20/core_hchacha20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/hsalsa20/core_hsalsa20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/hsalsa20/ref2/core_hsalsa20_ref2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/salsa/ref/core_salsa_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_core/softaes/softaes.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/generichash_blake2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/ref/blake2b-compress-avx2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/ref/blake2b-compress-ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/ref/blake2b-compress-ssse3.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/ref/blake2b-ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_generichash/crypto_generichash.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_hash/crypto_hash.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_hash/sha256/cp/hash_sha256_cp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_hash/sha256/hash_sha256.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_hash/sha512/cp/hash_sha512_cp.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_hash/sha512/hash_sha512.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_kdf/blake2b/kdf_blake2b.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_kdf/crypto_kdf.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_kx/crypto_kx.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_onetimeauth/crypto_onetimeauth.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_onetimeauth/poly1305/donna/poly1305_donna.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_onetimeauth/poly1305/onetimeauth_poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-core.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-encoding.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-fill-block-avx2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-fill-block-avx512f.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-fill-block-ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2-fill-block-ssse3.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/argon2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/blake2b-long.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/pwhash_argon2i.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/argon2/pwhash_argon2id.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/crypto_pwhash.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/scryptsalsa208sha256/crypto_scrypt-common.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/scryptsalsa208sha256/nosse/pwhash_scryptsalsa208sha256_nosse.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/scryptsalsa208sha256/pbkdf2-sha256.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/scryptsalsa208sha256/pwhash_scryptsalsa208sha256.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_pwhash/scryptsalsa208sha256/scrypt_platform.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/crypto_scalarmult.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/ref10/x25519_ref10.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/consts.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/curve25519_sandy2x.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/fe51_invert.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/fe51_mul.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/fe51_nsquare.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/fe51_pack.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/fe_frombytes_sandy2x.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/ladder.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/sandy2x/sandy2x.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/curve25519/scalarmult_curve25519.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/ed25519/ref10/scalarmult_ed25519_ref10.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_scalarmult/ristretto255/ref10/scalarmult_ristretto255_ref10.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_secretbox/crypto_secretbox.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_secretbox/crypto_secretbox_easy.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_secretbox/xchacha20poly1305/secretbox_xchacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_secretbox/xsalsa20poly1305/secretbox_xsalsa20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_secretstream/xchacha20poly1305/secretstream_xchacha20poly1305.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_shorthash/crypto_shorthash.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_shorthash/siphash24/ref/shorthash_siphash24_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_shorthash/siphash24/ref/shorthash_siphashx24_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_shorthash/siphash24/shorthash_siphash24.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_shorthash/siphash24/shorthash_siphashx24.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/crypto_sign.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/ed25519/ref10/keypair.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/ed25519/ref10/obsolete.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/ed25519/ref10/open.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/ed25519/ref10/sign.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_sign/ed25519/sign_ed25519.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/chacha20/dolbeau/chacha20_dolbeau-avx2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/chacha20/dolbeau/chacha20_dolbeau-ssse3.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/chacha20/ref/chacha20_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/chacha20/stream_chacha20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/crypto_stream.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/ref/salsa20_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/stream_salsa20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/xmm6/salsa20_xmm6-asm.S.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/xmm6/salsa20_xmm6.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/xmm6int/salsa20_xmm6int-avx2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa20/xmm6int/salsa20_xmm6int-sse2.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa2012/ref/stream_salsa2012_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa2012/stream_salsa2012.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa208/ref/stream_salsa208_ref.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/salsa208/stream_salsa208.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/xchacha20/stream_xchacha20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_stream/xsalsa20/stream_xsalsa20.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/crypto_verify/verify.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/randombytes/randombytes.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/sodium/codecs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/sodium/core.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/sodium/runtime.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/sodium/utils.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/libsodium/src/libsodium/sodium/version.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__libsodium/port/randombytes_esp32.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__mdns/mdns.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__mdns/mdns_mem_caps.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__mdns/mdns_networking_lwip.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__libsodium/libespressif__libsodium.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__mdns/mdns_console.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/network_config.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/network_scan.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/network_ctrl.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/manager.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/handlers.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/scheme_console.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__libsodium/libespressif__libsodium.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/proto-c/network_config.pb-c.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/proto-c/network_scan.pb-c.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/proto-c/network_ctrl.pb-c.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/proto-c/network_constants.pb-c.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/scheme_softap.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__network_provisioning/src/scheme_ble.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__qrcode/esp_qrcode_main.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__qrcode/esp_qrcode_wrapper.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__qrcode/qrcodegen.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/work_queue.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/factory.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/time.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/timezone.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/utils.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/cmd_resp.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__network_provisioning/libespressif__network_provisioning.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/console/rmaker_common_cmds.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/console/rmaker_console.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__network_provisioning/libespressif__network_provisioning.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/esp-mqtt/esp-mqtt-glue.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/espressif__rmaker_common/src/create_APN3_PPI_string.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__qrcode/libespressif__qrcode.a
+Compiling .pio/build/esp32-s3-16mb/fatfs/diskio/diskio.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__qrcode/libespressif__qrcode.a
+Compiling .pio/build/esp32-s3-16mb/fatfs/diskio/diskio_rawflash.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/diskio/diskio_wl.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__mdns/libespressif__mdns.a
+Compiling .pio/build/esp32-s3-16mb/fatfs/src/ff.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/src/ffunicode.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__mdns/libespressif__mdns.a
+Compiling .pio/build/esp32-s3-16mb/fatfs/port/freertos/ffsystem.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/diskio/diskio_sdmmc.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/vfs/vfs_fat.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/vfs/vfs_fat_sdmmc.c.o
+Compiling .pio/build/esp32-s3-16mb/fatfs/vfs/vfs_fat_spiflash.c.o
+Compiling .pio/build/esp32-s3-16mb/base64.cpp.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/espressif__rmaker_common/libespressif__rmaker_common.a
+Compiling .pio/build/esp32-s3-16mb/cbuf.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ColorFormat.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/espressif__rmaker_common/libespressif__rmaker_common.a
+Compiling .pio/build/esp32-s3-16mb/chip-debug-report.cpp.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-cpu.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/fatfs/libfatfs.a
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-gpio.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/fatfs/libfatfs.a
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-hosted.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-i2c-ng.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-periman.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-time.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-touch-ng.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-s3-16mb/Esp.cpp.o
+Compiling .pio/build/esp32-s3-16mb/freertos_stats.cpp.o
+Compiling .pio/build/esp32-s3-16mb/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HashBuilder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HEXBuilder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/IPAddress.cpp.o
+Compiling .pio/build/esp32-s3-16mb/cdecode.c.o
+Compiling .pio/build/esp32-s3-16mb/cencode.c.o
+Compiling .pio/build/esp32-s3-16mb/MacAddress.cpp.o
+Compiling .pio/build/esp32-s3-16mb/main.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MD5Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Print.cpp.o
+Compiling .pio/build/esp32-s3-16mb/stdlib_noniso.c.o
+Compiling .pio/build/esp32-s3-16mb/Stream.cpp.o
+Compiling .pio/build/esp32-s3-16mb/StreamString.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Tone.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HWCDC.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USB.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBCDC.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBMSC.cpp.o
+Compiling .pio/build/esp32-s3-16mb/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-s3-16mb/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-s3-16mb/wiring_pulse.c.o
+Compiling .pio/build/esp32-s3-16mb/wiring_shift.c.o
+Compiling .pio/build/esp32-s3-16mb/WMath.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WString.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ArduinoOTA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/AsyncUDP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLE2901.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLE2902.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLE2904.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEAddress.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEAdvertising.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEBeacon.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLECharacteristic.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLECharacteristicMap.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEClient.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEDescriptor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEDescriptorMap.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEEddystoneURL.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEExceptions.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEHIDDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLERemoteService.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEScan.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLESecurity.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEService.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEServiceMap.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEUtils.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEUUID.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BLEValue.cpp.o
+Compiling .pio/build/esp32-s3-16mb/FreeRTOS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/GeneralUtils.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BluetoothSerial.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BTAddress.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BTAdvertisedDeviceSet.cpp.o
+Compiling .pio/build/esp32-s3-16mb/BTScanResultsSet.cpp.o
+Compiling .pio/build/esp32-s3-16mb/DNSServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/EEPROM.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ESP_I2S.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ESP32_NOW.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ESP32_NOW_Serial.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ESP_SR.cpp.o
+Compiling .pio/build/esp32-s3-16mb/esp32-hal-sr.c.o
+/Users/rra1imb/.platformio/packages/framework-arduinoespressif32/libraries/ESP_SR/src/esp32-hal-sr.c:10:2: warning: #warning Compatible partition must be selected for ESP_SR to work [-Wcpp]
+   10 | #warning Compatible partition must be selected for ESP_SR to work
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/ESPmDNS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ETH.cpp.o
+Compiling .pio/build/esp32-s3-16mb/FFat.cpp.o
+Compiling .pio/build/esp32-s3-16mb/FS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/vfs_api.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SHA1Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SHA2Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SHA3Builder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/PBKDF2_HMACBuilder.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HTTPClient.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HTTPUpdate.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Insights.cpp.o
+Compiling .pio/build/esp32-s3-16mb/LittleFS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterGenericSwitch.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterOnOffLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterDimmableLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterColorTemperatureLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterColorLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterEnhancedColorLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterFan.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterTemperatureSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterHumiditySensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterContactSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterPressureSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterOccupancySensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterOnOffPlugin.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterThermostat.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Matter.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MatterEndPoint.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetBIOS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkInterface.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkEvents.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkManager.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkClient.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkUdp.cpp.o
+Compiling .pio/build/esp32-s3-16mb/OThread.cpp.o
+Compiling .pio/build/esp32-s3-16mb/OThreadCLI.cpp.o
+Compiling .pio/build/esp32-s3-16mb/OThreadCLI_Util.cpp.o
+Compiling .pio/build/esp32-s3-16mb/PPP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ppp.c.o
+Compiling .pio/build/esp32-s3-16mb/Preferences.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMaker.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerNode.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerParam.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerDevice.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerType.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerQR.cpp.o
+Compiling .pio/build/esp32-s3-16mb/RMakerUtils.cpp.o
+Compiling .pio/build/esp32-s3-16mb/AppInsights.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SD_MMC.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SD.cpp.o
+Compiling .pio/build/esp32-s3-16mb/sd_diskio.cpp.o
+Compiling .pio/build/esp32-s3-16mb/sd_diskio_crc.c.o
+Compiling .pio/build/esp32-s3-16mb/SimpleBLE.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SPIFFS.cpp.o
+Compiling .pio/build/esp32-s3-16mb/SPI.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Ticker.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Updater.cpp.o
+Compiling .pio/build/esp32-s3-16mb/HttpsOTAUpdate.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHID.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBMIDI.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDMouse.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDKeyboard.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_da_DK.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_de_DE.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_en_US.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_es_ES.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_fr_FR.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_hu_HU.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_it_IT.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_pt_BR.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_pt_PT.cpp.o
+Compiling .pio/build/esp32-s3-16mb/KeyboardLayout_sv_SE.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDGamepad.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDConsumerControl.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDSystemControl.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBHIDVendor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/USBVendor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Parsing.cpp.o
+Compiling .pio/build/esp32-s3-16mb/mimetable.cpp.o
+Compiling .pio/build/esp32-s3-16mb/MiddlewareChain.cpp.o
+Compiling .pio/build/esp32-s3-16mb/AuthenticationMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/CorsMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/LoggingMiddleware.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ssl_client.cpp.o
+Compiling .pio/build/esp32-s3-16mb/NetworkClientSecure.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFiAP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFi.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFiGeneric.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFiMulti.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFiScan.cpp.o
+Compiling .pio/build/esp32-s3-16mb/WiFiSTA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/STA.cpp.o
+Compiling .pio/build/esp32-s3-16mb/AP.cpp.o
+/Users/rra1imb/.platformio/packages/framework-arduinoespressif32/libraries/NetworkClientSecure/src/ssl_client.cpp:23:2: warning: #warning "Please call `idf.py menuconfig` then go to Component config -> mbedTLS -> TLS Key Exchange Methods -> Enable pre-shared-key ciphersuites and then check `Enable PSK based ciphersuite modes`. Save and Quit." [-Wcpp]
+   23 | #warning \
+      |  ^~~~~~~
+Compiling .pio/build/esp32-s3-16mb/WiFiProv.cpp.o
+Compiling .pio/build/esp32-s3-16mb/Wire.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeCore.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeEP.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeHandlers.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeColorDimmableLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeColorDimmerSwitch.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeDimmableLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeLight.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeSwitch.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeTempSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeThermostat.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeFlowSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeePressureSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeOccupancySensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeCarbonDioxideSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeContactSwitch.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeDoorWindowHandle.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeWindowCovering.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeVibrationSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeAnalog.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeRangeExtender.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeGateway.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeWindSpeedSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeIlluminanceSensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeePM25Sensor.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeElectricalMeasurement.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeBinary.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeePowerOutlet.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeFanControl.cpp.o
+Compiling .pio/build/esp32-s3-16mb/ZigbeeMultistate.cpp.o
+Compiling .pio/build/esp32-s3-16mb/freertos/heap_idf.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/app_startup.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/port_common.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/port_systick.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/list.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/queue.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/tasks.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/timers.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/event_groups.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/stream_buffer.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/portable/xtensa/port.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/portable/xtensa/portasm.S.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/portable/xtensa/xtensa_init.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/FreeRTOS-Kernel/portable/xtensa/xtensa_overlay_os_hook.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/esp_additions/freertos_compatibility.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/esp_additions/idf_additions_event_groups.c.o
+Compiling .pio/build/esp32-s3-16mb/freertos/esp_additions/idf_additions.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/hal_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/mpu_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/efuse_hal.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/framework-arduinoespressif32/libframework-arduinoespressif32.a
+Compiling .pio/build/esp32-s3-16mb/hal/esp32s3/efuse_hal.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/freertos/libfreertos.a
+Compiling .pio/build/esp32-s3-16mb/hal/mmu_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/cache_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/color_hal.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/freertos/libfreertos.a
+Compiling .pio/build/esp32-s3-16mb/hal/spi_flash_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_flash_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_flash_encrypt_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/esp32s3/clk_tree_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/systimer_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/uart_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/uart_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/gpio_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/rtc_io_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/timer_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/ledc_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/ledc_hal_iram.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/framework-arduinoespressif32/libframework-arduinoespressif32.a
+Compiling .pio/build/esp32-s3-16mb/hal/i2c_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/i2c_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/rmt_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/pcnt_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/mcpwm_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/uhci_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/twai_hal_v1.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/gdma_hal_top.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/gdma_hal_ahb_v1.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/i2s_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/sdm_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/sdmmc_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/adc_hal_common.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/adc_oneshot_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/adc_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/lcd_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/mpi_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/sha_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/aes_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/brownout_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_slave_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_slave_hal_iram.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_slave_hd_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/spi_flash_hal_gpspi.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/hmac_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/ds_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/cam_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/usb_serial_jtag_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/usb_dwc_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/usb_wrap_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/esp32s3/touch_sensor_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/touch_sensor_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/touch_sens_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/xt_wdt_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/hal/esp32s3/rtc_cntl_hal.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/heap_caps_base.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/heap_caps.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/heap_caps_init.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/multi_heap.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/tlsf/tlsf.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/hal/libhal.a
+Compiling .pio/build/esp32-s3-16mb/heap/port/memory_layout_utils.c.o
+Compiling .pio/build/esp32-s3-16mb/heap/port/esp32s3/memory_layout.c.o
+Compiling .pio/build/esp32-s3-16mb/http_parser/http_parser.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/joltwallet__littlefs/src/littlefs/lfs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/joltwallet__littlefs/src/littlefs/lfs_util.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/hal/libhal.a
+Compiling .pio/build/esp32-s3-16mb/managed_components/joltwallet__littlefs/src/esp_littlefs.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/joltwallet__littlefs/src/littlefs_esp_part.c.o
+Compiling .pio/build/esp32-s3-16mb/managed_components/joltwallet__littlefs/src/lfs_config.c.o
+Compiling .pio/build/esp32-s3-16mb/json/cJSON/cJSON.c.o
+Compiling .pio/build/esp32-s3-16mb/json/cJSON/cJSON_Utils.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/os/log_timestamp.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/log_timestamp_common.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/os/log_lock.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/heap/libheap.a
+Compiling .pio/build/esp32-s3-16mb/log/src/buffer/log_buffers.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/os/util.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/util.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/heap/libheap.a
+Archiving .pio/build/esp32-s3-16mb/esp-idf/http_parser/libhttp_parser.a
+Compiling .pio/build/esp32-s3-16mb/log/src/log_format_text.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/http_parser/libhttp_parser.a
+Compiling .pio/build/esp32-s3-16mb/log/src/log_print.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/json/libjson.a
+Compiling .pio/build/esp32-s3-16mb/log/src/log.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/os/log_write.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/json/libjson.a
+Compiling .pio/build/esp32-s3-16mb/log/src/log_level/log_level.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/log_level/tag_log_level/tag_log_level.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/log_level/tag_log_level/linked_list/log_linked_list.c.o
+Compiling .pio/build/esp32-s3-16mb/log/src/log_level/tag_log_level/cache/log_binary_heap.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/apps/sntp/sntp.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/joltwallet__littlefs/libjoltwallet__littlefs.a
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/api_lib.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/joltwallet__littlefs/libjoltwallet__littlefs.a
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/api_msg.c.o
+Archiving .pio/build/esp32-s3-16mb/esp-idf/log/liblog.a
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/err.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/if_api.c.o
+Indexing .pio/build/esp32-s3-16mb/esp-idf/log/liblog.a
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/netbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/netdb.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/netifapi.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/sockets.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/api/tcpip.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/apps/sntp/sntp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/apps/netbiosns/netbiosns.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/def.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/dns.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/inet_chksum.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/init.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ip.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/mem.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/memp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/netif.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/pbuf.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/raw.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/stats.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/sys.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/tcp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/tcp_in.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/tcp_out.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/timeouts.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/udp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/autoip.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/dhcp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/etharp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/icmp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/igmp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/ip4.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/ip4_napt.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/ip4_addr.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv4/ip4_frag.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/dhcp6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/ethip6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/icmp6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/inet6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/ip6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/ip6_addr.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/ip6_frag.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/mld6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/core/ipv6/nd6.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ethernet.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/bridgeif.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/bridgeif_fdb.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/slipif.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/auth.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/ccp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/chap-md5.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/chap-new.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/chap_ms.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/demand.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/eap.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/ecp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/eui64.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/fsm.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/ipcp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/ipv6cp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/lcp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/magic.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/mppe.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/multilink.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/ppp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/pppapi.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/pppcrypt.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/pppoe.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/pppol2tp.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/pppos.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/upap.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/utils.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/vj.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/hooks/tcp_isn_default.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/hooks/lwip_default_hooks.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/debug/lwip_debug.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/sockets_ext.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/freertos/sys_arch.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/if_index.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/acd_dhcp_check.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/port/esp32xx/vfs_lwip.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/apps/ping/esp_ping.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/apps/ping/ping.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/apps/ping/ping_sock.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/polarssl/arc4.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/polarssl/des.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/polarssl/md4.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/polarssl/md5.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/lwip/src/netif/ppp/polarssl/sha1.c.o
+Compiling .pio/build/esp32-s3-16mb/lwip/apps/dhcpserver/dhcpserver.c.o
+Compiling .pio/build/esp32-s3-16mb/mbedtls/esp_crt_bundle/esp_crt_bundle.c.o
+Compiling .pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/x509_crt_bundle.S.o
+Compiling .pio/build/esp32-s3-16mb/mqtt/esp-mqtt/mqtt_client.c.o
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S: Assembler messages:
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4: Error: syntax error
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4: Error: junk at end of line, first unrecognized character is `*'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:65: Error: junk at end of line, first unrecognized character is `.'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:146: Error: junk at end of line, first unrecognized character is `c'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:227: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:308: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:389: Warning: zero assumed for missing expression
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:470: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:632: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:713: Warning: value 0x3c7 truncated to 0xc7
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:876: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:957: Warning: zero assumed for missing expression
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1038: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1200: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1281: Warning: value 0x8502 truncated to 0x2
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1443: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1687: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1808: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1890: Error: floating point number invalid
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:1930: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2011: Error: floating point number invalid
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2092: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2132: Warning: value 0x27d truncated to 0x7d
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2255: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2335: Warning: value 0x827d truncated to 0x7d
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2376: Warning: zero assumed for missing expression
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2417: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2458: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2498: Warning: value 0x20f truncated to 0xf
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2538: Warning: value 0x820 truncated to 0x20
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2579: Warning: zero assumed for missing expression
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2620: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2660: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2700: Warning: value 0x216 truncated to 0x16
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2822: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2862: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2903: Warning: value 0x3a16 truncated to 0x16
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2944: Warning: zero assumed for missing expression
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:2985: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3146: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3390: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3512: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3633: Warning: value 0x300 truncated to 0x0
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3633: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3796: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:3958: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4080: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4201: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4363: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4526: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4566: Error: floating point number invalid
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4607: Error: unknown pseudo-op: `.bytexf9'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4648: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4769: Warning: value 0x260 truncated to 0x60
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4769: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:4931: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5012: Error: junk at end of line, first unrecognized character is `a'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5052: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5134: Error: junk at end of line, first unrecognized character is `9'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5174: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5215: Error: unknown pseudo-op: `.byt'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5256: Error: floating point number invalid
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5256: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5337: Error: unknown pseudo-op: `.byt0x0b'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5378: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5499: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5620: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5742: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5904: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5945: Error: unknown pseudo-op: `.by5'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:5986: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6067: Error: unknown pseudo-op: `.by'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6108: Error: junk at end of line, first unrecognized character is `t'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6188: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6270: Error: floating point number invalid
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6310: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6472: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6553: Error: backward ref to unknown label "6:"
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6634: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6675: Error: unknown pseudo-op: `.b6b'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6716: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6756: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6797: Error: unknown pseudo-op: `.b'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6838: Error: junk at end of line, first unrecognized character is `y'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:6878: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7040: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7121: Error: junk at end of line, first unrecognized character is `d'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7202: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7242: Error: junk at end of line, first unrecognized character is `8'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7324: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7405: Error: unknown pseudo-op: `.x39'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7446: Warning: value 0x6eb truncated to 0xeb
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7446: Error: junk at end of line, first unrecognized character is `y'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7527: Error: unknown pseudo-op: `.f'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7568: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7608: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7770: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7810: Error: junk at end of line, first unrecognized character is `9'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:7892: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8013: Warning: value 0xc10 truncated to 0x10
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8013: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8135: Error: syntax error
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8135: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8176: Error: junk at end of line, first unrecognized character is `.'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8257: Error: syntax error
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8257: Error: junk at end of line, first unrecognized character is `3'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8298: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8338: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8378: Error: junk at end of line, first unrecognized character is `a'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8460: Error: junk at end of line, first unrecognized character is `0'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8581: Warning: value 0xaf0 truncated to 0xf0
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8581: Error: junk at end of line, first unrecognized character is `x'
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8595: Error: syntax error
+.pio/build/esp32-s3-16mb/x509_crt_bundle.S:8595: Error: junk at end of line, first unrecognized character is `,'
+Compiling .pio/build/esp32-s3-16mb/mqtt/esp-mqtt/lib/mqtt_msg.c.o
+/var/folders/wh/kwt0kz_s0cg1rm67htr914780000gp/T//ccSlbm0k.s: Error: local label `"0" (instance number 1 of a fb label)' is not defined
+Compiling .pio/build/esp32-s3-16mb/mqtt/esp-mqtt/lib/mqtt_outbox.c.o
+*** [.pio/build/esp32-s3-16mb/.pio/build/esp32-s3-16mb/x509_crt_bundle.S.o] Error 1
+========================= [FAILED] Took 130.91 seconds =========================

@@ -1,0 +1,7 @@
+# Custom 16MB layout — Single factory app (3MB) + 8MB LittleFS
+# Suitable for ESP32-S3 Arduino projects with many web assets
+# Name,     Type, SubType,  Offset,  Size,   Flags
+nvs,        data, nvs,      0x9000,  24K,
+coredump,   data, coredump, 0xF000,  4K,
+app0,       app,  factory,  0x10000, 3072K,
+littlefs,   data, littlefs, 0x310000, 13056K,

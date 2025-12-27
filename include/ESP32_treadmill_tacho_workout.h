@@ -1,0 +1,108 @@
+#include <stdint.h>
+#pragma once
+#include <Arduino.h>
+#include <vector>
+#include <functional>
+#include "ESP32_treadmill_tacho_config.h" 
+
+extern TreadmillStoredGlobals storedGlobals;
+
+// If your BLE code already defines these, keep only one set of prototypes.
+void bleSetTreadmillSpeedKph(float speedKph);
+void bleSetTreadmillInclinePct(float inclinePct);
+void physicalSpeedControl(float targetSpeed_kmh, float current_Mps);
+
+struct WorkoutStep {
+  uint32_t duration_s = 0;   // seconds
+  float    speed_kph  = 0.0; // target speed
+  float    incline_pct= 0.0; // target incline (%)
+  String   label;            // optional
+};
+
+enum class WorkoutState { Idle, Running, Paused, Finished, Error };
+
+struct WorkoutProgress {
+  WorkoutState state = WorkoutState::Idle;
+  uint32_t total_s = 0;
+  uint32_t elapsed_s = 0;
+
+  uint32_t step_index = 0;
+  uint32_t step_elapsed_s = 0;
+  uint32_t step_remaining_s = 0;
+
+  float  current_speed_kph   = 0.0f;
+  float  current_incline_pct = 0.0f;
+  String current_label;
+  String error;
+};
+
+class WorkoutExecutor {
+public:
+  // Mapping used when ZWO provides Power (IF) instead of Speed.
+  float speedAtIF1_kph = 10.0f;
+
+  // Safety clamps
+  float minSpeed_kph    = 3.0f;
+  float maxSpeed_kph    = 22.0f;
+  float minIncline_pct  = 0.0f;
+  float maxIncline_pct  = 15.0f;
+
+  // Lifecycle
+  bool  loadFromZwoString(const String& xml);
+  void  clear();
+  void  start();
+  void  pause();
+  void  resume();
+  void  stop();
+
+  // Call regularly (e.g. every 100–200 ms)
+  void  update();
+
+  // UI / state
+  WorkoutProgress getProgress() const;
+  const std::vector<WorkoutStep>& steps() const { return _steps; }
+  void  setSpeedScale(float f) { speed_scale_ = f < 0.10f ? 0.10f : (f > 2.50f ? 2.50f : f); }
+  void  nudgeSpeedScale(float rel) { setSpeedScale(speed_scale_ * (1.0f + rel)); } // rel = +0.01 for +1%
+  float getSpeedScale() const { return speed_scale_; }
+  void scaleAllSpeeds(float factor);
+
+  // Optional callback on step begin
+  std::function<void(const WorkoutStep&, uint32_t)> onStepBegin;
+
+  // Utilities
+  static float paceToSpeedKph(float paceMin, int units /*1=min/km, 0=min/mile*/);
+  float powerFracToSpeedKph(float frac) const; // uses thresholdSecPerKm if present
+
+private:
+  // Runtime state
+  std::vector<WorkoutStep> _steps;
+  WorkoutState _state = WorkoutState::Idle;
+  String _lastError;
+  float speed_scale_ = 1.0f;   // NEW: scales all step speeds (kph)
+
+  uint32_t _workoutStart_ms = 0;
+  uint32_t _pauseStart_ms   = 0;
+  uint32_t _pausedTotal_ms  = 0;
+
+  uint32_t _currentIndex = 0;
+  uint32_t _stepStart_ms  = 0;
+
+  // Parsing
+  bool _parseZwo(const String& xml);
+
+  // Helpers
+  void     _applyTargets(const WorkoutStep& st);
+  void     _advanceStep();
+  uint32_t _now() const { return millis(); }
+
+  // Attribute helpers (case-insensitive on key)
+  static bool _getAttrF  (const String& tag, const char* key, float& outVal);
+  static bool _getAttrU32(const String& tag, const char* key, uint32_t& outVal);
+
+  static float _clamp(float v, float vmin, float vmax) {
+    return v < vmin ? vmin : (v > vmax ? vmax : v);
+  }
+
+  // 0 ⇒ unknown; set from <thresholdSecPerKm> if present, else derived from speedAtIF1_kph
+  float zwo_threshold_sec_per_km_ = 0.0f;
+};
