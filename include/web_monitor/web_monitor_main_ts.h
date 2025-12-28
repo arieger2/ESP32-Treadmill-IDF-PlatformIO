@@ -47,6 +47,10 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     .button:active { transform:translateY(0); }
     .button.danger { background:rgba(220,53,69,0.3); }
     .button.danger:hover { background:rgba(220,53,69,0.5); }
+    .button-red { background:rgba(220,53,69,0.5); }
+    .button-red:hover { background:rgba(220,53,69,0.7); }
+    .button-green { background:rgba(40,167,69,0.3); }
+    .button-green:hover { background:rgba(40,167,69,0.5); }
     @media (max-width: 768px) {
       h2 { font-size:1.5rem; }
       .metric-value { font-size:1.5rem; }
@@ -156,7 +160,7 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div class="metric-value"><span id="motorrpm">0</span></div>
       </div>
       <p style="margin-top:15px;">
-        <a href="/testdata" class="button" onclick="return confirm('Testdaten umschalten?');"><i class="fas fa-vial"></i> Testdaten</a>
+        <button id="testdata-btn" class="button" onclick="toggleTestMode(); return false;"><i class="fas fa-vial"></i> <span id="testdata-text">Test Mode</span></button>
       </p>
     </div>
   </div>

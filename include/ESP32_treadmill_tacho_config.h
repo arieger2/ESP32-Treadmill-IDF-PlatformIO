@@ -218,6 +218,7 @@ void initTachometer();
 
 // Utility functions
 void enableTestdata(bool on);
+void processPendingTestMetrics();
 void resetWorkout();
 void adjustOffsetUp();
 void adjustOffsetDown();

@@ -84,6 +84,15 @@ void resetWorkoutTimer() {
   g_wasPaused = false;
 }
 
+void resetMonitorViewState() {
+  g_pace_sec_filt = 0.0f;
+  g_mps_filt = 0.0f;
+  g_pace_last_ms = 0;
+  g_pace_min_disp = -1;
+  g_pace_valid = false;
+  g_pace_was_moving = false;
+}
+
 static uint32_t getWorkoutElapsedSeconds() {
   if (metrics.sessionStartTime == 0) return 0;
   

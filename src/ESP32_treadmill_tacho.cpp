@@ -27,10 +27,8 @@
 TreadmillMetrics metrics;
 BLEData bleData;
 
-// Test data simulation counter (only used in test mode)
-volatile int64_t test_pulse_count = 0;
+// Test mode flag (accessed by ISR callback)
 volatile bool testdata = false;
-volatile bool metrics_need_reset = false;  // Flag to reset metrics after test mode
 
 WorkoutExecutor gWorkout; 
 WiFiStatus wifi;
@@ -48,7 +46,6 @@ AsyncWebServer server(80);
 // void updateMetricsBand(uint32_t now_ms, uint32_t now_us);
 uint8_t sensorSelection(bool init = false);
 void enableTestdata(bool on);
-void generateTestData();
 
 // ============================================================================
 // SETUP AND MAIN LOOP
@@ -100,7 +97,6 @@ void setup() {
 
 void loop() {
     static uint32_t lastUpdate = 0;
-    static uint32_t testdataElapsed = 0;
     static uint32_t speedIncDecElapsed = 0;
     static bool cpuInitialized = false;
     static uint32_t lastCpuUpdate = 0;
@@ -121,11 +117,20 @@ void loop() {
     gWorkout.update(); // tick often
     heartRateClientLoop();
 
-    // Test data
-    testdataElapsed += delta;
-    if (testdata && testdataElapsed > storedGlobals.TESTDATA_FREQ_MS) {
-        generateTestData();
-        testdataElapsed = 0;
+    processPendingTestMetrics();
+
+    // TEST MODE: Now handled automatically by on_timeout_cb ISR (no loop code needed)
+    // Debug: Log test mode metrics every 5 seconds
+    extern volatile uint32_t test_isr_call_count;
+    static uint32_t lastTestDebug = 0;
+    static uint32_t lastCallCount = 0;
+    if (testdata && (now - lastTestDebug >= 5000)) {
+        lastTestDebug = now;
+        float kmh = metrics.mpsSmooth * 3.6f;
+        uint32_t calls = test_isr_call_count - lastCallCount;
+        lastCallCount = test_isr_call_count;
+        Serial.printf("[TEST-LOOP] Speed: %.2f km/h, Distance: %.2f m, ISR calls: %u (total: %u)\n", 
+                      kmh, metrics.workoutDistance, calls, (unsigned)test_isr_call_count);
     }
 
     // FTMS status

@@ -332,7 +332,15 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
 {
     (void)timer; (void)edata; (void)user_data;
 
-    // Check both sensors
+    // TEST MODE: Use simulated data instead of real sensors
+    extern volatile bool testdata;
+    if (testdata) {
+        extern void updateTestMetrics();
+        updateTestMetrics();
+        return false;
+    }
+
+    // NORMAL MODE: Check both real sensors
     speed_sensor_t *sensors[] = {&s_sensor1, &s_sensor2};
     
     for (int i = 0; i < 2; i++) {

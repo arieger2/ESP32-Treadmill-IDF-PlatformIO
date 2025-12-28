@@ -48,7 +48,7 @@ namespace MonitorApp {
     // Single request for all scalar values
     fetch(`/api/monitor?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)
-      .then((data: Record<string, string> | null) => {
+      .then((data: Record<string, any> | null) => {
         if (!data) return;
         
         setTextById('speed', data.speed);
@@ -66,6 +66,15 @@ namespace MonitorApp {
         setTextById('heartrate', data.heartrate);
         setTextById('rr', data.rr);
         setTextById('datetime', data.datetime);
+        
+        // Update testdata button appearance
+        const testBtn = document.getElementById('testdata-btn');
+        const testText = document.getElementById('testdata-text');
+        if (testBtn && testText) {
+          const isActive = data.testdata === true || data.testdata === 'true';
+          testBtn.className = isActive ? 'button button-red' : 'button button-green';
+          testText.textContent = isActive ? 'Test Mode ON' : 'Test Mode OFF';
+        }
       })
       .catch(() => {});
 
@@ -89,4 +98,16 @@ namespace MonitorApp {
       if (!document.hidden) refreshMetrics();
     });
   }
+  
+  /**
+   * Toggle test mode - called by button click
+   */
+  (window as any).toggleTestMode = function(): void {
+    fetch('/testdata', { method: 'GET' })
+      .then(() => {
+        // Force immediate refresh to update button state
+        setTimeout(refreshMetrics, 100);
+      })
+      .catch(err => console.error('Failed to toggle test mode:', err));
+  };
 }

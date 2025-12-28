@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "driver/pulse_cnt.h"
 #include "ESP32_treadmill_tacho_config.h"
+#include "ESP32_treadmill_tacho_sensor.h"
 #include "ESP32_treadmill_tacho_web.h"
 #include <nvs.h>
 #include <nvs_flash.h>
@@ -528,12 +529,21 @@ void initPCNT() {
 void initTachometer() {
     pinModeSetup();
     pinTimerSetup();
-    // OLD PCNT system removed - now using new MCPWM+PCNT sensor system
-    // initPCNT();  // DEPRECATED
-    
-    // New sensor system is initialized via speed_sensor1_init / speed_sensor2_init
-    // called from sensor_setup.cpp
-    
+    // Initialize new MCPWM + PCNT sensor system so GPTimer timeout callback runs
+    esp_err_t err = speed_sensor1_init(storedGlobals.PULSES_PER_REV,
+                                       storedGlobals.INTERRUPT_PIN);
+    if (err != ESP_OK) {
+        Serial.printf("[INIT][ERR] speed_sensor1_init failed: %s\r\n",
+                      esp_err_to_name(err));
+    }
+
+    err = speed_sensor2_init(storedGlobals.MOTOR_PULSES_PER_REV,
+                             storedGlobals.MOTOR_INTERRUPT_PIN);
+    if (err != ESP_OK) {
+        Serial.printf("[INIT][ERR] speed_sensor2_init failed: %s\r\n",
+                      esp_err_to_name(err));
+    }
+
     Serial.printf("[INIT] Using new MCPWM+PCNT sensor system (GPIO %d, %d)\r\n",
                   storedGlobals.INTERRUPT_PIN, storedGlobals.MOTOR_INTERRUPT_PIN);
     Serial.println("Hall sensor ready: Hardware ISR-based counting enabled");
@@ -552,15 +562,39 @@ void factoryReset() {
 }
 
 void resetWorkout() {
-  metrics.workoutDistance   = 0;
-  metrics.targetSpeed       = 0.0f;
-  metrics.targetInclination = 0;
-  // Don't reset isRunning/isPaused here - let workout executor manage these
-  // metrics.isRunning         = false;
-  // metrics.isPaused          = false;
-  metrics.sessionStartTime  = millis();
-  metrics.cpuUsagePercent   = 0;
-  testdata = false;
-  Serial.println("Workout reset (global)");
+    uint32_t now = millis();
+
+    metrics.mps = 0.0f;
+    metrics.mpsSmooth = 0.0f;
+    metrics.rpm = 0.0f;
+    metrics.motorRPM = 0.0f;
+    metrics.workoutDistance = 0.0f;
+    metrics.cpuUsagePercent = 0;
+
+    metrics.targetSpeed = 0.0f;
+    metrics.targetInclination = 0.0f;
+    metrics.currentInclination = 0.0f;
+
+    metrics.heartRateBpm = 0;
+    metrics.rrLastMs = 0;
+    metrics.heartRateEnergy = 0;
+    metrics.heartRateLastUpdate = 0;
+    metrics.rrBuffer.clear();
+    metrics.hrBuffer.clear();
+
+    metrics.isRunning = false;
+    metrics.isPaused = false;
+    metrics.controlRequested = false;
+
+    metrics.sessionStartTime = now;
+    metrics.workoutStartTime = now;
+    metrics.lastUpdate = now;
+
+    testdata = false;
+
+    resetWorkoutTimer();
+    resetMonitorViewState();
+
+    Serial.println("Workout reset (global)");
 }
 

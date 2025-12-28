@@ -67,7 +67,8 @@ void initWebServer() {
     json += "\"motorrpm\":\"" + getMotorRPM() + "\",";
     json += "\"heartrate\":\"" + getHeartRate() + "\",";
     json += "\"rr\":\"" + getRR() + "\",";
-    json += "\"datetime\":\"" + getDateTime() + "\"";
+    json += "\"datetime\":\"" + getDateTime() + "\",";
+    json += "\"testdata\":" + String(testdata ? "true" : "false");
     json += "}";
     r->send(200, "application/json", json);
   });
@@ -101,13 +102,7 @@ void initWebServer() {
     req->redirect("/");
   });
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *req) {
-    metrics.workoutDistance = 0;
-    metrics.targetSpeed = 0.0;
-    metrics.targetInclination = 0;
-    metrics.isPaused = false;
-    metrics.sessionStartTime = millis();
-    resetWorkoutTimer();
-    testdata = false;
+    resetWorkout();
     Serial.println("Workout reset via web interface");
     req->redirect("/");
   });

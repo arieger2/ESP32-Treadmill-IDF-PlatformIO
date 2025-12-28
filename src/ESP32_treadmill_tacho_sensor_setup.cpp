@@ -90,6 +90,11 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
 
     sensor->target_periods = initial_periods;
 
+    // Validate target pulse count to avoid invalid PCNT configuration ranges
+    if (sensor->target_periods == 0 || sensor->target_periods > 32767) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
     /* ---- MCPWM Capture timer ---- */
     {
         mcpwm_capture_timer_config_t tcfg = {
@@ -120,9 +125,13 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
 
     /* ---- PCNT (Pulse Counter) ---- */
     {
+        // PCNT on ESP32-S3 expects a symmetric counting window (low < 0 < high)
+        // even if we only increment on positive edges. Give the counter a small
+        // negative range so the driver accepts the configuration while the
+        // channel setup prevents ever going below zero.
         pcnt_unit_config_t ucfg = {
-            .low_limit = 0,
-            .high_limit = (int)initial_periods,
+            .low_limit = -(int)sensor->target_periods,
+            .high_limit = (int)sensor->target_periods,
         };
         ESP_RETURN_ON_ERROR(pcnt_new_unit(&ucfg, &sensor->pcnt_unit), TAG, "new pcnt unit");
 

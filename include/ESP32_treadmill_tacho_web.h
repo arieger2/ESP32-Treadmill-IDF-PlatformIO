@@ -63,3 +63,4 @@ String getRR();
 String getDateTime();
 String getTestDataButtonText();
 void resetWorkoutTimer();
+void resetMonitorViewState();

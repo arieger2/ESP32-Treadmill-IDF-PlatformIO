@@ -73,6 +73,14 @@ var MonitorApp;
             setTextById('heartrate', data.heartrate);
             setTextById('rr', data.rr);
             setTextById('datetime', data.datetime);
+            // Update testdata button appearance
+            var testBtn = document.getElementById('testdata-btn');
+            var testText = document.getElementById('testdata-text');
+            if (testBtn && testText) {
+                var isActive = data.testdata === true || data.testdata === 'true';
+                testBtn.className = isActive ? 'button button-red' : 'button button-green';
+                testText.textContent = isActive ? 'Test Mode ON' : 'Test Mode OFF';
+            }
         })
             .catch(function () { });
         // Charts still need separate requests (different data format)
@@ -95,6 +103,17 @@ var MonitorApp;
         });
     }
     MonitorApp.initPolling = initPolling;
+    /**
+     * Toggle test mode - called by button click
+     */
+    window.toggleTestMode = function () {
+        fetch('/testdata', { method: 'GET' })
+            .then(function () {
+            // Force immediate refresh to update button state
+            setTimeout(refreshMetrics, 100);
+        })
+            .catch(function (err) { return console.error('Failed to toggle test mode:', err); });
+    };
 })(MonitorApp || (MonitorApp = {}));
 /**
  * @file 2-chart.ts
