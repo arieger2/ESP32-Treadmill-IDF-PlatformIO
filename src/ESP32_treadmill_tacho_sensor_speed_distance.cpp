@@ -210,43 +210,42 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
     
     // Determine mode and validate sensor matches the mode
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
-    uint8_t motorPulsesPerRev = storedGlobals.MOTOR_PULSES_PER_REV;
-    uint8_t bandPulsesPerRev = storedGlobals.PULSES_PER_REV;
-    uint8_t beltDistanceMM = storedGlobals.BELT_DISTANCE_MM;
-    uint8_t motorToBeltRatio = storedGlobals.MOTOR_TO_BELT_RATIO;
     
     if (mode == SENSOR_AUTO) {
         // AUTO mode: update both band and motor metrics
         // Use motor sensor for speed calculation (more stable)
-        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, motorPulsesPerRev, 
-                                                                       beltDistanceMM, motorToBeltRatio);
+        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                       storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
         metrics.motorRPM = motorResult.rpm;
-        metrics.workoutDistance += motorResult.delta_distance;
+        metrics.workoutDistance += motorResult.delta_distance; // meters
         
-        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), bandPulsesPerRev, 
-                                                                      beltDistanceMM, 1.0f);
+        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
+                                                                      storedGlobals.BELT_DISTANCE_MM, 1.0f);
         metrics.rpm = bandResult.rpm;
-        metrics.mps = speed_sensor_get_mps(motorResult.rpm, beltDistanceMM, motorToBeltRatio);
+        metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
         
     } else if (mode == SENSOR_BAND) {
         // BAND mode: only update if sensor is actually the band sensor
         if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, bandPulsesPerRev, 
-                                                                      beltDistanceMM, 1.0f);
+            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
+                                                                      storedGlobals.BELT_DISTANCE_MM, 1.0f);
             metrics.rpm = result.rpm;
-            metrics.workoutDistance += result.delta_distance;
-            metrics.mps = speed_sensor_get_mps(result.rpm, beltDistanceMM, 1.0f);
+            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+            metrics.workoutDistance += result.delta_distance; // meters
         }
         // else: sensor is motor but mode is band - do nothing
     } else if (mode == SENSOR_MOTOR) {
         // MOTOR mode: only update if sensor is actually the motor sensor
         if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
-            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, motorPulsesPerRev, 
-                                                                      beltDistanceMM, motorToBeltRatio);
+            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                      storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
             metrics.motorRPM = result.rpm;
-            metrics.workoutDistance += result.delta_distance;
-            metrics.mps = speed_sensor_get_mps(result.rpm, beltDistanceMM, motorToBeltRatio);
+            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+            metrics.workoutDistance += result.delta_distance; // meters
         }
         // else: sensor is band but mode is motor - do nothing
     }
+    
+    // Simplified: no filtering, just copy mps to mpsSmooth
+    metrics.mpsSmooth = metrics.mps;
 }

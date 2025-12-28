@@ -12,8 +12,8 @@
 #include "ESP32_treadmill_tacho_ble.h"
 #include "ESP32_treadmill_tacho_workout.h"
 #include "ESP32_treadmill_hr_client.h"
-#include "ESP32_treadmill_tacho_filters.h"
-#include "ESP32_treadmill_tacho_sensor_common.h"
+// #include "ESP32_treadmill_tacho_filters.h"  // OLD SYSTEM REMOVED
+// #include "ESP32_treadmill_tacho_sensor_common.h"  // OLD SYSTEM REMOVED
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -36,15 +36,16 @@ WorkoutExecutor gWorkout;
 WiFiStatus wifi;
 AsyncWebServer server(80);
 
-// Speed filters for band and motor sensors
-SpeedFilter bandFilter;
-SpeedFilter motorFilter;
+// Speed filters (DEPRECATED - no longer used, will be removed)
+// SpeedFilter bandFilter;
+// SpeedFilter motorFilter;
 
 // ============================================================================
 // FORWARD DECLARATIONS - Functions in separate files
 // ============================================================================
-void updateMetricsMotor(uint32_t now_ms, uint32_t now_us);
-void updateMetricsBand(uint32_t now_ms, uint32_t now_us);
+// OLD SYSTEM - DEPRECATED (updateMetrics() now called from ISR)
+// void updateMetricsMotor(uint32_t now_ms, uint32_t now_us);
+// void updateMetricsBand(uint32_t now_ms, uint32_t now_us);
 uint8_t sensorSelection(bool init = false);
 void enableTestdata(bool on);
 void generateTestData();
@@ -68,11 +69,9 @@ void setup() {
     printSettings();
     resetWorkout();
     
-    // Initialize speed filters based on settings
-    bandFilter.setFilterType((SpeedFilterType)storedGlobals.BAND_FILTER_TYPE);
-    motorFilter.setFilterType((SpeedFilterType)storedGlobals.MOTOR_FILTER_TYPE);
-    Serial.printf("Band filter: %d, Motor filter: %d\r\n", 
-                  storedGlobals.BAND_FILTER_TYPE, storedGlobals.MOTOR_FILTER_TYPE);
+    // Speed filters removed - no longer using filtering (mpsSmooth = mps directly)
+    // bandFilter.setFilterType((SpeedFilterType)storedGlobals.BAND_FILTER_TYPE);
+    // motorFilter.setFilterType((SpeedFilterType)storedGlobals.MOTOR_FILTER_TYPE);
 
     metrics.workoutStartTime = millis();
     metrics.sessionStartTime = millis();
@@ -155,38 +154,14 @@ void loop() {
 
     // Update every 500ms
     static uint32_t lastMetricsUpdate = 0;
-    static uint8_t lastSensorMode = SENSOR_AUTO;  // Track previous sensor mode
     
     if (now - lastMetricsUpdate >= 500) {
-        // Capture timestamps IMMEDIATELY to ensure consistent measurement windows
-        uint32_t update_ms = millis();
-        uint32_t update_us = micros();
-        
         lastMetricsUpdate = now;
         wifiLoop();
         
-        // Check if sensor mode changed
-        uint8_t currentSensorMode = sensorSelection(false);
-        if (currentSensorMode != lastSensorMode) {
-            // Sensor mode changed - reset both filters and set metrics reset flag
-            bandFilter.reset();
-            motorFilter.reset();
-            metrics_need_reset = true;
-            Serial.printf("[SENSOR] Switched from %d to %d, filters and metrics reset\r\n", 
-                         lastSensorMode, currentSensorMode);
-            lastSensorMode = currentSensorMode;
-        }
+        // OLD SYSTEM REMOVED - metrics now updated directly from ISR callbacks
+        // (on_pcnt_reach_cb and on_timeout_cb in ESP32_treadmill_tacho_sensor.cpp)
         
-        if (currentSensorMode == SENSOR_MOTOR) 
-            updateMetricsMotor(update_ms, update_us);
-        else
-            updateMetricsBand(update_ms, update_us);
-        
-        // Clear the metrics reset flag after update is called
-        if (metrics_need_reset) {
-            metrics_need_reset = false;
-        }
-
         if (bleData.clientConnected) {
             sendFTMS_BLE_Data();
             sendHR_BLE_Data();  // Broadcast HR from belt to Zwift

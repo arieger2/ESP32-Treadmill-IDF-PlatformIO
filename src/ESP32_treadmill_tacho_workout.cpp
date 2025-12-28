@@ -548,15 +548,9 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
     vTaskDelay(pdMS_TO_TICKS(CHECK_INTERVAL_MS));  // FreeRTOS delay - yields to other tasks
     elapsed = millis() - startTime;
     
-    // Update sensor metrics every 500ms to keep speed readings current
+    // Metrics are updated automatically by ISR callbacks - no manual update needed
+    // OLD SYSTEM REMOVED: Previously called updateMetricsMotor/Band here
     if (elapsed - lastSensorUpdate >= 500) {
-      uint32_t now_ms = millis();
-      uint32_t now_us = micros();
-      if (sensorSelection(false) == SENSOR_MOTOR) {
-        updateMetricsMotor(now_ms, now_us);
-      } else {
-        updateMetricsBand(now_ms, now_us);
-      }
       lastSensorUpdate = elapsed;
       
       // Check if speed is still changing in the expected direction

@@ -11,11 +11,11 @@
 #include "web_settings/web_settings_main_ts.h"
 #include "web_workout/web_workout_main_ts.h"
 #include "ESP32_treadmill_tacho_ui_assets.h"
-#include "ESP32_treadmill_tacho_filters.h"
+// #include "ESP32_treadmill_tacho_filters.h"  // OLD SYSTEM REMOVED
 
 extern WorkoutExecutor gWorkout;
-extern SpeedFilter bandFilter;
-extern SpeedFilter motorFilter;
+// extern SpeedFilter bandFilter;  // OLD SYSTEM REMOVED
+// extern SpeedFilter motorFilter; // OLD SYSTEM REMOVED
 
 // ============================================================================
 // Web Server Initialization and Route Definitions
@@ -245,14 +245,16 @@ void initWebServer() {
         storedGlobals.OVERSHOOT_FACTOR = overshootFactor;
       
       // Update filter settings immediately
-      bandFilter.setFilterType((SpeedFilterType)bandFilterType);
-      motorFilter.setFilterType((SpeedFilterType)motorFilterType);
+      // OLD SYSTEM REMOVED: Filter configuration no longer used
+      // bandFilter.setFilterType((SpeedFilterType)bandFilterType);
+      // motorFilter.setFilterType((SpeedFilterType)motorFilterType);
       
       // Reset filters when switching sensor source to prevent stale data
       if (sensorModeChanged) {
-        bandFilter.reset();
-        motorFilter.reset();
-        Serial.printf("[SENSOR] Mode changed, filters reset\r\n");
+        // OLD SYSTEM REMOVED: Filter reset no longer needed
+        // bandFilter.reset();
+        // motorFilter.reset();
+        Serial.printf("[SENSOR] Mode changed (filters removed in NEW system)\r\n");
       }
 
       String details = saveSettings();

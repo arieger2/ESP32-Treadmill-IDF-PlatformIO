@@ -362,8 +362,7 @@ static void syncTimeFromNetwork(bool force) {
     const uint32_t pollDelayMs = 100;  // Shorter delay to feed watchdog more often
     const uint32_t maxAttempts = 50;   // 50 * 100ms = 5 seconds max
     for (uint32_t i = 0; i < maxAttempts; i++) {
-        yield();  // Feed watchdog during NTP sync
-        esp_task_wdt_reset();  // Explicitly reset watchdog
+        yield();  // Feed watchdog during NTP sync (sufficient for Arduino framework)
         time_t now_t = time(nullptr);
         if (now_t > 8 * 3600 * 2) {
             // Get local time using the timezone

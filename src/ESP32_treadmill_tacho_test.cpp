@@ -3,7 +3,7 @@
 // Purpose: Test data generation and simulation
 // ============================================================================
 #include "ESP32_treadmill_tacho_config.h"
-#include "ESP32_treadmill_tacho_sensor_common.h"
+// #include "ESP32_treadmill_tacho_sensor_common.h"  // OLD SYSTEM REMOVED
 
 extern TreadmillMetrics metrics;
 extern volatile int64_t test_pulse_count;
@@ -16,11 +16,15 @@ extern volatile bool metrics_need_reset;
 // Called by web interface to enable/disable test mode
 void enableTestdata(bool on) {
     if (on) {
-        // Enter test mode - stop PCNT hardware and use simulated pulses
+        // OLD SYSTEM REMOVED: Test mode needs rework for NEW system
+        // Previously stopped PCNT hardware, but NEW system uses different architecture
+        // TODO: Implement test mode for NEW ISR-driven sensor system
+        /*
         pcnt_unit_handle_t band_handle = getPCNTHandle(PCNT_ID_BAND);
         pcnt_unit_handle_t motor_handle = getPCNTHandle(PCNT_ID_MOTOR);
         if (band_handle) pcnt_unit_stop(band_handle);
         if (motor_handle) pcnt_unit_stop(motor_handle);
+        */
         test_pulse_count = 0;
         testdata = true;
         metrics.isRunning = true;
@@ -31,7 +35,8 @@ void enableTestdata(bool on) {
         testdata = false;
         metrics.isRunning = false;
         
-        // Clear PCNT counters before resuming
+        // OLD SYSTEM REMOVED: Test mode exit needs rework
+        /*
         pcnt_unit_handle_t band_handle = getPCNTHandle(PCNT_ID_BAND);
         pcnt_unit_handle_t motor_handle = getPCNTHandle(PCNT_ID_MOTOR);
         if (band_handle) {
@@ -42,6 +47,7 @@ void enableTestdata(bool on) {
             pcnt_unit_clear_count(motor_handle);
             pcnt_unit_start(motor_handle);
         }
+        */
         test_pulse_count = 0;
         
         // Immediately clear all displayed metrics

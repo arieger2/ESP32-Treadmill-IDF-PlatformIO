@@ -528,10 +528,15 @@ void initPCNT() {
 void initTachometer() {
     pinModeSetup();
     pinTimerSetup();
-    initPCNT();  // Initialize PCNT hardware instead of GPIO ISRs
-    Serial.printf("[INIT] PCNT units configured: band=%d, motor=%d\r\n",
+    // OLD PCNT system removed - now using new MCPWM+PCNT sensor system
+    // initPCNT();  // DEPRECATED
+    
+    // New sensor system is initialized via speed_sensor1_init / speed_sensor2_init
+    // called from sensor_setup.cpp
+    
+    Serial.printf("[INIT] Using new MCPWM+PCNT sensor system (GPIO %d, %d)\r\n",
                   storedGlobals.INTERRUPT_PIN, storedGlobals.MOTOR_INTERRUPT_PIN);
-    Serial.println("Hall sensor ready: PCNT hardware counting enabled");
+    Serial.println("Hall sensor ready: Hardware ISR-based counting enabled");
     testdata = false;
 }
 

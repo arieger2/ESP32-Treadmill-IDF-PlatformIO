@@ -150,8 +150,7 @@ String getMotorSensorInterrupts() { return String(0); }  // Removed
 String getMotorRPM()              { return String((int)metrics.motorRPM); }
 
 String getDistance() {
-  const float mm = (float)metrics.workoutDistance;
-  const float meters = mm / 1000.0f;
+  const float meters = metrics.workoutDistance; // Already in meters
   if (meters < 1000.0f) {
     uint32_t m_rounded = (uint32_t)(meters + 0.5f);
     return String(m_rounded);
@@ -163,8 +162,8 @@ String getDistance() {
 }
 
 String getDistanceUnit() {
-  const float mm = (float)metrics.workoutDistance;
-  return ((mm / 1000.0f) < 1000.0f) ? "m" : "km";
+  const float meters = metrics.workoutDistance; // Already in meters
+  return (meters < 1000.0f) ? "m" : "km";
 }
 
 String getRPM() { return String((int)metrics.rpm); }
