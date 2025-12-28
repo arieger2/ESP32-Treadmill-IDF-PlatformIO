@@ -268,7 +268,7 @@ void initWebServer() {
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
       String* acc = static_cast<String*>(request->_tempObject);
       if (index == 0) {
-        acc = new (std::nothrow) String();
+        acc = new String();
         if (acc && total > 0 && total < 64*1024) acc->reserve(total);
         request->_tempObject = acc;
       }
@@ -385,7 +385,7 @@ void initWebServer() {
     {
       if (index == 0) {
         Serial.printf("[UPLOAD] begin file='%s' total=%d\r\n", filename.c_str(), (int)request->contentLength());
-        auto* acc = new (std::nothrow) String();
+        String* acc = new String();
         if (acc && request->contentLength() > 0 && request->contentLength() < 512*1024)
           acc->reserve(request->contentLength());
         request->_tempObject = acc;
