@@ -20,6 +20,7 @@
 #include <nvs.h>
 #include <nvs_flash.h>
 #include "driver/gpio.h"
+#include <cstring>
 
 // ============================================================================
 // GLOBAL VARIABLES
@@ -100,8 +101,8 @@ void loop() {
     static uint32_t speedIncDecElapsed = 0;
     static bool cpuInitialized = false;
     static uint32_t lastCpuUpdate = 0;
-    static uint32_t lastTotalRunTime = 0;
-    static uint32_t lastIdleRunTime = 0;
+    static uint64_t lastTotalRunTime = 0;
+    static uint64_t lastIdleRunTime = 0;
     
     uint32_t now = millis();
     
@@ -182,28 +183,68 @@ void loop() {
         }
     }
     
-    // CPU usage estimation based on number of running tasks
+    // CPU usage calculation using FreeRTOS runtime stats (falls back to heuristic if disabled)
     if (now - lastCpuUpdate >= 1000) {
-        // Get number of tasks in system
+#if (configUSE_TRACE_FACILITY == 1) && (configGENERATE_RUN_TIME_STATS == 1)
         UBaseType_t taskCount = uxTaskGetNumberOfTasks();
-        
-        // Baseline: ~8-12 tasks idle, 15-20 tasks when busy
-        // Map task count to CPU percentage
-        // Fewer tasks = lower CPU, more tasks = higher CPU
+        UBaseType_t arraySize = taskCount + 4;  // cushion for tasks created between calls
+        TaskStatus_t *statusArray = static_cast<TaskStatus_t *>(pvPortMalloc(arraySize * sizeof(TaskStatus_t)));
+        if (statusArray != nullptr) {
+            uint32_t totalRuntime32 = 0;
+            UBaseType_t retrievedTasks = uxTaskGetSystemState(statusArray, arraySize, &totalRuntime32);
+            if (retrievedTasks > 0 && totalRuntime32 > 0) {
+                uint64_t totalRuntime = static_cast<uint64_t>(totalRuntime32);
+                uint64_t idleRuntime = 0;
+                for (UBaseType_t i = 0; i < retrievedTasks; ++i) {
+                    const char *name = statusArray[i].pcTaskName;
+                    if (name != nullptr && strncmp(name, "IDLE", 4) == 0) {
+                        idleRuntime += static_cast<uint64_t>(statusArray[i].ulRunTimeCounter);
+                    }
+                }
+
+                if (lastTotalRunTime != 0 && totalRuntime > lastTotalRunTime) {
+                    uint64_t totalDelta = totalRuntime - lastTotalRunTime;
+                    uint64_t idleDelta = (idleRuntime > lastIdleRunTime) ? (idleRuntime - lastIdleRunTime) : 0ULL;
+                    if (idleDelta > totalDelta) {
+                        idleDelta = totalDelta;
+                    }
+
+                    if (totalDelta > 0) {
+                        uint64_t activeDelta = totalDelta - idleDelta;
+                        uint32_t cpuPercent = static_cast<uint32_t>((activeDelta * 100ULL) / totalDelta);
+                        if (cpuPercent > 100U) {
+                            cpuPercent = 100U;
+                        }
+                        metrics.cpuUsagePercent = static_cast<uint8_t>(cpuPercent);
+                    }
+                }
+
+                lastTotalRunTime = totalRuntime;
+                lastIdleRunTime = idleRuntime;
+            }
+
+            vPortFree(statusArray);
+        }
+#else
+        // Fallback heuristic when runtime statistics are disabled
+        UBaseType_t taskCount = uxTaskGetNumberOfTasks();
         float cpuPercent = 0.0f;
         if (taskCount <= 10) {
-            cpuPercent = 5.0f;  // Minimal activity
+            cpuPercent = 5.0f;
         } else if (taskCount <= 15) {
-            cpuPercent = 5.0f + ((taskCount - 10) * 3.0f);  // 5-20%
+            cpuPercent = 5.0f + ((taskCount - 10) * 3.0f);
         } else if (taskCount <= 25) {
-            cpuPercent = 20.0f + ((taskCount - 15) * 4.0f);  // 20-60%
+            cpuPercent = 20.0f + ((taskCount - 15) * 4.0f);
         } else {
-            cpuPercent = 60.0f + ((taskCount - 25) * 2.0f);  // 60-100%
+            cpuPercent = 60.0f + ((taskCount - 25) * 2.0f);
         }
-        
-        if (cpuPercent > 100.0f) cpuPercent = 100.0f;
-        metrics.cpuUsagePercent = (uint8_t)cpuPercent;
-        
+
+        if (cpuPercent > 100.0f) {
+            cpuPercent = 100.0f;
+        }
+        metrics.cpuUsagePercent = static_cast<uint8_t>(cpuPercent);
+#endif
+
         lastCpuUpdate = now;
     }
     
