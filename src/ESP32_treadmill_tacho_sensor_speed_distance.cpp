@@ -40,10 +40,15 @@
 
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_sensor.h"
+#include "ESP32_treadmill_tacho_filters.h"
 
 // External references to sensor instances (defined in sensor.cpp)
 extern speed_sensor_t s_sensor1;
 extern speed_sensor_t s_sensor2;
+
+// Static filter instances (one for band, one for motor)
+static SpeedFilter bandFilter;
+static SpeedFilter motorFilter;
 
 
 /**
@@ -246,6 +251,13 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
         // else: sensor is band but mode is motor - do nothing
     }
     
-    // Simplified: no filtering, just copy mps to mpsSmooth
-    metrics.mpsSmooth = metrics.mps;
+    // Apply speed filtering based on sensor mode and configured filter type
+    SpeedFilter* activeFilter = (mode == SENSOR_BAND) ? &bandFilter : &motorFilter;
+    SpeedFilterType filterType = (mode == SENSOR_BAND) 
+        ? static_cast<SpeedFilterType>(storedGlobals.BAND_FILTER_TYPE)
+        : static_cast<SpeedFilterType>(storedGlobals.MOTOR_FILTER_TYPE);
+    
+    activeFilter->setFilterType(filterType);
+    bool isDecelerating = (metrics.mps < metrics.mpsSmooth);
+    metrics.mpsSmooth = activeFilter->update(metrics.mps, isDecelerating);
 }
