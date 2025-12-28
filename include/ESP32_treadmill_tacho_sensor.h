@@ -29,6 +29,22 @@ extern "C" {
 #define CAPTURE_RES_HZ        10000000  // 10 MHz capture resolution
 
 /* ==========================
+ * Sensor type identifier
+ * ========================== */
+typedef enum {
+    SENSOR_TYPE_BAND = 0,   // Belt/band sensor (sensor1)
+    SENSOR_TYPE_MOTOR = 1   // Motor sensor (sensor2)
+} sensor_type_t;
+
+/* ==========================
+ * Sensor result structure
+ * ========================== */
+typedef struct {
+    float rpm;              // Rotational speed in revolutions per minute
+    float delta_distance;   // Distance traveled in meters since last measurement
+} sensor_result_t;
+
+/* ==========================
  * Sensor structure
  * ========================== */
 typedef struct {
@@ -39,6 +55,7 @@ typedef struct {
     pcnt_channel_handle_t      pcnt_chan;
     
     // Configuration
+    sensor_type_t sensor_type;   // Identifies if this is band or motor sensor
     int      gpio_num;
     int      mcpwm_group_id;     // 0 or 1 for ESP32-S3
     uint32_t target_periods;
@@ -109,6 +126,25 @@ esp_err_t speed_sensor_set_target_pulses(speed_sensor_t *sensor, uint32_t period
  *   float rpm = speed_sensor_get_rpm(speed_sensor_get_sensor1(), 48);
  */
 float speed_sensor_get_rpm(speed_sensor_t *sensor, uint32_t pulses_per_rev);
+
+/**
+ * Get RPM and delta distance from sensor
+ * 
+ * Returns both RPM and distance traveled since last measurement.
+ * 
+ * @param sensor Pointer to sensor structure
+ * @param pulses_per_rev Number of pulses in one complete revolution
+ * @param belt_distance_mm Belt circumference in millimeters
+ * @param belt_ratio Motor-to-belt ratio (1.0 for direct drive)
+ * @return sensor_result_t containing rpm and delta_distance (in meters)
+ * 
+ * Example:
+ *   sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, 48, 1600.0f, 1.0f);
+ *   float rpm = result.rpm;
+ *   float meters = result.delta_distance;
+ */
+sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
+                                                 float belt_distance_mm, float belt_ratio);
 
 /**
  * Convert RPM to meters per second (m/s)

@@ -181,6 +181,8 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
  * ========================== */
 esp_err_t speed_sensor1_init(uint32_t initial_periods, int gpio_num)
 {
+    s_sensor1.sensor_type = SENSOR_TYPE_BAND;  // Mark as band sensor
+    
     if (gpio_num >= 0) {
         s_sensor1.gpio_num = gpio_num;
     }
@@ -238,6 +240,8 @@ esp_err_t speed_sensor1_init(uint32_t initial_periods, int gpio_num)
  * ========================== */
 esp_err_t speed_sensor2_init(uint32_t initial_periods, int gpio_num)
 {
+    s_sensor2.sensor_type = SENSOR_TYPE_MOTOR;  // Mark as motor sensor
+    
     if (gpio_num >= 0) {
         s_sensor2.gpio_num = gpio_num;
     }
