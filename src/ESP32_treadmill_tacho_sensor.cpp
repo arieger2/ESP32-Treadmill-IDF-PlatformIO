@@ -93,44 +93,19 @@
 #include "driver/pulse_cnt.h"
 #include "driver/gptimer.h"
 
+#include "ESP32_treadmill_tacho_config.h"
+#include "ESP32_treadmill_tacho_sensor.h"
+
 static const char *TAG = "speed_sensor";
+
+// External metrics reference
+extern TreadmillMetrics metrics;
 
 /* ==========================
  * User configuration
  * ========================== */
 #define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval (fallback for low speed)
 #define CAPTURE_RES_HZ        10000000  // 10 MHz capture timer resolution => 0.1 µs precision for timestamps
-
-/* ==========================
- * Sensor structure
- * ========================== */
-typedef struct {
-    // Hardware handles
-    mcpwm_cap_timer_handle_t   cap_timer;
-    mcpwm_cap_channel_handle_t cap_chan;
-    pcnt_unit_handle_t         pcnt_unit;
-    pcnt_channel_handle_t      pcnt_chan;
-    
-    // Configuration
-    int      gpio_num;
-    int      mcpwm_group_id;     // 0 or 1 for ESP32-S3
-    uint32_t target_periods;
-    
-    // Measurement control
-    volatile bool     armed;      // waiting for first edge to start measurement window
-    volatile bool     running;    // measurement active (pcnt counting)
-    
-    // Captured timestamps (hardware latched)
-    volatile uint32_t t_start;    // capture tick at first edge (window start)
-    volatile uint32_t t_last;     // last capture tick seen (always updated on cap event)
-    
-    // Published result (snapshot)
-    volatile bool     new_result;
-    volatile uint32_t used_periods; // how many periods used for last result
-    volatile uint32_t dt_ticks;     // delta time in capture ticks for last result
-    
-    portMUX_TYPE mux;
-} speed_sensor_t;
 
 /* ==========================
  * Shared resources
@@ -299,6 +274,9 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     // Re-arm for next window immediately (next capture edge will restart)
     sensor->armed = true;
 
+    // Update metrics with new sensor data
+    updateMetrics(metrics, sensor);
+
     return false;
 }
 
@@ -386,6 +364,9 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
 
             // Re-arm
             sensor->armed = true;
+            
+            // Update metrics with new sensor data
+            updateMetrics(metrics, sensor);
         }
     }
 
