@@ -8,7 +8,6 @@
 
 // Pace display cache/state (shared by getPaceMin/getPaceSec)
 static float    g_pace_sec_filt = 0.0f;
-static float    g_mps_filt = 0.0f;
 static uint32_t g_pace_last_ms  = 0;
 static int      g_pace_min_disp = -1;
 static bool     g_pace_valid    = false;
@@ -34,28 +33,15 @@ static void updatePaceDisplay() {
     g_pace_valid = false;
     g_pace_min_disp = -1;
     g_pace_sec_filt = 0.0f;
-    g_mps_filt = 0.0f;
     return;
   }
 
-  // Filter speed with higher precision
+  // Use already filtered speed directly (no additional smoothing needed)
   if (base_mps < 0.0f) base_mps = 0.0f;
 
-  if (g_mps_filt == 0.0f) {
-    g_mps_filt = base_mps;
-  } else {
-    static const float tau_ms = 700.0f;
-    uint32_t dt = (now_ms >= g_pace_last_ms) ? (now_ms - g_pace_last_ms) : 0;
-    float a = (dt == 0) ? 1.0f : (float)dt / (tau_ms + (float)dt);
-    // Use double precision for intermediate calculation to reduce rounding errors
-    double new_filt = (double)g_mps_filt + (double)a * ((double)base_mps - (double)g_mps_filt);
-    g_mps_filt = (float)new_filt;
-  }
-
   // Convert filtered speed -> instantaneous pace (sec/km)
-  // Use more precise calculation to avoid rounding errors
   // At 10 km/h (2.7777... m/s), we want exactly 360.0 sec (6:00 min/km)
-  float pace_sec = (g_mps_filt > 0.001f) ? (1000.0f / g_mps_filt) : 9999.0f;
+  float pace_sec = (base_mps > 0.001f) ? (1000.0f / base_mps) : 9999.0f;
 
   // Minute display with tighter hysteresis
   if (g_pace_min_disp < 0) g_pace_min_disp = (int)(pace_sec / 60.0f);
@@ -86,7 +72,6 @@ void resetWorkoutTimer() {
 
 void resetMonitorViewState() {
   g_pace_sec_filt = 0.0f;
-  g_mps_filt = 0.0f;
   g_pace_last_ms = 0;
   g_pace_min_disp = -1;
   g_pace_valid = false;
