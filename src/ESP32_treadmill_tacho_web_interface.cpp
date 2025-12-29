@@ -162,7 +162,9 @@ void initWebServer() {
       long   debounceThreshold= extractJsonValue(jsonString, "debounceThreshold").toInt();
       long   maxRevolutionTime= extractJsonValue(jsonString, "maxRevolutionTime").toInt();
       long   pulsesPerRev     = extractJsonValue(jsonString, "pulsesPerRev").toInt();
+      long   bandPulseMult    = extractJsonValue(jsonString, "bandPulseMultiplier").toInt();
       long   motorPulsesPerRev= extractJsonValue(jsonString, "motorPulsesPerRev").toInt();
+      long   motorPulseMult   = extractJsonValue(jsonString, "motorPulseMultiplier").toInt();
       float  motorToBeltRatio = extractJsonValue(jsonString, "motorToBeltRatio").toFloat();
 
       int    sensorSourceMode = extractJsonValue(jsonString, "sensorSourceMode").toInt();
@@ -202,7 +204,12 @@ void initWebServer() {
       storedGlobals.DEBOUNCE_THRESHOLD_US    = debounceThreshold;
       storedGlobals.MAX_REVOLUTION_TIME_MS   = maxRevolutionTime;
       storedGlobals.PULSES_PER_REV           = pulsesPerRev;
+      // Clamp pulse multipliers (1-100)
+      bandPulseMult  = (bandPulseMult < 1 || bandPulseMult > 100) ? 1 : bandPulseMult;
+      motorPulseMult = (motorPulseMult < 1 || motorPulseMult > 100) ? 1 : motorPulseMult;
+      storedGlobals.BAND_PULSE_MULTIPLIER    = bandPulseMult;
       storedGlobals.MOTOR_PULSES_PER_REV     = motorPulsesPerRev;
+      storedGlobals.MOTOR_PULSE_MULTIPLIER   = motorPulseMult;
       storedGlobals.MOTOR_TO_BELT_RATIO      = motorToBeltRatio;
       sensorSourceMode = (sensorSourceMode < 0 || sensorSourceMode > 2) ? 0 : sensorSourceMode;
       

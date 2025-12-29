@@ -89,9 +89,19 @@ namespace SettingsApp {
       return { valid: false, error: 'Pulses per revolution must be 1-128', fieldId: 'pulsesPerRev' };
     }
 
+    const bandMult = parseInt(data['bandPulseMultiplier']);
+    if (isNaN(bandMult) || bandMult < 1 || bandMult > 100) {
+      return { valid: false, error: 'Band pulse multiplier must be 1-100', fieldId: 'bandPulseMultiplier' };
+    }
+
     const motorPulses = parseInt(data['motorPulsesPerRev']);
     if (isNaN(motorPulses) || motorPulses < 1 || motorPulses > 256) {
       return { valid: false, error: 'Motor pulses per revolution must be 1-256', fieldId: 'motorPulsesPerRev' };
+    }
+
+    const motorMult = parseInt(data['motorPulseMultiplier']);
+    if (isNaN(motorMult) || motorMult < 1 || motorMult > 100) {
+      return { valid: false, error: 'Motor pulse multiplier must be 1-100', fieldId: 'motorPulseMultiplier' };
     }
 
     const ratio = parseFloat(data['motorToBeltRatio']);

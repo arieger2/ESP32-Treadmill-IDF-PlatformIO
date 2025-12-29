@@ -46,7 +46,9 @@ String processTemplate(const String& var) {
   if (var == "MAX_REVOLUTION_TIME")return String(storedGlobals.MAX_REVOLUTION_TIME_MS);
   if (var == "MAX_REVOLUTION_TIME_MS")return String(storedGlobals.MAX_REVOLUTION_TIME_MS); // Legacy
   if (var == "PULSES_PER_REV")     return String(storedGlobals.PULSES_PER_REV);
+  if (var == "BAND_PULSE_MULTIPLIER") return String(storedGlobals.BAND_PULSE_MULTIPLIER);
   if (var == "MOTOR_PULSES_PER_REV")return String(storedGlobals.MOTOR_PULSES_PER_REV);
+  if (var == "MOTOR_PULSE_MULTIPLIER") return String(storedGlobals.MOTOR_PULSE_MULTIPLIER);
   if (var == "MOTOR_TO_BELT_RATIO")return String(storedGlobals.MOTOR_TO_BELT_RATIO, 6);
   if (var == "SENSOR_SOURCE_MODE") return String((int)storedGlobals.SENSOR_SOURCE_MODE);
   if (var == "BAND_FILTER_TYPE")   return String((int)storedGlobals.BAND_FILTER_TYPE);

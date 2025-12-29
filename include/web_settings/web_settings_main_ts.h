@@ -158,8 +158,18 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             <input type="number" id="pulsesPerRev" name="pulsesPerRev" value="%PULSES_PER_REV%" min="1" max="128">
           </div>
           <div class="form-group">
+            <label>Band max Pulses for measurement (Band Pulses × value):</label>
+            <input type="number" id="bandPulseMultiplier" name="bandPulseMultiplier" value="%BAND_PULSE_MULTIPLIER%" min="1" max="100">
+            <span class="unit">multiplier (1-100)</span>
+          </div>
+          <div class="form-group">
             <label>Motor Pulses per Revolution:</label>
             <input type="number" id="motorPulsesPerRev" name="motorPulsesPerRev" value="%MOTOR_PULSES_PER_REV%" min="1" max="256">
+          </div>
+          <div class="form-group">
+            <label>Motor max Pulses for measurement (Motor Pulses × value):</label>
+            <input type="number" id="motorPulseMultiplier" name="motorPulseMultiplier" value="%MOTOR_PULSE_MULTIPLIER%" min="1" max="100">
+            <span class="unit">multiplier (1-100)</span>
           </div>
           <div class="form-group">
             <label>Motor to Belt Ratio:</label>

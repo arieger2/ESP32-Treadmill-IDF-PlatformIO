@@ -93,6 +93,8 @@ struct TreadmillStoredGlobals {
     uint32_t MAX_REVOLUTION_TIME_MS = 2000; // Max time for valid revolution (1 second)
     uint32_t PULSES_PER_REV = 2;
     uint32_t MOTOR_PULSES_PER_REV = 12;   
+    uint32_t BAND_PULSE_MULTIPLIER = 1;   // Multiplier for band pulses (1-100)
+    uint32_t MOTOR_PULSE_MULTIPLIER = 1;  // Multiplier for motor pulses (1-100)
     float MOTOR_TO_BELT_RATIO = 0.413793;     
     uint8_t SENSOR_SOURCE_MODE = SENSOR_AUTO;  // persisted
     uint8_t BAND_FILTER_TYPE = 1;     // Filter for band sensor: 0=None, 1=EMA, 2=Kalman, 3=Median
@@ -168,6 +170,8 @@ namespace NVSKeys {
     extern const char* DEBOUNCE_US;
     extern const char* MAXREV_MS;
     extern const char* PPR_BELT;
+    extern const char* PPR_MULT_BAND;
+    extern const char* PPR_MULT_MTR;
     extern const char* FORCE_MOTOR;
     extern const char* PPR_MOTOR;
     extern const char* RATIO;

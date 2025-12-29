@@ -125,9 +125,17 @@ var SettingsApp;
         if (isNaN(pulses) || pulses < 1 || pulses > 128) {
             return { valid: false, error: 'Pulses per revolution must be 1-128', fieldId: 'pulsesPerRev' };
         }
+        var bandMult = parseInt(data['bandPulseMultiplier']);
+        if (isNaN(bandMult) || bandMult < 1 || bandMult > 100) {
+            return { valid: false, error: 'Band pulse multiplier must be 1-100', fieldId: 'bandPulseMultiplier' };
+        }
         var motorPulses = parseInt(data['motorPulsesPerRev']);
         if (isNaN(motorPulses) || motorPulses < 1 || motorPulses > 256) {
             return { valid: false, error: 'Motor pulses per revolution must be 1-256', fieldId: 'motorPulsesPerRev' };
+        }
+        var motorMult = parseInt(data['motorPulseMultiplier']);
+        if (isNaN(motorMult) || motorMult < 1 || motorMult > 100) {
+            return { valid: false, error: 'Motor pulse multiplier must be 1-100', fieldId: 'motorPulseMultiplier' };
         }
         var ratio = parseFloat(data['motorToBeltRatio']);
         if (isNaN(ratio) || ratio <= 0.01 || ratio >= 10.0) {

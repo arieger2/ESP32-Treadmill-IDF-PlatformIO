@@ -49,6 +49,8 @@ const char* NVSKeys::BELT_MM       = "beltDistanceMM";    // 14 (OK)
 const char* NVSKeys::DEBOUNCE_US   = "debThUs";           // was "debounceThresholdUs"
 const char* NVSKeys::MAXREV_MS     = "maxRevMs";          // was "maxRevolutionTimeUs"
 const char* NVSKeys::PPR_BELT      = "pprBelt";           // was "pulsePerRevision"
+const char* NVSKeys::PPR_MULT_BAND = "pprMultB";          // Band pulse multiplier
+const char* NVSKeys::PPR_MULT_MTR  = "pprMultM";          // Motor pulse multiplier
 const char* NVSKeys::FORCE_MOTOR   = "forceMtr";          // FORCE_USE_MOTOR flag
 const char* NVSKeys::PPR_MOTOR     = "pprMotor";          // was "motorPulsesPerRev"
 
@@ -141,6 +143,8 @@ String saveSettings() {
     {NVSKeys::DEBOUNCE_US,   putOrReplace(prefs, NVSKeys::DEBOUNCE_US,  storedGlobals.DEBOUNCE_THRESHOLD_US)},
     {NVSKeys::MAXREV_MS,     putOrReplace(prefs, NVSKeys::MAXREV_MS,    storedGlobals.MAX_REVOLUTION_TIME_MS)},
     {NVSKeys::PPR_BELT,      putOrReplace(prefs, NVSKeys::PPR_BELT,     storedGlobals.PULSES_PER_REV)},
+    {NVSKeys::PPR_MULT_BAND, putOrReplace(prefs, NVSKeys::PPR_MULT_BAND,storedGlobals.BAND_PULSE_MULTIPLIER)},
+    {NVSKeys::PPR_MULT_MTR,  putOrReplace(prefs, NVSKeys::PPR_MULT_MTR, storedGlobals.MOTOR_PULSE_MULTIPLIER)},
     {NVSKeys::FORCE_MOTOR,   putOrReplace(prefs, NVSKeys::FORCE_MOTOR,  (int32_t)storedGlobals.FORCE_USE_MOTOR)},
     {NVSKeys::PPR_MOTOR,     putOrReplace(prefs, NVSKeys::PPR_MOTOR,    storedGlobals.MOTOR_PULSES_PER_REV)},
     {NVSKeys::SENSOR_MODE,   putOrReplace(prefs, NVSKeys::SENSOR_MODE,  (int32_t)storedGlobals.SENSOR_SOURCE_MODE)},
@@ -186,6 +190,8 @@ void loadSettings() {
   storedGlobals.DEBOUNCE_THRESHOLD_US = prefs.getLong (NVSKeys::DEBOUNCE_US, 13);
   storedGlobals.MAX_REVOLUTION_TIME_MS= prefs.getLong (NVSKeys::MAXREV_MS, 2000);
   storedGlobals.PULSES_PER_REV        = prefs.getLong (NVSKeys::PPR_BELT, 2);
+  storedGlobals.BAND_PULSE_MULTIPLIER = prefs.getLong (NVSKeys::PPR_MULT_BAND, 1);
+  storedGlobals.MOTOR_PULSE_MULTIPLIER= prefs.getLong (NVSKeys::PPR_MULT_MTR, 1);
   storedGlobals.MOTOR_PULSES_PER_REV  = prefs.getLong (NVSKeys::PPR_MOTOR, 12);
   storedGlobals.MOTOR_TO_BELT_RATIO   = prefs.getFloat(NVSKeys::RATIO, 0.413793);
   storedGlobals.FORCE_USE_MOTOR       = prefs.getBool (NVSKeys::FORCE_MOTOR, false);
@@ -214,6 +220,12 @@ void loadSettings() {
   // Clamp filter types to valid range (0-3)
   if (storedGlobals.BAND_FILTER_TYPE > 3) storedGlobals.BAND_FILTER_TYPE = 1;
   if (storedGlobals.MOTOR_FILTER_TYPE > 3) storedGlobals.MOTOR_FILTER_TYPE = 1;
+  
+  // Clamp pulse multipliers to valid range (1-100)
+  if (storedGlobals.BAND_PULSE_MULTIPLIER < 1) storedGlobals.BAND_PULSE_MULTIPLIER = 1;
+  if (storedGlobals.BAND_PULSE_MULTIPLIER > 100) storedGlobals.BAND_PULSE_MULTIPLIER = 100;
+  if (storedGlobals.MOTOR_PULSE_MULTIPLIER < 1) storedGlobals.MOTOR_PULSE_MULTIPLIER = 1;
+  if (storedGlobals.MOTOR_PULSE_MULTIPLIER > 100) storedGlobals.MOTOR_PULSE_MULTIPLIER = 100;
 }
 
 void loadDefaultSettings() {
@@ -233,6 +245,8 @@ void loadDefaultSettings() {
     storedGlobals.DEBOUNCE_THRESHOLD_US = 13;
     storedGlobals.MAX_REVOLUTION_TIME_MS = 2000;
     storedGlobals.PULSES_PER_REV = 2;
+    storedGlobals.BAND_PULSE_MULTIPLIER = 1;
+    storedGlobals.MOTOR_PULSE_MULTIPLIER = 1;
     storedGlobals.MOTOR_PULSES_PER_REV = 12;
     storedGlobals.MOTOR_TO_BELT_RATIO  = 0.413793;
     storedGlobals.FORCE_USE_MOTOR = true;
@@ -416,14 +430,14 @@ void initTachometer() {
     pinModeSetup();
     pinTimerSetup();
     // Initialize new MCPWM + PCNT sensor system so GPTimer timeout callback runs
-    esp_err_t err = speed_sensor1_init(storedGlobals.PULSES_PER_REV,
+    esp_err_t err = speed_sensor1_init(storedGlobals.PULSES_PER_REV * storedGlobals.BAND_PULSE_MULTIPLIER,
                                        storedGlobals.INTERRUPT_PIN);
     if (err != ESP_OK) {
         Serial.printf("[INIT][ERR] speed_sensor1_init failed: %s\r\n",
                       esp_err_to_name(err));
     }
 
-    err = speed_sensor2_init(storedGlobals.MOTOR_PULSES_PER_REV,
+    err = speed_sensor2_init(storedGlobals.MOTOR_PULSES_PER_REV * storedGlobals.MOTOR_PULSE_MULTIPLIER,
                              storedGlobals.MOTOR_INTERRUPT_PIN);
     if (err != ESP_OK) {
         Serial.printf("[INIT][ERR] speed_sensor2_init failed: %s\r\n",
