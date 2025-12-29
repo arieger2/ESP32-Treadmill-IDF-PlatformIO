@@ -38,6 +38,7 @@ static const char *TAG = "SENSOR_SETUP";
 extern "C" {
     struct TreadmillStoredGlobals {
         uint8_t SENSOR_SOURCE_MODE;
+        uint32_t DEBOUNCE_THRESHOLD_US;
         // ... other fields not needed here
     };
     extern TreadmillStoredGlobals storedGlobals;
@@ -134,6 +135,14 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
             .high_limit = (int)sensor->target_periods,
         };
         ESP_RETURN_ON_ERROR(pcnt_new_unit(&ucfg, &sensor->pcnt_unit), TAG, "new pcnt unit");
+
+        // Configure glitch filter (hardware debounce) - clamp to hardware max (12787 ns)
+        uint32_t debounce_ns = storedGlobals.DEBOUNCE_THRESHOLD_US * 1000;
+        if (debounce_ns > 12787) debounce_ns = 12787;
+        pcnt_glitch_filter_config_t filter_config = {
+            .max_glitch_ns = debounce_ns,
+        };
+        ESP_RETURN_ON_ERROR(pcnt_unit_set_glitch_filter(sensor->pcnt_unit, &filter_config), TAG, "glitch filter");
 
         pcnt_chan_config_t chcfg = {
             .edge_gpio_num = sensor->gpio_num,
