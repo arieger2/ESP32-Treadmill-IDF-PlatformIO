@@ -198,10 +198,22 @@ SpeedFilter::SpeedFilter() : currentType(FILTER_EMA) {}
 
 void SpeedFilter::setFilterType(SpeedFilterType type) {
     if (type != currentType) {
-        // Reset all filters when switching
-        ema.reset();
-        kalman.reset();
-        median.reset();
+        // Only reset filters when switching between actual filters (not to/from NONE)
+        if (type != FILTER_NONE && currentType != FILTER_NONE) {
+            // Switching between different filters - reset all
+            ema.reset();
+            kalman.reset();
+            median.reset();
+        } else if (type != FILTER_NONE) {
+            // Switching from NONE to a filter - only reset the target filter
+            switch (type) {
+                case FILTER_EMA:    ema.reset();    break;
+                case FILTER_KALMAN: kalman.reset(); break;
+                case FILTER_MEDIAN: median.reset(); break;
+                default: break;
+            }
+        }
+        // If switching to FILTER_NONE, no reset needed (filters won't be used)
         currentType = type;
     }
 }
