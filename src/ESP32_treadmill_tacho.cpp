@@ -12,8 +12,6 @@
 #include "ESP32_treadmill_tacho_ble.h"
 #include "ESP32_treadmill_tacho_workout.h"
 #include "ESP32_treadmill_hr_client.h"
-// #include "ESP32_treadmill_tacho_filters.h"  // OLD SYSTEM REMOVED
-// #include "ESP32_treadmill_tacho_sensor_common.h"  // OLD SYSTEM REMOVED
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
