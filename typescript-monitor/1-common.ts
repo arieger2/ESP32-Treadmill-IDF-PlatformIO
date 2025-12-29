@@ -54,7 +54,6 @@ namespace MonitorApp {
         setTextById('speed', data.speed);
         setTextById('pacemin', data.pacemin);
         setTextById('pacesec', data.pacesec);
-        setTextById('cpuusage', data.cpu);
         setTextById('distance', data.distance);
         setTextById('distanceunit', data.distanceunit);
         setTextById('hour', data.hour);

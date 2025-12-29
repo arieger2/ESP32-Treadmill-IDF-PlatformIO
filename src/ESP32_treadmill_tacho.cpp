@@ -74,7 +74,6 @@ void setup() {
     metrics.workoutStartTime = millis();
     metrics.sessionStartTime = millis();
     metrics.lastUpdate = millis();
-    metrics.cpuUsagePercent = 0;
     
     // Initialize WiFi Manager
     wifiInit();
@@ -99,18 +98,8 @@ void setup() {
 void loop() {
     static uint32_t lastUpdate = 0;
     static uint32_t speedIncDecElapsed = 0;
-    static bool cpuInitialized = false;
-    static uint32_t lastCpuUpdate = 0;
-    static uint64_t lastTotalRunTime = 0;
-    static uint64_t lastIdleRunTime = 0;
     
     uint32_t now = millis();
-    
-    // Initialize CPU timing on first loop
-    if (!cpuInitialized) {
-        lastCpuUpdate = now;
-        cpuInitialized = true;
-    }
     uint32_t delta = now - lastUpdate;
     lastUpdate = now;
 
@@ -178,74 +167,9 @@ void loop() {
         if (now - lastDebug >= 30000) {
             lastDebug = now;
             float kmh = metrics.mps * 3.6f;
-            Serial.printf(" kmh=%.2f, CPU: %d%%\r\n", kmh, metrics.cpuUsagePercent);
+            Serial.printf(" kmh=%.2f\r\n", kmh);
             Serial.println();
         }
-    }
-    
-    // CPU usage calculation using FreeRTOS runtime stats (falls back to heuristic if disabled)
-    if (now - lastCpuUpdate >= 1000) {
-#if (configUSE_TRACE_FACILITY == 1) && (configGENERATE_RUN_TIME_STATS == 1)
-        UBaseType_t taskCount = uxTaskGetNumberOfTasks();
-        UBaseType_t arraySize = taskCount + 4;  // cushion for tasks created between calls
-        TaskStatus_t *statusArray = static_cast<TaskStatus_t *>(pvPortMalloc(arraySize * sizeof(TaskStatus_t)));
-        if (statusArray != nullptr) {
-            uint32_t totalRuntime32 = 0;
-            UBaseType_t retrievedTasks = uxTaskGetSystemState(statusArray, arraySize, &totalRuntime32);
-            if (retrievedTasks > 0 && totalRuntime32 > 0) {
-                uint64_t totalRuntime = static_cast<uint64_t>(totalRuntime32);
-                uint64_t idleRuntime = 0;
-                for (UBaseType_t i = 0; i < retrievedTasks; ++i) {
-                    const char *name = statusArray[i].pcTaskName;
-                    if (name != nullptr && strncmp(name, "IDLE", 4) == 0) {
-                        idleRuntime += static_cast<uint64_t>(statusArray[i].ulRunTimeCounter);
-                    }
-                }
-
-                if (lastTotalRunTime != 0 && totalRuntime > lastTotalRunTime) {
-                    uint64_t totalDelta = totalRuntime - lastTotalRunTime;
-                    uint64_t idleDelta = (idleRuntime > lastIdleRunTime) ? (idleRuntime - lastIdleRunTime) : 0ULL;
-                    if (idleDelta > totalDelta) {
-                        idleDelta = totalDelta;
-                    }
-
-                    if (totalDelta > 0) {
-                        uint64_t activeDelta = totalDelta - idleDelta;
-                        uint32_t cpuPercent = static_cast<uint32_t>((activeDelta * 100ULL) / totalDelta);
-                        if (cpuPercent > 100U) {
-                            cpuPercent = 100U;
-                        }
-                        metrics.cpuUsagePercent = static_cast<uint8_t>(cpuPercent);
-                    }
-                }
-
-                lastTotalRunTime = totalRuntime;
-                lastIdleRunTime = idleRuntime;
-            }
-
-            vPortFree(statusArray);
-        }
-#else
-        // Fallback heuristic when runtime statistics are disabled
-        UBaseType_t taskCount = uxTaskGetNumberOfTasks();
-        float cpuPercent = 0.0f;
-        if (taskCount <= 10) {
-            cpuPercent = 5.0f;
-        } else if (taskCount <= 15) {
-            cpuPercent = 5.0f + ((taskCount - 10) * 3.0f);
-        } else if (taskCount <= 25) {
-            cpuPercent = 20.0f + ((taskCount - 15) * 4.0f);
-        } else {
-            cpuPercent = 60.0f + ((taskCount - 25) * 2.0f);
-        }
-
-        if (cpuPercent > 100.0f) {
-            cpuPercent = 100.0f;
-        }
-        metrics.cpuUsagePercent = static_cast<uint8_t>(cpuPercent);
-#endif
-
-        lastCpuUpdate = now;
     }
     
     // Yield to prevent watchdog timeout on CPU 1

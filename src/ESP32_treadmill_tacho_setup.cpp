@@ -469,7 +469,6 @@ void resetWorkout() {
     metrics.rpm = 0.0f;
     metrics.motorRPM = 0.0f;
     metrics.workoutDistance = 0.0f;
-    metrics.cpuUsagePercent = 0;
 
     metrics.targetSpeed = 0.0f;
     metrics.targetInclination = 0.0f;

@@ -56,7 +56,6 @@ void initWebServer() {
     json += "\"speed\":\"" + getSpeed() + "\",";
     json += "\"pacemin\":\"" + getPaceMin() + "\",";
     json += "\"pacesec\":\"" + getPaceSec() + "\",";
-    json += "\"cpu\":\"" + getCpuUsage() + "\",";
     json += "\"distance\":\"" + getDistance() + "\",";
     json += "\"distanceunit\":\"" + getDistanceUnit() + "\",";
     json += "\"hour\":\"" + getHour() + "\",";
@@ -77,7 +76,6 @@ void initWebServer() {
   server.on("/api/speed",      HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getSpeed()); });
   server.on("/api/pacesec",    HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getPaceSec()); });
   server.on("/api/pacemin",    HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getPaceMin()); });
-  server.on("/api/cpu",        HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getCpuUsage()); });
   server.on("/api/motorrpm",   HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getMotorRPM()); });
   server.on("/api/distance",   HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getDistance()); });
   server.on("/api/distanceunit",HTTP_GET,[](AsyncWebServerRequest *r){ r->send(200,"text/plain", getDistanceUnit()); });

@@ -139,7 +139,6 @@ String getPaceSec() {
   return String(buf);
 }
 
-String getCpuUsage()               { return String(metrics.cpuUsagePercent); }
 String getMotorSensorInterrupts() { return String(0); }  // Removed
 String getMotorRPM()              { return String((int)metrics.motorRPM); }
 

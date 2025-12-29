@@ -12,7 +12,6 @@ String processTemplate(const String& var) {
   if (var == "SPEED")           return getSpeed();
   if (var == "PACEMIN")         return getPaceMin();
   if (var == "PACESEC")         return getPaceSec();
-  if (var == "CPUUSAGE")        return getCpuUsage();
   if (var == "MOTORRPM")        return getMotorRPM();
   if (var == "DISTANCE")        return getDistance();
   if (var == "DISTANCE_UNIT")   return getDistanceUnit();

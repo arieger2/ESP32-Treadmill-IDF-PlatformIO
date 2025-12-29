@@ -107,7 +107,6 @@ struct TreadmillMetrics {
     float motorRPM = 0.0f;
     float mps = 0;
     float mpsOffset = 0;
-    uint8_t cpuUsagePercent = 0;   // CPU usage percentage (0-100)
     float workoutDistance = 0.0f;  // in meters (changed from mm)
     unsigned long workoutStartTime = 0;
     unsigned long lastUpdate = 0;
