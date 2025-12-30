@@ -263,8 +263,10 @@ void loop() {
                 
         // Debug every 30 seconds
         static uint32_t lastDebug = 0;
-        if (now - lastDebug >= 30000) {
+        static float lastMps = 0.0f;
+        if (now - lastDebug >= 30000 && fabsf(metrics.mps - lastMps) >= 0.1f) {
             lastDebug = now;
+            lastMps = metrics.mps;
             float kmh = metrics.mps * 3.6f;
             Serial.printf(" kmh=%.2f\r\n", kmh);
             Serial.println();
