@@ -7,6 +7,7 @@
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_sensor.h"
 #include "ESP32_treadmill_tacho_web.h"
+#include "ESP32_treadmill_tacho_bootlog.h"
 #include <nvs.h>
 #include <nvs_flash.h>
 #include "esp_system.h"
@@ -97,25 +98,25 @@ void systemInfo() {
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
 
-  Serial.println("=== ESP32 Chip Info ===");
-  Serial.printf("Chip model: %s\r\n", ESP.getChipModel());
-  Serial.printf("Chip revision: %d\r\n", ESP.getChipRevision());
-  Serial.printf("Cores: %d\r\n", ESP.getChipCores());
-  Serial.printf("CPU Freq: %u MHz\r\n", ESP.getCpuFreqMHz());
-  Serial.printf("Flash size: %u MB\r\n", ESP.getFlashChipSize() / (1024 * 1024));
-  Serial.printf("Flash speed: %u Hz\r\n", ESP.getFlashChipSpeed());
-  Serial.printf("PSRAM size: %u MB\r\n", ESP.getPsramSize() / (1024 * 1024));
-  Serial.printf("Heap size: %u KB\r\n", ESP.getHeapSize() / 1024);
-  Serial.printf("Free heap: %u KB\r\n", ESP.getFreeHeap() / 1024);
-  Serial.printf("Sketch size: %u KB\r\n", ESP.getSketchSize() / 1024);
-  Serial.printf("Free sketch space: %u KB\r\n", ESP.getFreeSketchSpace() / 1024);
-  Serial.printf("SDK Version: %s\r\n", ESP.getSdkVersion());
+  logPrint("=== ESP32 Chip Info ===\n");
+  logPrintf("Chip model: %s\r\n", ESP.getChipModel());
+  logPrintf("Chip revision: %d\r\n", ESP.getChipRevision());
+  logPrintf("Cores: %d\r\n", ESP.getChipCores());
+  logPrintf("CPU Freq: %u MHz\r\n", ESP.getCpuFreqMHz());
+  logPrintf("Flash size: %u MB\r\n", ESP.getFlashChipSize() / (1024 * 1024));
+  logPrintf("Flash speed: %u Hz\r\n", ESP.getFlashChipSpeed());
+  logPrintf("PSRAM size: %u MB\r\n", ESP.getPsramSize() / (1024 * 1024));
+  logPrintf("Heap size: %u KB\r\n", ESP.getHeapSize() / 1024);
+  logPrintf("Free heap: %u KB\r\n", ESP.getFreeHeap() / 1024);
+  logPrintf("Sketch size: %u KB\r\n", ESP.getSketchSize() / 1024);
+  logPrintf("Free sketch space: %u KB\r\n", ESP.getFreeSketchSpace() / 1024);
+  logPrintf("SDK Version: %s\r\n", ESP.getSdkVersion());
 
-  Serial.println("\r\nFeatures:");
-  if (chip_info.features & CHIP_FEATURE_EMB_FLASH) Serial.println(" - Embedded Flash");
-  if (chip_info.features & CHIP_FEATURE_WIFI_BGN)  Serial.println(" - WiFi BGN");
-  if (chip_info.features & CHIP_FEATURE_BLE)       Serial.println(" - BLE");
-  if (chip_info.features & CHIP_FEATURE_BT)        Serial.println(" - Classic BT");
+  logPrint("\r\nFeatures:\n");
+  if (chip_info.features & CHIP_FEATURE_EMB_FLASH) logPrint(" - Embedded Flash\n");
+  if (chip_info.features & CHIP_FEATURE_WIFI_BGN)  logPrint(" - WiFi BGN\n");
+  if (chip_info.features & CHIP_FEATURE_BLE)       logPrint(" - BLE\n");
+  if (chip_info.features & CHIP_FEATURE_BT)        logPrint(" - Classic BT\n");
 }
 
 // ============================================================================
@@ -165,7 +166,7 @@ String saveSettings() {
   }
   
   prefs.end();  // Close AFTER verification loop
-  Serial.print(out);
+  logPrint(out.c_str());
   return ret;
 }
 
@@ -204,7 +205,7 @@ void loadSettings() {
   storedGlobals.INERTIA_DELAY_MS   = prefs.getUInt (NVSKeys::INERTIA_MS, 2000);
   storedGlobals.OVERSHOOT_FACTOR   = prefs.getFloat(NVSKeys::OVERSHOOT, 1.1f);
 
-  Serial.printf("[NVS] Loaded calibration: UP=%.3f, DOWN=%.3f\n", 
+  logPrintf("[NVS] Loaded calibration: UP=%.3f, DOWN=%.3f\n", 
                 storedGlobals.SPEED_UP_RATE, storedGlobals.SPEED_DOWN_RATE);
 
   prefs.end();
@@ -255,60 +256,60 @@ void loadDefaultSettings() {
 
 // Call this after loadSettings() / saveSettings()
 void printSettings() {
-  Serial.println("===== TREADMILL SETTINGS (loaded) =====");
-  Serial.printf("WiFi SSID             : %s\r\n", storedGlobals.WIFI_SSID.c_str());
-  Serial.printf("BLE Device Name       : %s\r\n", storedGlobals.BLE_DEVICE_NAME.c_str());
-  Serial.println();
+  logPrint("===== TREADMILL SETTINGS (loaded) =====\n");
+  logPrintf("WiFi SSID             : %s\r\n", storedGlobals.WIFI_SSID.c_str());
+  logPrintf("BLE Device Name       : %s\r\n", storedGlobals.BLE_DEVICE_NAME.c_str());
+  logPrint("\n");
 
-  Serial.printf("Pins:\r\n"); 
-  Serial.printf("  Band Interrupt Pin  : %d\r\n", storedGlobals.INTERRUPT_PIN);
-  Serial.printf("  Motor Interrupt Pin : %d\r\n", storedGlobals.MOTOR_INTERRUPT_PIN);
-  Serial.printf("  LED Pin             : %d\r\n", storedGlobals.LED_PIN); 
-  Serial.printf("  Speed Up Pin        : %d\r\n", storedGlobals.SPEED_UP_PIN); 
-  Serial.printf("  Speed Down Pin      : %d\r\n", storedGlobals.SPEED_DOWN_PIN);
-  Serial.printf("  Incline Up Pin      : %d\r\n", storedGlobals.INCLINE_UP_PIN); 
-  Serial.printf("  Incline Down Pin    : %d\r\n", storedGlobals.INCLINE_DOWN_PIN);
-  Serial.println();
+  logPrint("Pins:\r\n"); 
+  logPrintf("  Band Interrupt Pin  : %d\r\n", storedGlobals.INTERRUPT_PIN);
+  logPrintf("  Motor Interrupt Pin : %d\r\n", storedGlobals.MOTOR_INTERRUPT_PIN);
+  logPrintf("  LED Pin             : %d\r\n", storedGlobals.LED_PIN); 
+  logPrintf("  Speed Up Pin        : %d\r\n", storedGlobals.SPEED_UP_PIN); 
+  logPrintf("  Speed Down Pin      : %d\r\n", storedGlobals.SPEED_DOWN_PIN);
+  logPrintf("  Incline Up Pin      : %d\r\n", storedGlobals.INCLINE_UP_PIN); 
+  logPrintf("  Incline Down Pin    : %d\r\n", storedGlobals.INCLINE_DOWN_PIN);
+  logPrint("\n");
 
-  Serial.printf("Timing:\r\n"); 
-  Serial.printf("  Speed Ctl Freq (ms) : %u\r\n", storedGlobals.SPEED_INC_DEC_FREQ_MS); 
-  Serial.printf("  Testdata Freq (ms)  : %u\r\n", storedGlobals.TESTDATA_FREQ_MS); 
-  Serial.println();
+  logPrint("Timing:\r\n"); 
+  logPrintf("  Speed Ctl Freq (ms) : %u\r\n", storedGlobals.SPEED_INC_DEC_FREQ_MS); 
+  logPrintf("  Testdata Freq (ms)  : %u\r\n", storedGlobals.TESTDATA_FREQ_MS); 
+  logPrint("\n");
 
-  Serial.printf("Mechanics:\r\n"); 
-  Serial.printf("  Belt Distance (mm)  : %lu\r\n", (unsigned long)storedGlobals.BELT_DISTANCE_MM); 
-  Serial.printf("  Debounce Thresh (us): %lu\r\n", (unsigned long)storedGlobals.DEBOUNCE_THRESHOLD_US); 
-  Serial.printf("  Max Rev Time (ms)   : %lu\r\n", (unsigned long)storedGlobals.MAX_REVOLUTION_TIME_MS); 
-  Serial.printf("  Pulses/Rev (belt)   : %lu\r\n", (unsigned long)storedGlobals.PULSES_PER_REV); 
-  Serial.printf("  Pulses/Rev (motor)  : %lu\r\n", (unsigned long)storedGlobals.MOTOR_PULSES_PER_REV); 
-  Serial.printf("  Motor→Belt Ratio    : %.6f\r\n", storedGlobals.MOTOR_TO_BELT_RATIO); 
-  Serial.printf("  Force Use Motor     : %s\r\n", storedGlobals.FORCE_USE_MOTOR ? "YES" : "NO"); 
+  logPrint("Mechanics:\r\n"); 
+  logPrintf("  Belt Distance (mm)  : %lu\r\n", (unsigned long)storedGlobals.BELT_DISTANCE_MM); 
+  logPrintf("  Debounce Thresh (us): %lu\r\n", (unsigned long)storedGlobals.DEBOUNCE_THRESHOLD_US); 
+  logPrintf("  Max Rev Time (ms)   : %lu\r\n", (unsigned long)storedGlobals.MAX_REVOLUTION_TIME_MS); 
+  logPrintf("  Pulses/Rev (belt)   : %lu\r\n", (unsigned long)storedGlobals.PULSES_PER_REV); 
+  logPrintf("  Pulses/Rev (motor)  : %lu\r\n", (unsigned long)storedGlobals.MOTOR_PULSES_PER_REV); 
+  logPrintf("  Motor→Belt Ratio    : %.6f\r\n", storedGlobals.MOTOR_TO_BELT_RATIO); 
+  logPrintf("  Force Use Motor     : %s\r\n", storedGlobals.FORCE_USE_MOTOR ? "YES" : "NO"); 
   
   const char* src =
     (storedGlobals.SENSOR_SOURCE_MODE == SENSOR_BAND)  ? "BAND"  :
     (storedGlobals.SENSOR_SOURCE_MODE == SENSOR_MOTOR) ? "MOTOR" : "AUTO";
-  Serial.printf("  Speed Sensor Source : %s (%u)\r\n", src, storedGlobals.SENSOR_SOURCE_MODE);
-  Serial.println("=======================================\r\n");
+  logPrintf("  Speed Sensor Source : %s (%u)\r\n", src, storedGlobals.SENSOR_SOURCE_MODE);
+  logPrint("=======================================\r\n\n");
 }
 
 // Add this function to check and fix NVS
 void checkAndFixNVS() {
-    Serial.println("=== Borad Infos ===");
+    logPrint("=== Borad Infos ===\n");
     systemInfo();
-    Serial.println();
-    Serial.println("=== NVS DIAGNOSTIC ===");
+    logPrint("\n");
+    logPrint("=== NVS DIAGNOSTIC ===\n");
     size_t sz = ESP.getFlashChipSize();  // bytes
-    Serial.printf("Flash size: %u bytes (%.2f MB)\r\n", (unsigned)sz, sz / (1024.0*1024.0));
-    Serial.println();
+    logPrintf("Flash size: %u bytes (%.2f MB)\r\n", (unsigned)sz, sz / (1024.0*1024.0));
+    logPrint("\n");
     
     // Check NVS initialization
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        Serial.println("NVS partition was truncated and needs to be erased");
+        logPrint("NVS partition was truncated and needs to be erased\n");
         // NVS partition was truncated and needs to be erased
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
-        Serial.println("NVS erased and reinitialized");
+        logPrint("NVS erased and reinitialized\n");
     }
     ESP_ERROR_CHECK(err);
     
@@ -316,41 +317,41 @@ void checkAndFixNVS() {
     nvs_stats_t nvs_stats;
     err = nvs_get_stats(NULL, &nvs_stats);
     if (err == ESP_OK) {
-        Serial.printf("NVS Statistics:\r\n");
-        Serial.printf("  Used entries: %d\r\n", nvs_stats.used_entries);
-        Serial.printf("  Free entries: %d\r\n", nvs_stats.free_entries);
-        Serial.printf("  Total entries: %d\r\n", nvs_stats.total_entries);
-        Serial.printf("  Namespace count: %d\r\n", nvs_stats.namespace_count);
+        logPrint("NVS Statistics:\r\n");
+        logPrintf("  Used entries: %d\r\n", nvs_stats.used_entries);
+        logPrintf("  Free entries: %d\r\n", nvs_stats.free_entries);
+        logPrintf("  Total entries: %d\r\n", nvs_stats.total_entries);
+        logPrintf("  Namespace count: %d\r\n", nvs_stats.namespace_count);
     } else {
-        Serial.printf("Error getting NVS stats: %s\r\n", esp_err_to_name(err));
+        logPrintf("Error getting NVS stats: %s\r\n", esp_err_to_name(err));
     }
     
     // Test preferences access
     Preferences testPrefs;
     bool canOpen = testPrefs.begin("test", false);
     if (canOpen) {
-        Serial.println("✅ Preferences can be opened for write");
+        logPrint("✅ Preferences can be opened for write\n");
         testPrefs.putString("test", "working");
         String result = testPrefs.getString("test", "failed");
-        Serial.printf("Write/Read test: %s\r\n", result.c_str()); 
-        Serial.println();
+        logPrintf("Write/Read test: %s\r\n", result.c_str()); 
+        logPrint("\n");
         testPrefs.end();
     } else {
-        Serial.println("❌ Cannot open preferences for write");
+        logPrint("❌ Cannot open preferences for write\n");
     }
     
     // Test your treadmill namespace specifically
     bool canOpenTreadmill = testPrefs.begin("treadmill", false);
     if (canOpenTreadmill) {
-        Serial.println("✅ Treadmill namespace accessible");
+        logPrint("✅ Treadmill namespace accessible\n");
         size_t freeEntries = testPrefs.freeEntries();
-        Serial.printf("Free entries in treadmill namespace: %d\r\n", freeEntries);
+        logPrintf("Free entries in treadmill namespace: %d\r\n", freeEntries);
         testPrefs.end();
     } else {
-        Serial.println("❌ Cannot access treadmill namespace");
+        logPrint("❌ Cannot access treadmill namespace\n");
     }
     
-    Serial.println("======================\r\n");
+    logPrint("======================\r\n\n");
 }
 
 // ============================================================================
@@ -433,20 +434,20 @@ void initTachometer() {
     esp_err_t err = speed_sensor1_init(storedGlobals.PULSES_PER_REV * storedGlobals.BAND_PULSE_MULTIPLIER,
                                        storedGlobals.INTERRUPT_PIN);
     if (err != ESP_OK) {
-        Serial.printf("[INIT][ERR] speed_sensor1_init failed: %s\r\n",
+        logPrintf("[INIT][ERR] speed_sensor1_init failed: %s\r\n",
                       esp_err_to_name(err));
     }
 
     err = speed_sensor2_init(storedGlobals.MOTOR_PULSES_PER_REV * storedGlobals.MOTOR_PULSE_MULTIPLIER,
                              storedGlobals.MOTOR_INTERRUPT_PIN);
     if (err != ESP_OK) {
-        Serial.printf("[INIT][ERR] speed_sensor2_init failed: %s\r\n",
+        logPrintf("[INIT][ERR] speed_sensor2_init failed: %s\r\n",
                       esp_err_to_name(err));
     }
 
-    Serial.printf("[INIT] Using new MCPWM+PCNT sensor system (GPIO %d, %d)\r\n",
+    logPrintf("[INIT] Using new MCPWM+PCNT sensor system (GPIO %d, %d)\r\n",
                   storedGlobals.INTERRUPT_PIN, storedGlobals.MOTOR_INTERRUPT_PIN);
-    Serial.println("Hall sensor ready: Hardware ISR-based counting enabled");
+    logPrint("Hall sensor ready: Hardware ISR-based counting enabled\n");
     testdata = false;
 }
 

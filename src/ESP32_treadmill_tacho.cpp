@@ -13,6 +13,7 @@
 #include "ESP32_treadmill_tacho_ble.h"
 #include "ESP32_treadmill_tacho_workout.h"
 #include "ESP32_treadmill_hr_client.h"
+#include "ESP32_treadmill_tacho_bootlog.h"
 #include "esp_coexist.h"
 #include <nvs.h>
 #include <nvs_flash.h>
@@ -98,33 +99,38 @@ void setup() {
     Serial.begin(115200);
     delay(100);  // Let serial stabilize
     
+    // Initialize boot log capture FIRST to capture all subsequent output
+    initBootLog();
+    
     // Reduce ESP-IDF component log verbosity (nvs, wifi, nimble, etc)
     esp_log_level_set("*", ESP_LOG_WARN);  // Set all components to WARN or higher
     esp_log_level_set("Preferences", ESP_LOG_NONE);  // Suppress NVS "NOT_FOUND" errors on first boot
     esp_log_level_set("NimBLE", ESP_LOG_NONE);       // Suppress BLE scan advertiser logs
     esp_log_level_set("NimBLEScan", ESP_LOG_NONE);   // Suppress "New advertiser" messages
     
-    Serial.println("=== PCNT HARDWARE TREADMILL ===");
+    logPrint("=== PCNT HARDWARE TREADMILL ===\n");
     
     // Issue #7: Set WiFi/BLE coexistence preference - BLE PRIORITY for Zwift
     esp_err_t coex_err = esp_coex_preference_set(ESP_COEX_PREFER_BT);
     if (coex_err == ESP_OK) {
-        Serial.println("✓ Coexistence: BLE PRIORITY (Zwift prioritized)");
+        logPrint("✓ Coexistence: BLE PRIORITY (Zwift prioritized)\n");
     } else {
-        Serial.printf("⚠ Coexistence setup failed: %s\n", esp_err_to_name(coex_err));
+        logPrintf("⚠ Coexistence setup failed: %s\n", esp_err_to_name(coex_err));
     }
     
-    Serial.print("Init NVS... ");
+    logPrint("Init NVS... ");
     checkAndFixNVS();
     initStatus.nvs = true;
-    Serial.println("✓");
+    logPrint("✓\n");
 
-    Serial.print("Load config... ");
+    logPrint("Load config... ");
     loadSettings();
     initStatus.config = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
+    logPrint("\n--- Settings ---\n");
     printSettings();
+    logPrint("---------------\n\n");
     resetWorkout();
 
     metrics.workoutStartTime = millis();
@@ -132,66 +138,69 @@ void setup() {
     metrics.lastUpdate = millis();
     
     // Initialize BLE services FIRST (priority for Zwift connection)
-    Serial.print("Init BLE FTMS... ");
+    logPrint("Init BLE FTMS... ");
     initFTMS_BLE();
     initStatus.ble_ftms = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
-    Serial.print("Init BLE RSC... ");
+    logPrint("Init BLE RSC... ");
     initBLE_RSC();
     initStatus.ble_rsc = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
-    Serial.print("Init BLE HR Server... ");
+    logPrint("Init BLE HR Server... ");
     initHR_BLE_Server();
     initStatus.ble_hr_server = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
-    Serial.print("Init BLE Advertising... ");
+    logPrint("Init BLE Advertising... ");
     BLEAdvertising_init();
     initStatus.ble_adv = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
     FMTS_check();
     
-    Serial.print("Init BLE HR Client... ");
+    logPrint("Init BLE HR Client... ");
     initHeartRateClient();
     initStatus.ble_hr_client = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
     // Initialize WiFi AFTER BLE (lower priority)
-    Serial.print("Init WiFi... ");
+    logPrint("Init WiFi... ");
     wifiInit();
     initStatus.wifi = true;
-    Serial.println("✓");
+    logPrint("✓\n");
 
     // Initialize web server. It will become accessible when WiFi connects.
-    Serial.print("Init Web Server... ");
+    logPrint("Init Web Server... ");
     initWebServer();
     initStatus.web = true;
-    Serial.println("✓");
+    logPrint("✓\n");
 
     // Initialize remaining peripherals
-    Serial.print("Init Tachometer... ");
+    logPrint("Init Tachometer... ");
     initTachometer();
     initStatus.tachometer = true;
-    Serial.println("✓");
+    logPrint("✓\n");
     
     initStatus.print();
     
     // Issue #1: Verify task affinity (Arduino runs loop on CPU1 by default)
-    Serial.println("=== Task Affinity ===");
-    Serial.printf("  Loop Task: CPU%d (Arduino default)\n", xPortGetCoreID());
-    Serial.println("  WiFi/BLE: CPU0 (ESP-IDF)");
-    Serial.println("=====================\n");
+    logPrint("=== Task Affinity ===\n");
+    logPrintf("  Loop Task: CPU%d (Arduino default)\n", xPortGetCoreID());
+    logPrint("  WiFi/BLE: CPU0 (ESP-IDF)\n");
+    logPrint("=====================\n\n");
     
     if (initStatus.critical()) {
-        Serial.println("✓✓✓ CRITICAL SYSTEMS READY ✓✓✓");
+        logPrint("✓✓✓ CRITICAL SYSTEMS READY ✓✓✓\n");
     } else {
-        Serial.println("⚠⚠⚠ CRITICAL INIT FAILED ⚠⚠⚠");
+        logPrint("⚠⚠⚠ CRITICAL INIT FAILED ⚠⚠⚠\n");
     }
     
-    Serial.println("Setup complete");
+    logPrint("Setup complete\n");
+    
+    // Stop boot log capture now that setup is complete
+    stopBootLog();
 }
 
 void loop() {

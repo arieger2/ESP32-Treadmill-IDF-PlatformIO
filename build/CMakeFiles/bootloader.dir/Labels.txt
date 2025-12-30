@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/CMakeFiles/bootloader
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/CMakeFiles/bootloader.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/CMakeFiles/bootloader-complete.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

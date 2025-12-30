@@ -7,11 +7,11 @@
 #include "ESP32_treadmill_tacho_web.h"
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_workout.h"
+#include "ESP32_treadmill_tacho_bootlog.h"
 #include "web_monitor/web_monitor_main_ts.h"
 #include "web_settings/web_settings_main_ts.h"
 #include "web_workout/web_workout_main_ts.h"
 #include "ESP32_treadmill_tacho_ui_assets.h"
-// #include "ESP32_treadmill_tacho_filters.h"  // OLD SYSTEM REMOVED
 
 extern WorkoutExecutor gWorkout;
 // extern SpeedFilter bandFilter;  // OLD SYSTEM REMOVED
@@ -89,6 +89,12 @@ void initWebServer() {
   server.on("/api/hr-series",  HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"application/json", buildHeartRateSeriesJson()); });
   server.on("/api/rr-series",  HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"application/json", buildRRSeriesJson()); });
   server.on("/api/datetime",   HTTP_GET, [](AsyncWebServerRequest *r){ r->send(200,"text/plain", getDateTime()); });
+  
+  // ===== Boot Log API =====
+  server.on("/api/bootlog", HTTP_GET, [](AsyncWebServerRequest *r){
+    String log = readBootLog();
+    r->send(200, "text/plain", log);
+  });
 
   // ===== Buttons (monitor page) =====
   server.on("/offset/up", HTTP_GET, [](AsyncWebServerRequest *req) {

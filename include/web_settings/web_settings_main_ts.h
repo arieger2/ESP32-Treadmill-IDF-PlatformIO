@@ -249,6 +249,7 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           <button type="button" class="button button-danger" onclick="SettingsApp.factoryReset()"><i class="fas fa-trash"></i> Factory Reset</button>
           <button type="button" class="button button-secondary" onclick="SettingsApp.rebootDevice()"><i class="fas fa-power-off"></i> Reboot Device</button>
           <button type="button" class="button button-secondary" onclick="SettingsApp.goToOTA()"><i class="fas fa-upload"></i> Upload Firmware</button>
+          <button type="button" class="button button-info" onclick="SettingsApp.viewBootLog()" style="background:#17a2b8;border-color:#17a2b8;"><i class="fas fa-file-alt"></i> View Boot Log</button>
         </div>
       </form>
     </div>

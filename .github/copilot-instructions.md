@@ -3,6 +3,13 @@
 1. **NEVER** change platform, library, or framework versions in `platformio.ini`, `package.json`, or `idf_component.yml` without EXPLICIT user permission.
 2. **NEVER** delete files without asking.
 3. If a build fails, analyze and report the cause, but **DO NOT** attempt to fix configuration files automatically.
+4. **ANALYZE FIRST, IMPLEMENT SECOND**:
+   - Before making ANY code changes, thoroughly analyze the problem
+   - Check existing implementations, APIs, and dependencies
+   - Verify all required components are available (don't assume Arduino libraries exist in ESP-IDF environment)
+   - Ask clarifying questions if requirements are unclear
+   - Present the analysis and approach BEFORE starting implementation
+   - Only after confirmation, proceed with code changes
 
 ## ESP-IDF + Arduino Framework Header Pattern
 

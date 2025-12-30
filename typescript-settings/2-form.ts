@@ -212,4 +212,55 @@ namespace SettingsApp {
       setTimeout(() => location.href = '/', CONFIG.REBOOT_WAIT_TIME_MS);
     });
   }
+  
+  /**
+   * View boot log in modal popup
+   */
+  export function viewBootLog(): void {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    
+    // Create modal content
+    const content = document.createElement('div');
+    content.style.cssText = 'background:#fff;padding:20px;border-radius:8px;max-width:90%;max-height:80%;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+    
+    // Add header
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;border-bottom:2px solid #ddd;padding-bottom:10px;';
+    header.innerHTML = '<h2 style="margin:0;">Boot Log</h2><button id="closeLogModal" style="padding:5px 15px;cursor:pointer;">Close</button>';
+    content.appendChild(header);
+    
+    // Add loading message
+    const logArea = document.createElement('pre');
+    logArea.style.cssText = 'background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:4px;overflow:auto;max-height:60vh;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.4;';
+    logArea.textContent = 'Loading boot log...';
+    content.appendChild(logArea);
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Close button handler
+    document.getElementById('closeLogModal')!.onclick = () => {
+      document.body.removeChild(modal);
+    };
+    
+    // Click outside to close
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+      }
+    };
+    
+    // Fetch boot log
+    fetch('/api/bootlog')
+      .then(r => r.text())
+      .then(log => {
+        logArea.textContent = log;
+      })
+      .catch(err => {
+        logArea.textContent = 'Error loading boot log: ' + err.message;
+        logArea.style.color = '#ff6b6b';
+      });
+  }
 }
