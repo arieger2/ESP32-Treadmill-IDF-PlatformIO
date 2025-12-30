@@ -4,6 +4,10 @@
  */
 
 namespace SettingsApp {
+  // Expose functions globally IMMEDIATELY for onclick handlers in HTML
+  // This must happen before DOMContentLoaded to prevent race conditions
+  (window as any).SettingsApp = SettingsApp;
+  
   document.addEventListener('DOMContentLoaded', () => {
     // Initialize select dropdowns
     initializeSelects();
@@ -13,8 +17,5 @@ namespace SettingsApp {
     if (form) {
       form.addEventListener('submit', handleFormSubmit);
     }
-    
-    // Expose functions globally for onclick handlers in HTML
-    (window as any).SettingsApp = SettingsApp;
   });
 }

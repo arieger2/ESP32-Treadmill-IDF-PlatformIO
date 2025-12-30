@@ -2,9 +2,7 @@
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_workout.h"
 
-// Forward declarations for sensor updates (defined in band/motor.cpp)
-extern void updateMetricsBand(uint32_t now_ms, uint32_t now_us);
-extern void updateMetricsMotor(uint32_t now_ms, uint32_t now_us);
+// Forward declarations for sensor selection
 extern uint8_t sensorSelection(bool init);
 
 // ======= BLE steering shim (weak, can be overridden) =======
