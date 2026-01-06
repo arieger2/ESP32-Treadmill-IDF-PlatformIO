@@ -217,17 +217,22 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
     
     if (mode == SENSOR_AUTO) {
-        // AUTO mode: update both band and motor metrics
-        // Use motor sensor for speed calculation (more stable)
-        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
-                                                                       storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-        metrics.motorRPM = motorResult.rpm;
-        metrics.workoutDistance += motorResult.delta_distance; // meters
-        
-        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
-                                                                      storedGlobals.BELT_DISTANCE_MM, 1.0f);
-        metrics.rpm = bandResult.rpm;
-        metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        // AUTO mode: update both band and motor metrics from their respective sensors
+        // Update based on which sensor triggered this call
+        if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
+            // Motor sensor data
+            sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                           storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+            metrics.motorRPM = motorResult.rpm;
+            metrics.workoutDistance += motorResult.delta_distance; // meters
+            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        } else {
+            // Band sensor data
+            sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
+                                                                          storedGlobals.BELT_DISTANCE_MM, 1.0f);
+            metrics.rpm = bandResult.rpm;
+            // Note: mps is calculated from motor for better stability in AUTO mode
+        }
         
     } else if (mode == SENSOR_BAND) {
         // BAND mode: only update if sensor is actually the band sensor
