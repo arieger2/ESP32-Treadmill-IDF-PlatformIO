@@ -14,6 +14,7 @@
 #include "ESP32_treadmill_tacho_workout.h"
 #include "ESP32_treadmill_hr_client.h"
 #include "ESP32_treadmill_tacho_bootlog.h"
+#include "ESP32_treadmill_tacho_sensor.h"
 #include "esp_coexist.h"
 #include <nvs.h>
 #include <nvs_flash.h>
