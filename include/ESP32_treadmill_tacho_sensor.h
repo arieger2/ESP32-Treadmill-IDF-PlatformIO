@@ -198,6 +198,7 @@ speed_sensor_t* speed_sensor_get_sensor2(void);
 #ifdef __cplusplus
 struct TreadmillMetrics;
 void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor);
+void applySpeedFilter(TreadmillMetrics& metrics);
 #endif
 
 #endif // ESP32_TREADMILL_TACHO_SENSOR_NEW_H

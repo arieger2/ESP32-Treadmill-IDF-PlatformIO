@@ -262,8 +262,8 @@ void loop() {
         lastMetricsUpdate = now;
         wifiLoop();
         
-        // OLD SYSTEM REMOVED - metrics now updated directly from ISR callbacks
-        // (on_pcnt_reach_cb and on_timeout_cb in ESP32_treadmill_tacho_sensor.cpp)
+        // Apply speed filter in loop context (not ISR!)
+        applySpeedFilter(metrics);
         
         if (bleData.clientConnected) {
             sendFTMS_BLE_Data();

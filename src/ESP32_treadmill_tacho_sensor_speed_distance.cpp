@@ -251,7 +251,22 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
         // else: sensor is band but mode is motor - do nothing
     }
     
-    // Apply speed filtering based on sensor mode and configured filter type
+    // NOTE: Filter is now applied separately in loop() via applySpeedFilter()
+    // This keeps the ISR-called updateMetrics() as fast as possible
+}
+
+/**
+ * Apply speed filtering to metrics
+ * 
+ * This function should be called from loop() context, NOT from ISR!
+ * Applies the configured filter type to smooth the speed measurements.
+ * 
+ * @param metrics Reference to metrics structure to update
+ */
+void applySpeedFilter(TreadmillMetrics& metrics) {
+    uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
+    
+    // Select appropriate filter based on sensor mode
     SpeedFilter* activeFilter = (mode == SENSOR_BAND) ? &bandFilter : &motorFilter;
     SpeedFilterType filterType = (mode == SENSOR_BAND) 
         ? static_cast<SpeedFilterType>(storedGlobals.BAND_FILTER_TYPE)
