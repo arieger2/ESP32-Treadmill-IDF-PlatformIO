@@ -218,6 +218,20 @@ void loop() {
 
     processPendingTestMetrics();
 
+    // Update metrics from sensor data every 200ms (process ISR-collected data)
+    static uint32_t lastSensorUpdate = 0;
+    if (now - lastSensorUpdate >= 200) {
+        lastSensorUpdate = now;
+        
+        // Check both sensors for new data and update metrics
+        if (speed_sensor_get_sensor1()->new_result) {
+            updateMetrics(metrics, speed_sensor_get_sensor1());
+        }
+        if (speed_sensor_get_sensor2()->new_result) {
+            updateMetrics(metrics, speed_sensor_get_sensor2());
+        }
+    }
+
     // TEST MODE: Now handled automatically by on_timeout_cb ISR (no loop code needed)
     // Debug: Log test mode metrics every 5 seconds
     extern volatile uint32_t test_isr_call_count;

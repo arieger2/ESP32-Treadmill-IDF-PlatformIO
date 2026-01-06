@@ -274,8 +274,7 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     // Re-arm for next window immediately (next capture edge will restart)
     sensor->armed = true;
 
-    // Update metrics with new sensor data
-    updateMetrics(metrics, sensor);
+    // Metrics will be updated in loop() every 200ms (not in ISR!)
 
     return false;
 }
@@ -373,8 +372,7 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
             // Re-arm
             sensor->armed = true;
             
-            // Update metrics with new sensor data
-            updateMetrics(metrics, sensor);
+            // Metrics will be updated in loop() every 200ms (not in ISR!)
         }
     }
 
