@@ -95,15 +95,15 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
     uint32_t used = 0;
     uint32_t dt = 0;
 
-    // Atomic read of sensor result
-    portENTER_CRITICAL(&sensor->mux);
+    // Atomic read of sensor result (ISR-safe critical section)
+    portENTER_CRITICAL_ISR(&sensor->mux);
     has_new = sensor->new_result;
     if (has_new) {
         used = sensor->used_periods;
         dt = sensor->dt_ticks;
         sensor->new_result = false;  // Clear flag after reading
     }
-    portEXIT_CRITICAL(&sensor->mux);
+    portEXIT_CRITICAL_ISR(&sensor->mux);
 
     // Calculate new RPM and distance if we have valid new data
     if (has_new && dt > 0 && pulses_per_rev > 0) {

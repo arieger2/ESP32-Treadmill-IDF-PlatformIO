@@ -110,10 +110,10 @@ void setup() {
     
     logPrint("=== PCNT HARDWARE TREADMILL ===\n");
     
-    // Issue #7: Set WiFi/BLE coexistence preference - BLE PRIORITY for Zwift
-    esp_err_t coex_err = esp_coex_preference_set(ESP_COEX_PREFER_BT);
+    // WiFi/BLE coexistence preference - BALANCED mode
+    esp_err_t coex_err = esp_coex_preference_set(ESP_COEX_PREFER_BALANCE);
     if (coex_err == ESP_OK) {
-        logPrint("✓ Coexistence: BLE PRIORITY (Zwift prioritized)\n");
+        logPrint("✓ Coexistence: BALANCED (WiFi and BLE equal priority)\n");
     } else {
         logPrintf("⚠ Coexistence setup failed: %s\n", esp_err_to_name(coex_err));
     }
