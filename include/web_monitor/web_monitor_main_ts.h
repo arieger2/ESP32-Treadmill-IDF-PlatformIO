@@ -151,9 +151,15 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 
     <div class="card">
       <h2><i class="fas fa-cog"></i> System</h2>
-      <div class="metric">
-        <div class="metric-label">Motor RPM</div>
-        <div class="metric-value"><span id="motorrpm">0</span></div>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Band RPM</div>
+          <div class="metric-value"><span id="rpm">0</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Motor RPM</div>
+          <div class="metric-value"><span id="motorrpm">0</span></div>
+        </div>
       </div>
       <p style="margin-top:15px;">
         <button id="testdata-btn" class="button" onclick="toggleTestMode(); return false;"><i class="fas fa-vial"></i> <span id="testdata-text">Test Mode</span></button>

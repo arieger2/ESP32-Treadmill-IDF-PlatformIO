@@ -170,8 +170,7 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
         pcnt_unit_stop(sensor->pcnt_unit); // Don't start counting until first edge arrives
     }
 
-    // Start in "armed" state (wait for first edge to define t_start precisely)
-    sensor->armed = true;
+    // Start in "running" state (wait for first edge to define t_start precisely)
     sensor->running = false;
 
     ESP_LOGI(TAG, "Sensor GPIO%d initialized. Target periods=%u, MCPWM group=%d", 

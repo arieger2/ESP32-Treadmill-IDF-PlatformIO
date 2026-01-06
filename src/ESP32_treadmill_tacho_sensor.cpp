@@ -120,14 +120,13 @@ speed_sensor_t s_sensor1 = {
     .cap_chan = NULL,
     .pcnt_unit = NULL,
     .pcnt_chan = NULL,
-    .gpio_num = 18,
+    .sensor_type = SENSOR_TYPE_BAND,
+    .gpio_num = -1,
     .mcpwm_group_id = 0,
     .target_periods = 100,
-    .armed = false,
     .running = false,
     .t_start = 0,
     .t_last = 0,
-    .new_result = false,
     .used_periods = 0,
     .dt_ticks = 0,
     .mux = portMUX_INITIALIZER_UNLOCKED
@@ -138,14 +137,13 @@ speed_sensor_t s_sensor2 = {
     .cap_chan = NULL,
     .pcnt_unit = NULL,
     .pcnt_chan = NULL,
-    .gpio_num = 19,
+    .sensor_type = SENSOR_TYPE_MOTOR,
+    .gpio_num = -1,
     .mcpwm_group_id = 1,  // Use different MCPWM group for sensor 2
     .target_periods = 100,
-    .armed = false,
     .running = false,
     .t_start = 0,
     .t_last = 0,
-    .new_result = false,
     .used_periods = 0,
     .dt_ticks = 0,
     .mux = portMUX_INITIALIZER_UNLOCKED
@@ -169,7 +167,7 @@ static inline uint32_t tick_diff_u32(uint32_t now, uint32_t then) {
  *    - Keeps latest edge timestamp for end-of-measurement
  *    - Used by both PCNT callback and timeout callback
  * 
- * 2. FIRST PULSE ONLY (when armed && !running):
+ * 2. FIRST PULSE ONLY (when  !running):
  *    - Captures precise start time (t_start)
  *    - Resets PCNT counter to 0
  *    - Starts PCNT hardware counting
@@ -199,8 +197,8 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
     // Always keep "latest edge timestamp" for timeout/end timestamping
     sensor->t_last = t;
 
-    // Arm/start logic: start window exactly on a real edge
-    if (sensor->armed && !sensor->running) {
+    // Start logic: start measurement window on first edge when ready
+    if (!sensor->running) {
         sensor->t_start = t;
 
         // Reset & start PCNT counting from this edge onwards
@@ -208,7 +206,6 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
         pcnt_unit_start(sensor->pcnt_unit);
 
         sensor->running = true;
-        sensor->armed = false;
     }
 
     return false; // no yield
@@ -262,17 +259,14 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
 
     // Publish result atomically (coarse-grain critical section)
     portENTER_CRITICAL_ISR(&sensor->mux);
-    sensor->used_periods = used;
-    sensor->dt_ticks = dt;
-    sensor->new_result = true;
+    sensor->used_periods += used;
+    sensor->dt_ticks += dt;
     portEXIT_CRITICAL_ISR(&sensor->mux);
 
-    // Stop counting until next arm
+    // Stop counting, ready for next measurement cycle
     pcnt_unit_stop(sensor->pcnt_unit);
     sensor->running = false;
-
-    // Re-arm for next window immediately (next capture edge will restart)
-    sensor->armed = true;
+    sensor->t_start = sensor->t_last;  // Mark last timestamp as new start for next cycle
 
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 
@@ -361,16 +355,13 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
             uint32_t dt = tick_diff_u32(t_end, sensor->t_start);
 
             portENTER_CRITICAL_ISR(&sensor->mux);
-            sensor->used_periods = used;
-            sensor->dt_ticks = dt;
-            sensor->new_result = true;
+            sensor->used_periods += used;
+            sensor->dt_ticks += dt;
             portEXIT_CRITICAL_ISR(&sensor->mux);
 
             pcnt_unit_stop(sensor->pcnt_unit);
             sensor->running = false;
-
-            // Re-arm
-            sensor->armed = true;
+            sensor->t_start = sensor->t_last;  // Mark last timestamp as new start for next cycle
             
             // Metrics will be updated in loop() every 200ms (not in ISR!)
         }

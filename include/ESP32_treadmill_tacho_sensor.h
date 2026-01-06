@@ -61,15 +61,13 @@ typedef struct {
     uint32_t target_periods;
     
     // Measurement control
-    volatile bool     armed;      // waiting for first edge to start measurement window
-    volatile bool     running;    // measurement active (pcnt counting)
+    volatile bool     running;    // measurement active (pcnt counting), false=ready for new measurement
     
     // Captured timestamps (hardware latched)
     volatile uint32_t t_start;    // capture tick at first edge (window start)
     volatile uint32_t t_last;     // last capture tick seen (always updated on cap event)
     
     // Published result (snapshot)
-    volatile bool     new_result;
     volatile uint32_t used_periods; // how many periods used for last result
     volatile uint32_t dt_ticks;     // delta time in capture ticks for last result
     

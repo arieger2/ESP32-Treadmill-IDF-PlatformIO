@@ -97,11 +97,12 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
 
     // Atomic read of sensor result (ISR-safe critical section)
     portENTER_CRITICAL_ISR(&sensor->mux);
-    has_new = sensor->new_result;
-    if (has_new) {
+    if (sensor->used_periods) {
+        has_new = true;
         used = sensor->used_periods;
+        sensor->used_periods = 0;  // Clear after reading
         dt = sensor->dt_ticks;
-        sensor->new_result = false;  // Clear flag after reading
+        sensor->dt_ticks = 0;      // Clear after reading
     }
     portEXIT_CRITICAL_ISR(&sensor->mux);
 
@@ -213,47 +214,54 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
 void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
     if (sensor == NULL) return;
     
-    // Determine mode and validate sensor matches the mode
+    // Determine mode
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
     
     if (mode == SENSOR_AUTO) {
-        // AUTO mode: update both band and motor metrics from their respective sensors
-        // Update based on which sensor triggered this call
+        // AUTO mode: use sensor_type to determine which metrics to update
         if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
             // Motor sensor data
             sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
                                                                            storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
             metrics.motorRPM = motorResult.rpm;
-            metrics.workoutDistance += motorResult.delta_distance; // meters
+            metrics.workoutDistance += motorResult.delta_distance;
             metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
         } else {
             // Band sensor data
             sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
                                                                           storedGlobals.BELT_DISTANCE_MM, 1.0f);
             metrics.rpm = bandResult.rpm;
-            // Note: mps is calculated from motor for better stability in AUTO mode
+            metrics.mps = speed_sensor_get_mps(bandResult.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+            metrics.workoutDistance += bandResult.delta_distance;
+            // Calculate motor RPM from band RPM using ratio (for single-sensor setups)
+            if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
+                metrics.motorRPM = bandResult.rpm / storedGlobals.MOTOR_TO_BELT_RATIO;
+            }
         }
         
     } else if (mode == SENSOR_BAND) {
-        // BAND mode: only update if sensor is actually the band sensor
-        if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
-                                                                      storedGlobals.BELT_DISTANCE_MM, 1.0f);
-            metrics.rpm = result.rpm;
-            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-            metrics.workoutDistance += result.delta_distance; // meters
+        // BAND mode: interpret ANY sensor as band sensor
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.rpm = result.rpm;
+        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.workoutDistance += result.delta_distance;
+        // Calculate motor RPM from band RPM using ratio
+        if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
+            metrics.motorRPM = result.rpm / storedGlobals.MOTOR_TO_BELT_RATIO;
         }
-        // else: sensor is motor but mode is band - do nothing
+        
     } else if (mode == SENSOR_MOTOR) {
-        // MOTOR mode: only update if sensor is actually the motor sensor
-        if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
-            sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
-                                                                      storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-            metrics.motorRPM = result.rpm;
-            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-            metrics.workoutDistance += result.delta_distance; // meters
+        // MOTOR mode: interpret ANY sensor as motor sensor
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        metrics.motorRPM = result.rpm;
+        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        metrics.workoutDistance += result.delta_distance;
+        // Calculate band RPM from motor RPM using ratio
+        if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
+            metrics.rpm = result.rpm * storedGlobals.MOTOR_TO_BELT_RATIO;
         }
-        // else: sensor is band but mode is motor - do nothing
     }
     
     // NOTE: Filter is now applied separately in loop() via applySpeedFilter()
