@@ -178,9 +178,9 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           <div class="form-group">
             <label>Sensor Source Mode:</label>
             <select id="sensorSourceMode" name="sensorSourceMode" data-value="%SENSOR_SOURCE_MODE%">
-              <option value="0">Band Sensor</option>
-              <option value="1">Motor Sensor</option>
-              <option value="2">Hybrid (Automatic)</option>
+              <option value="0">Hybrid (Automatic)</option>
+              <option value="1">Band Sensor</option>
+              <option value="2">Motor Sensor</option>
             </select>
           </div>
         </div>
