@@ -119,7 +119,9 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         
         // Step 4: Calculate delta distance in meters
         // revolutions = pulses / pulses_per_rev
-        // distance = belt_circumference × revolutions × gear_ratio
+        // distance = belt_circumference × revolutions × belt_ratio
+        // NOTE: belt_ratio applied HERE for delta_distance calculation
+        //       get_mps() should use ratio=1.0 to avoid double application
         float revolutions = (float)used / (float)pulses_per_rev;
         float distance_mm = belt_distance_mm * revolutions * belt_ratio;
         result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
@@ -217,50 +219,47 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
     // Determine mode
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
     
-    if (mode == SENSOR_AUTO) {
-        // AUTO mode: use sensor_type to determine which metrics to update
+    if (mode == SENSOR_BAND) {
+        // BAND mode: Only process Band sensor (Sensor 1), ignore Motor sensor (Sensor 2)
+        if (sensor->sensor_type != SENSOR_TYPE_BAND) return;
+        
+        // Ratio=1.0 in both functions for band sensor (direct measurement, no gear ratio)
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.rpm = result.rpm;
+        metrics.motorRPM = 0.0f;  // Motor RPM set to 0, not calculated from band
+        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.workoutDistance += result.delta_distance;
+        
+    } else if (mode == SENSOR_MOTOR) {
+        // MOTOR mode: Only process Motor sensor (Sensor 2), ignore Band sensor (Sensor 1)
+        if (sensor->sensor_type != SENSOR_TYPE_MOTOR) return;
+        
+        // Ratio=1.0 in get_rpm_and_delta, actual ratio applied ONLY in get_mps
+        // This prevents double ratio application (was causing 2x speed error)
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        metrics.rpm = 0.0f;  // Band RPM set to 0, not calculated from motor
+        metrics.motorRPM = result.rpm;
+        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.workoutDistance += result.delta_distance;
+        
+    } else if (mode == SENSOR_AUTO) {
+        // AUTO/HYBRID mode: Process both sensors, Motor prioritized for speed calculation
         if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
-            // Motor sensor data
+            // Motor sensor data - ratio applied ONLY in get_mps, not in get_rpm_and_delta
             sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
                                                                            storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
             metrics.motorRPM = motorResult.rpm;
+            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
             metrics.workoutDistance += motorResult.delta_distance;
-            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
         } else {
             // Band sensor data
             sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
                                                                           storedGlobals.BELT_DISTANCE_MM, 1.0f);
             metrics.rpm = bandResult.rpm;
-            metrics.mps = speed_sensor_get_mps(bandResult.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
             metrics.workoutDistance += bandResult.delta_distance;
-            // Calculate motor RPM from band RPM using ratio (for single-sensor setups)
-            if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
-                metrics.motorRPM = bandResult.rpm / storedGlobals.MOTOR_TO_BELT_RATIO;
-            }
-        }
-        
-    } else if (mode == SENSOR_BAND) {
-        // BAND mode: interpret ANY sensor as band sensor
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
-                                                                  storedGlobals.BELT_DISTANCE_MM, 1.0f);
-        metrics.rpm = result.rpm;
-        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-        metrics.workoutDistance += result.delta_distance;
-        // Calculate motor RPM from band RPM using ratio
-        if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
-            metrics.motorRPM = result.rpm / storedGlobals.MOTOR_TO_BELT_RATIO;
-        }
-        
-    } else if (mode == SENSOR_MOTOR) {
-        // MOTOR mode: interpret ANY sensor as motor sensor
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
-                                                                  storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-        metrics.motorRPM = result.rpm;
-        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-        metrics.workoutDistance += result.delta_distance;
-        // Calculate band RPM from motor RPM using ratio
-        if (storedGlobals.MOTOR_TO_BELT_RATIO > 0.0f) {
-            metrics.rpm = result.rpm * storedGlobals.MOTOR_TO_BELT_RATIO;
+            // mps NOT updated from band sensor (Motor has priority in AUTO mode)
         }
     }
     

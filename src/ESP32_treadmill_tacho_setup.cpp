@@ -191,8 +191,8 @@ void loadSettings() {
   storedGlobals.DEBOUNCE_THRESHOLD_US = prefs.getLong (NVSKeys::DEBOUNCE_US, 13);
   storedGlobals.MAX_REVOLUTION_TIME_MS= prefs.getLong (NVSKeys::MAXREV_MS, 2000);
   storedGlobals.PULSES_PER_REV        = prefs.getLong (NVSKeys::PPR_BELT, 2);
-  storedGlobals.BAND_PULSE_MULTIPLIER = prefs.getLong (NVSKeys::PPR_MULT_BAND, 1);
-  storedGlobals.MOTOR_PULSE_MULTIPLIER= prefs.getLong (NVSKeys::PPR_MULT_MTR, 1);
+  storedGlobals.BAND_PULSE_MULTIPLIER = prefs.getUInt (NVSKeys::PPR_MULT_BAND, 1);
+  storedGlobals.MOTOR_PULSE_MULTIPLIER= prefs.getUInt (NVSKeys::PPR_MULT_MTR, 1);
   storedGlobals.MOTOR_PULSES_PER_REV  = prefs.getLong (NVSKeys::PPR_MOTOR, 12);
   storedGlobals.MOTOR_TO_BELT_RATIO   = prefs.getFloat(NVSKeys::RATIO, 0.413793);
   storedGlobals.FORCE_USE_MOTOR       = prefs.getBool (NVSKeys::FORCE_MOTOR, false);

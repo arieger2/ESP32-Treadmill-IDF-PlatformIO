@@ -266,7 +266,6 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     // Stop counting, ready for next measurement cycle
     pcnt_unit_stop(sensor->pcnt_unit);
     sensor->running = false;
-    sensor->t_start = sensor->t_last;  // Mark last timestamp as new start for next cycle
 
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 
@@ -361,7 +360,6 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
 
             pcnt_unit_stop(sensor->pcnt_unit);
             sensor->running = false;
-            sensor->t_start = sensor->t_last;  // Mark last timestamp as new start for next cycle
             
             // Metrics will be updated in loop() every 200ms (not in ISR!)
         }
