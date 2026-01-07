@@ -49,6 +49,9 @@ extern speed_sensor_t s_sensor2;
 // Static filter instances (one for band, one for motor)
 static SpeedFilter bandFilter;
 static SpeedFilter motorFilter;
+// Flags let applySpeedFilter() reset smoothing when a zero-speed timeout fires
+static volatile bool bandFilterResetPending = false;
+static volatile bool motorFilterResetPending = false;
 
 
 /**
@@ -75,7 +78,7 @@ static SpeedFilter motorFilter;
 sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
                                                  float belt_distance_mm)
 {
-    sensor_result_t result = {0.0f, 0.0f};
+    sensor_result_t result = {0.0f, 0.0f, false, false};
     
     if (sensor == NULL) return result;
     
@@ -85,11 +88,16 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
     float *last_rpm = (sensor == &s_sensor1) ? &last_rpm_s1 : &last_rpm_s2;
 
     bool has_new = false;
+    bool zero_pending = false;
     uint32_t used = 0;
     uint32_t dt = 0;
 
     // Atomic read of sensor result (ISR-safe critical section)
     portENTER_CRITICAL_ISR(&sensor->mux);
+    if (sensor->zero_pending) {
+        zero_pending = true;
+        sensor->zero_pending = false;
+    }
     if (sensor->used_periods) {
         has_new = true;
         used = sensor->used_periods;
@@ -97,11 +105,17 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         dt = sensor->dt_ticks;
         sensor->dt_ticks = 0;      // Clear after reading
         
-        // DEBUG: Log what we read from ISR
-        Serial.printf("[READ] Sensor%d: used=%lu dt=%lu\n", 
-                      sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
     }
     portEXIT_CRITICAL_ISR(&sensor->mux);
+
+    if (zero_pending) {
+        *last_rpm = 0.0f;
+        result.rpm = 0.0f;
+        result.delta_distance = 0.0f;
+        result.has_new = true;
+        result.force_reset = true;
+        return result;
+    }
 
     // Calculate new RPM and distance if we have valid new data
     if (has_new && dt > 0 && pulses_per_rev > 0) {
@@ -114,10 +128,6 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         // Step 3: Convert to RPM
         *last_rpm = (hz * 60.0f) / (float)pulses_per_rev;
         
-        // DEBUG: Log calculation details
-        Serial.printf("[CALC] Sensor%d: pulses=%lu time=%.6fs hz=%.2f ppr=%lu RPM=%.2f\n",
-                      sensor->sensor_type, (unsigned long)used, seconds, hz, 
-                      (unsigned long)pulses_per_rev, *last_rpm);
         // Always return current RPM (cached or newly calculated)
         result.rpm = *last_rpm;
         
@@ -136,11 +146,13 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         }
         
         result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
+        result.has_new = true;
     }
     else {
         // No new data - return last valid RPM
         result.rpm = *last_rpm;
         result.delta_distance = 0.0f;
+        result.has_new = false;
     }
     return result;
 }
@@ -226,44 +238,63 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
 }
 
 void updateMetrics(TreadmillMetrics& metrics) {
-    // Determine mode
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
-    
-    if (mode == SENSOR_BAND) {     
-        // Ratio=1.0 in both functions for band sensor (direct measurement, no gear ratio)
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
+
+    if (mode == SENSOR_BAND) {
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
                                                                   storedGlobals.BELT_DISTANCE_MM);
-        metrics.rpm = result.rpm;
-        metrics.workoutDistance += result.delta_distance;
-        metrics.motorRPM = 0.0f;  // Motor RPM set to 0, not calculated from band
-        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-    } else if (mode == SENSOR_MOTOR) {        
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV, 
+        if (result.force_reset) {
+            metrics.rpm = 0.0f;
+            metrics.motorRPM = 0.0f;
+            metrics.mps = 0.0f;
+            bandFilterResetPending = true;
+        } else {
+            metrics.rpm = result.rpm;
+            metrics.motorRPM = 0.0f;
+            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+            if (result.delta_distance > 0.0f) {
+                metrics.workoutDistance += result.delta_distance;
+            }
+        }
+    } else if (mode == SENSOR_MOTOR) {
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
                                                                   storedGlobals.BELT_DISTANCE_MM);
-        metrics.rpm = 0.0f;  // Band RPM set to 0, not calculated from motor
-        metrics.motorRPM = result.rpm;
-        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-        metrics.workoutDistance += result.delta_distance;
-        
+        if (result.force_reset) {
+            metrics.rpm = 0.0f;
+            metrics.motorRPM = 0.0f;
+            metrics.mps = 0.0f;
+            motorFilterResetPending = true;
+        } else {
+            metrics.rpm = 0.0f;
+            metrics.motorRPM = result.rpm;
+            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+            if (result.delta_distance > 0.0f) {
+                metrics.workoutDistance += result.delta_distance;
+            }
+        }
     } else if (mode == SENSOR_AUTO) {
-        // AUTO/HYBRID mode: Process both sensors, Motor prioritized for speed calculation
-
-        // Motor sensor data - ratio applied ONLY in get_mps, not in get_rpm_and_delta
-        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV, 
+        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
                                                                            storedGlobals.BELT_DISTANCE_MM);
-        metrics.motorRPM = motorResult.rpm;
-        metrics.workoutDistance += motorResult.delta_distance;
-        metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+        if (motorResult.force_reset) {
+            metrics.motorRPM = 0.0f;
+            metrics.mps = 0.0f;
+            motorFilterResetPending = true;
+        } else {
+            metrics.motorRPM = motorResult.rpm;
+            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+            if (motorResult.delta_distance > 0.0f) {
+                metrics.workoutDistance += motorResult.delta_distance;
+            }
+        }
 
-        // Band sensor data
-        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
+        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
                                                                       storedGlobals.BELT_DISTANCE_MM);
-        metrics.rpm = bandResult.rpm;
-        // mps & DistanceNOT updated from band sensor (Motor has priority in AUTO mode)
+        if (bandResult.force_reset) {
+            metrics.rpm = 0.0f;
+        } else {
+            metrics.rpm = bandResult.rpm;
+        }
     }
-    
-    // NOTE: Filter is now applied separately in loop() via applySpeedFilter()
-    // This keeps the ISR-called updateMetrics() as fast as possible
 }
 
 /**
@@ -284,6 +315,19 @@ void applySpeedFilter(TreadmillMetrics& metrics) {
         : static_cast<SpeedFilterType>(storedGlobals.MOTOR_FILTER_TYPE);
     
     activeFilter->setFilterType(filterType);
+    if (mode == SENSOR_BAND) {
+        if (bandFilterResetPending) {
+            activeFilter->reset();
+            metrics.mpsSmooth = metrics.mps;
+            bandFilterResetPending = false;
+        }
+    } else {
+        if (motorFilterResetPending) {
+            activeFilter->reset();
+            metrics.mpsSmooth = metrics.mps;
+            motorFilterResetPending = false;
+        }
+    }
     bool isDecelerating = (metrics.mps < metrics.mpsSmooth);
     metrics.mpsSmooth = activeFilter->update(metrics.mps, isDecelerating);
 }

@@ -151,10 +151,10 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
         };
         ESP_RETURN_ON_ERROR(pcnt_new_channel(sensor->pcnt_unit, &chcfg, &sensor->pcnt_chan), TAG, "new pcnt chan");
 
-        // Count rising edges only (increment on positive edge, hold on negative)
+        // Count only rising edges so pulses_per_rev matches physical magnets
         ESP_RETURN_ON_ERROR(pcnt_channel_set_edge_action(sensor->pcnt_chan,
-                                                        PCNT_CHANNEL_EDGE_ACTION_INCREASE,
-                                                        PCNT_CHANNEL_EDGE_ACTION_HOLD), TAG, "edge action");
+                    PCNT_CHANNEL_EDGE_ACTION_INCREASE,
+                    PCNT_CHANNEL_EDGE_ACTION_HOLD), TAG, "edge action");
         ESP_RETURN_ON_ERROR(pcnt_channel_set_level_action(sensor->pcnt_chan,
                                                          PCNT_CHANNEL_LEVEL_ACTION_KEEP,
                                                          PCNT_CHANNEL_LEVEL_ACTION_KEEP), TAG, "level action");

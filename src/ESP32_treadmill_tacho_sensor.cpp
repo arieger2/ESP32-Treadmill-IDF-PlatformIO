@@ -137,6 +137,7 @@ speed_sensor_t s_sensor1 = {
     .t_last = 0,
     .used_periods = 0,
     .dt_ticks = 0,
+    .zero_pending = false,
     .mux = portMUX_INITIALIZER_UNLOCKED
 };
 
@@ -154,6 +155,7 @@ speed_sensor_t s_sensor2 = {
     .t_last = 0,
     .used_periods = 0,
     .dt_ticks = 0,
+    .zero_pending = false,
     .mux = portMUX_INITIALIZER_UNLOCKED
 };
 
@@ -209,19 +211,6 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
         capture_cb_count_s2++;
     }
 
-    // SOFTWARE DEBOUNCING: Ignore edges too close together (glitch filtering)
-    // PCNT has hardware glitch filter, but MCPWM doesn't - add software filter here
-    // 13µs = 130 ticks at 10MHz (same debounce threshold as PCNT hardware filter)
-    static const uint32_t DEBOUNCE_TICKS = 130;  // 13µs * 10 ticks/µs
-    
-    if (sensor->running) {
-        uint32_t dt = t - sensor->t_last;  // Time since last valid edge
-        if (dt < DEBOUNCE_TICKS) {
-            // Too soon - likely a glitch, ignore this edge
-            return false;
-        }
-    }
-
     // Valid edge: update timestamp
     sensor->t_last = t;
 
@@ -235,8 +224,6 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
 
         sensor->running = true;
         
-        // DEBUG: Log start of measurement window
-        ESP_EARLY_LOGI(TAG, "[CAPTURE-START] Sensor%d started measuring", sensor->sensor_type);
     }
 
     return false; // no yield
@@ -299,16 +286,13 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     portENTER_CRITICAL_ISR(&sensor->mux);
     sensor->used_periods += used;
     sensor->dt_ticks += dt;
+    sensor->zero_pending = false;
     portEXIT_CRITICAL_ISR(&sensor->mux);
 
     // Stop counting, ready for next measurement cycle
     pcnt_unit_stop(sensor->pcnt_unit);
     sensor->running = false;
     
-    // DEBUG: Log ISR data (minimal logging from ISR)
-    ESP_EARLY_LOGI(TAG, "[ISR-PCNT] Sensor%d: used=%lu dt=%lu", 
-                   sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
-
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 
     return false;
@@ -382,20 +366,14 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
         
         // If not running, nothing to do (still waiting for first edge)
         if (!sensor->running) {
-            // DEBUG: Log skipped sensor
-            ESP_EARLY_LOGI(TAG, "[TIMEOUT] Sensor%d: not running, skip", sensor->sensor_type);
             continue;
         }
 
         // Read current count (how many periods observed so far)
         int count = 0;
         pcnt_unit_get_count(sensor->pcnt_unit, &count);
-        
-        // DEBUG: Always log PCNT count
-        ESP_EARLY_LOGI(TAG, "[TIMEOUT] Sensor%d: PCNT count=%d running=%d", 
-                       sensor->sensor_type, count, sensor->running);
 
-        // If we have at least 1 period, publish a result; else keep waiting
+        // If we have at least 1 period, publish a result; else mark zero-speed
         if (count > 0) {
             // DEBUG: Count timeout callbacks
             if (sensor->sensor_type == SENSOR_TYPE_BAND) {
@@ -411,16 +389,22 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
             portENTER_CRITICAL_ISR(&sensor->mux);
             sensor->used_periods += used;
             sensor->dt_ticks += dt;
+            sensor->zero_pending = false;
             portEXIT_CRITICAL_ISR(&sensor->mux);
 
             pcnt_unit_stop(sensor->pcnt_unit);
             sensor->running = false;
             
-            // DEBUG: Log timeout data (minimal logging from ISR)
-            ESP_EARLY_LOGI(TAG, "[ISR-TIMEOUT] Sensor%d: used=%lu dt=%lu ticks", 
-                           sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
-            
             // Metrics will be updated in loop() every 200ms (not in ISR!)
+        } else {
+            portENTER_CRITICAL_ISR(&sensor->mux);
+            sensor->used_periods = 0;
+            sensor->dt_ticks = 0;
+            sensor->zero_pending = true;
+            portEXIT_CRITICAL_ISR(&sensor->mux);
+
+            pcnt_unit_stop(sensor->pcnt_unit);
+            sensor->running = false;
         }
     }
 

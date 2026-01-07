@@ -42,6 +42,8 @@ typedef enum {
 typedef struct {
     float rpm;              // Rotational speed in revolutions per minute
     float delta_distance;   // Distance traveled in meters since last measurement
+    bool  has_new;          // True when fresh data (including forced zero) is available
+    bool  force_reset;      // True when filters should reset (zero-speed timeout)
 } sensor_result_t;
 
 /* ==========================
@@ -70,6 +72,7 @@ typedef struct {
     // Published result (snapshot)
     volatile uint32_t used_periods; // how many periods used for last result
     volatile uint32_t dt_ticks;     // delta time in capture ticks for last result
+    volatile bool     zero_pending; // flag to force zero-speed publication
     
     portMUX_TYPE mux;
 } speed_sensor_t;
@@ -133,16 +136,15 @@ float speed_sensor_get_rpm(speed_sensor_t *sensor, uint32_t pulses_per_rev);
  * @param sensor Pointer to sensor structure
  * @param pulses_per_rev Number of pulses in one complete revolution
  * @param belt_distance_mm Belt circumference in millimeters
- * @param belt_ratio Motor-to-belt ratio (1.0 for direct drive)
  * @return sensor_result_t containing rpm and delta_distance (in meters)
  * 
  * Example:
- *   sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, 48, 1600.0f, 1.0f);
+ *   sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, 48, 1600.0f);
  *   float rpm = result.rpm;
  *   float meters = result.delta_distance;
  */
 sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
-                                                 float belt_distance_mm, float belt_ratio);
+                                                 float belt_distance_mm);
 
 /**
  * Convert RPM to meters per second (m/s)
