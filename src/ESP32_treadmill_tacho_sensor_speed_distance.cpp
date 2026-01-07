@@ -242,7 +242,7 @@ void updateMetrics(TreadmillMetrics& metrics) {
                                                                   storedGlobals.BELT_DISTANCE_MM);
         metrics.rpm = 0.0f;  // Band RPM set to 0, not calculated from motor
         metrics.motorRPM = result.rpm;
-        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
         metrics.workoutDistance += result.delta_distance;
         
     } else if (mode == SENSOR_AUTO) {
