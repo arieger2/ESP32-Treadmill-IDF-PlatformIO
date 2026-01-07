@@ -202,14 +202,27 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
 
     uint32_t t = edata->cap_value;
     
-    // DEBUG: Count calls
+    // DEBUG: Count ALL callback invocations (including filtered glitches)
     if (sensor->sensor_type == SENSOR_TYPE_BAND) {
         capture_cb_count_s1++;
     } else {
         capture_cb_count_s2++;
     }
 
-    // Always keep "latest edge timestamp" for timeout/end timestamping
+    // SOFTWARE DEBOUNCING: Ignore edges too close together (glitch filtering)
+    // PCNT has hardware glitch filter, but MCPWM doesn't - add software filter here
+    // 13µs = 130 ticks at 10MHz (same debounce threshold as PCNT hardware filter)
+    static const uint32_t DEBOUNCE_TICKS = 130;  // 13µs * 10 ticks/µs
+    
+    if (sensor->running) {
+        uint32_t dt = t - sensor->t_last;  // Time since last valid edge
+        if (dt < DEBOUNCE_TICKS) {
+            // Too soon - likely a glitch, ignore this edge
+            return false;
+        }
+    }
+
+    // Valid edge: update timestamp
     sensor->t_last = t;
 
     // Start logic: start measurement window on first edge when ready
