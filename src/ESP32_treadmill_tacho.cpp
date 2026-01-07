@@ -227,8 +227,7 @@ void loop() {
         lastSensorUpdate = now;
         
         // Update metrics from both sensors (functions check internally for new data)
-        updateMetrics(metrics, speed_sensor_get_sensor1());
-        updateMetrics(metrics, speed_sensor_get_sensor2());
+        updateMetrics(metrics);
     }
 
     // TEST MODE: Now handled automatically by on_timeout_cb ISR (no loop code needed)
@@ -284,15 +283,28 @@ void loop() {
             sendHR_BLE_Data();  // Broadcast HR from belt to Zwift
         }
                 
-        // Debug every 30 seconds
+        // Debug every 5 seconds - show ISR counters
         static uint32_t lastDebug = 0;
-        static float lastMps = 0.0f;
-        if (now - lastDebug >= 30000 && fabsf(metrics.mps - lastMps) >= 0.1f) {
+        if (now - lastDebug >= 5000) {
             lastDebug = now;
-            lastMps = metrics.mps;
             float kmh = metrics.mps * 3.6f;
-            Serial.printf(" kmh=%.2f\r\n", kmh);
-            Serial.println();
+            
+            extern volatile uint32_t capture_cb_count_s1, capture_cb_count_s2;
+            extern volatile uint32_t pcnt_cb_count_s1, pcnt_cb_count_s2;
+            extern volatile uint32_t timeout_cb_count_s1, timeout_cb_count_s2;
+            
+            Serial.printf("\n=== ISR COUNTERS (5s) ===\n");
+            Serial.printf("Band (S1):  capture=%lu pcnt=%lu timeout=%lu\n", 
+                          (unsigned long)capture_cb_count_s1, 
+                          (unsigned long)pcnt_cb_count_s1,
+                          (unsigned long)timeout_cb_count_s1);
+            Serial.printf("Motor (S2): capture=%lu pcnt=%lu timeout=%lu\n",
+                          (unsigned long)capture_cb_count_s2,
+                          (unsigned long)pcnt_cb_count_s2,
+                          (unsigned long)timeout_cb_count_s2);
+            Serial.printf("Speed: %.2f km/h, RPM: %.1f, motorRPM: %.1f\n", 
+                          kmh, metrics.rpm, metrics.motorRPM);
+            Serial.printf("=========================\n\n");
         }
     }
     

@@ -101,6 +101,14 @@ static const char *TAG = "speed_sensor";
 // External metrics reference
 extern TreadmillMetrics metrics;
 
+// DEBUG: ISR call counters (not static so they can be accessed via extern)
+volatile uint32_t capture_cb_count_s1 = 0;
+volatile uint32_t capture_cb_count_s2 = 0;
+volatile uint32_t pcnt_cb_count_s1 = 0;
+volatile uint32_t pcnt_cb_count_s2 = 0;
+volatile uint32_t timeout_cb_count_s1 = 0;
+volatile uint32_t timeout_cb_count_s2 = 0;
+
 /* ==========================
  * User configuration
  * ========================== */
@@ -193,6 +201,13 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
     speed_sensor_t *sensor = (speed_sensor_t *)user_data;  // Identifies which sensor (1 or 2)
 
     uint32_t t = edata->cap_value;
+    
+    // DEBUG: Count calls
+    if (sensor->sensor_type == SENSOR_TYPE_BAND) {
+        capture_cb_count_s1++;
+    } else {
+        capture_cb_count_s2++;
+    }
 
     // Always keep "latest edge timestamp" for timeout/end timestamping
     sensor->t_last = t;
@@ -206,6 +221,9 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
         pcnt_unit_start(sensor->pcnt_unit);
 
         sensor->running = true;
+        
+        // DEBUG: Log start of measurement window
+        ESP_EARLY_LOGI(TAG, "[CAPTURE-START] Sensor%d started measuring", sensor->sensor_type);
     }
 
     return false; // no yield
@@ -249,6 +267,13 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
 {
     (void)unit;
     speed_sensor_t *sensor = (speed_sensor_t *)user_data;
+    
+    // DEBUG: Count PCNT callbacks
+    if (sensor->sensor_type == SENSOR_TYPE_BAND) {
+        pcnt_cb_count_s1++;
+    } else {
+        pcnt_cb_count_s2++;
+    }
 
     // edata->watch_point_value is the count at trigger (target)
     uint32_t used = (uint32_t)edata->watch_point_value;
@@ -266,6 +291,10 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     // Stop counting, ready for next measurement cycle
     pcnt_unit_stop(sensor->pcnt_unit);
     sensor->running = false;
+    
+    // DEBUG: Log ISR data (minimal logging from ISR)
+    ESP_EARLY_LOGI(TAG, "[ISR-PCNT] Sensor%d: used=%lu dt=%lu", 
+                   sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
 
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 
@@ -340,15 +369,28 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
         
         // If not running, nothing to do (still waiting for first edge)
         if (!sensor->running) {
+            // DEBUG: Log skipped sensor
+            ESP_EARLY_LOGI(TAG, "[TIMEOUT] Sensor%d: not running, skip", sensor->sensor_type);
             continue;
         }
 
         // Read current count (how many periods observed so far)
         int count = 0;
         pcnt_unit_get_count(sensor->pcnt_unit, &count);
+        
+        // DEBUG: Always log PCNT count
+        ESP_EARLY_LOGI(TAG, "[TIMEOUT] Sensor%d: PCNT count=%d running=%d", 
+                       sensor->sensor_type, count, sensor->running);
 
         // If we have at least 1 period, publish a result; else keep waiting
         if (count > 0) {
+            // DEBUG: Count timeout callbacks
+            if (sensor->sensor_type == SENSOR_TYPE_BAND) {
+                timeout_cb_count_s1++;
+            } else {
+                timeout_cb_count_s2++;
+            }
+            
             uint32_t used = (uint32_t)count;
             uint32_t t_end = sensor->t_last;
             uint32_t dt = tick_diff_u32(t_end, sensor->t_start);
@@ -360,6 +402,10 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
 
             pcnt_unit_stop(sensor->pcnt_unit);
             sensor->running = false;
+            
+            // DEBUG: Log timeout data (minimal logging from ISR)
+            ESP_EARLY_LOGI(TAG, "[ISR-TIMEOUT] Sensor%d: used=%lu dt=%lu ticks", 
+                           sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
             
             // Metrics will be updated in loop() every 200ms (not in ISR!)
         }

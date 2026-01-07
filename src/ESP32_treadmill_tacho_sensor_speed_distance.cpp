@@ -64,13 +64,6 @@ static SpeedFilter motorFilter;
  * @param belt_ratio Motor-to-belt ratio (1.0 for direct drive)
  * @return sensor_result_t containing rpm and delta_distance (in meters)
  * 
- * USAGE EXAMPLES:
- * ---------------
- * // Band sensor with 48 pulses/rev, 1600mm belt
- * sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor1, 48, 1600.0f, 1.0f);
- * 
- * // Motor sensor with 12 pulses/rev, 1600mm belt, 0.5 ratio
- * sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor2, 12, 1600.0f, 0.5f);
  * 
  * BEHAVIOR:
  * ---------
@@ -80,7 +73,7 @@ static SpeedFilter motorFilter;
  * - Thread-safe: uses critical section for atomic access
  */
 sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
-                                                 float belt_distance_mm, float belt_ratio)
+                                                 float belt_distance_mm)
 {
     sensor_result_t result = {0.0f, 0.0f};
     
@@ -103,6 +96,10 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         sensor->used_periods = 0;  // Clear after reading
         dt = sensor->dt_ticks;
         sensor->dt_ticks = 0;      // Clear after reading
+        
+        // DEBUG: Log what we read from ISR
+        Serial.printf("[READ] Sensor%d: used=%lu dt=%lu\n", 
+                      sensor->sensor_type, (unsigned long)used, (unsigned long)dt);
     }
     portEXIT_CRITICAL_ISR(&sensor->mux);
 
@@ -117,19 +114,34 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         // Step 3: Convert to RPM
         *last_rpm = (hz * 60.0f) / (float)pulses_per_rev;
         
+        // DEBUG: Log calculation details
+        Serial.printf("[CALC] Sensor%d: pulses=%lu time=%.6fs hz=%.2f ppr=%lu RPM=%.2f\n",
+                      sensor->sensor_type, (unsigned long)used, seconds, hz, 
+                      (unsigned long)pulses_per_rev, *last_rpm);
+        // Always return current RPM (cached or newly calculated)
+        result.rpm = *last_rpm;
+        
         // Step 4: Calculate delta distance in meters
         // revolutions = pulses / pulses_per_rev
         // distance = belt_circumference × revolutions × belt_ratio
         // NOTE: belt_ratio applied HERE for delta_distance calculation
         //       get_mps() should use ratio=1.0 to avoid double application
         float revolutions = (float)used / (float)pulses_per_rev;
-        float distance_mm = belt_distance_mm * revolutions * belt_ratio;
+        float distance_mm = 0.0f;
+        if (sensor->sensor_type == SENSOR_TYPE_BAND) { // Band sensor ration 1.0f
+            // No special handling needed
+            distance_mm = belt_distance_mm * revolutions;
+        } else {
+            distance_mm = belt_distance_mm * revolutions * storedGlobals.MOTOR_TO_BELT_RATIO;
+        }
+        
         result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
     }
-    
-    // Always return current RPM (cached or newly calculated)
-    result.rpm = *last_rpm;
-    
+    else {
+        // No new data - return last valid RPM
+        result.rpm = *last_rpm;
+        result.delta_distance = 0.0f;
+    }
     return result;
 }
 
@@ -213,32 +225,21 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
     return &s_sensor2;
 }
 
-void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
-    if (sensor == NULL) return;
-    
+void updateMetrics(TreadmillMetrics& metrics) {
     // Determine mode
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
     
-    if (mode == SENSOR_BAND) {
-        // BAND mode: Only process Band sensor (Sensor 1), ignore Motor sensor (Sensor 2)
-        if (sensor->sensor_type != SENSOR_TYPE_BAND) return;
-        
+    if (mode == SENSOR_BAND) {     
         // Ratio=1.0 in both functions for band sensor (direct measurement, no gear ratio)
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
-                                                                  storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM);
         metrics.rpm = result.rpm;
+        metrics.workoutDistance += result.delta_distance;
         metrics.motorRPM = 0.0f;  // Motor RPM set to 0, not calculated from band
         metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-        metrics.workoutDistance += result.delta_distance;
-        
-    } else if (mode == SENSOR_MOTOR) {
-        // MOTOR mode: Only process Motor sensor (Sensor 2), ignore Band sensor (Sensor 1)
-        if (sensor->sensor_type != SENSOR_TYPE_MOTOR) return;
-        
-        // Ratio=1.0 in get_rpm_and_delta, actual ratio applied ONLY in get_mps
-        // This prevents double ratio application (was causing 2x speed error)
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
-                                                                  storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+    } else if (mode == SENSOR_MOTOR) {        
+        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                  storedGlobals.BELT_DISTANCE_MM);
         metrics.rpm = 0.0f;  // Band RPM set to 0, not calculated from motor
         metrics.motorRPM = result.rpm;
         metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
@@ -246,21 +247,19 @@ void updateMetrics(TreadmillMetrics& metrics, speed_sensor_t *sensor) {
         
     } else if (mode == SENSOR_AUTO) {
         // AUTO/HYBRID mode: Process both sensors, Motor prioritized for speed calculation
-        if (sensor->sensor_type == SENSOR_TYPE_MOTOR) {
-            // Motor sensor data - ratio applied ONLY in get_mps, not in get_rpm_and_delta
-            sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.MOTOR_PULSES_PER_REV, 
-                                                                           storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-            metrics.motorRPM = motorResult.rpm;
-            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-            metrics.workoutDistance += motorResult.delta_distance;
-        } else {
-            // Band sensor data
-            sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(sensor, storedGlobals.PULSES_PER_REV, 
-                                                                          storedGlobals.BELT_DISTANCE_MM, 1.0f);
-            metrics.rpm = bandResult.rpm;
-            metrics.workoutDistance += bandResult.delta_distance;
-            // mps NOT updated from band sensor (Motor has priority in AUTO mode)
-        }
+
+        // Motor sensor data - ratio applied ONLY in get_mps, not in get_rpm_and_delta
+        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV, 
+                                                                           storedGlobals.BELT_DISTANCE_MM);
+        metrics.motorRPM = motorResult.rpm;
+        metrics.workoutDistance += motorResult.delta_distance;
+        metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
+
+        // Band sensor data
+        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV, 
+                                                                      storedGlobals.BELT_DISTANCE_MM);
+        metrics.rpm = bandResult.rpm;
+        // mps & DistanceNOT updated from band sensor (Motor has priority in AUTO mode)
     }
     
     // NOTE: Filter is now applied separately in loop() via applySpeedFilter()

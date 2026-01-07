@@ -108,9 +108,10 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
         mcpwm_capture_channel_config_t ccfg = {};
         ccfg.gpio_num = sensor->gpio_num;
         ccfg.prescale = 1;
-        ccfg.flags.pos_edge = 1;  // Capture on rising edge only
-        ccfg.flags.neg_edge = 0;
-        ccfg.flags.pull_up = 1;   // Enable internal pull-up
+        ccfg.flags.pos_edge = 1;  // Capture on rising edge
+        ccfg.flags.neg_edge = 0;  // Do NOT capture on falling edge
+        ccfg.flags.pull_up = 0;   // Use EXTERNAL pull-up (as per pinModeSetup comment)
+        ccfg.flags.invert_cap_signal = 0;
         
         ESP_RETURN_ON_ERROR(mcpwm_new_capture_channel(sensor->cap_timer, &ccfg, &sensor->cap_chan), TAG, "new cap chan");
 
