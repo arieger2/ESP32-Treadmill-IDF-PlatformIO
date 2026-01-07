@@ -156,8 +156,8 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
                     PCNT_CHANNEL_EDGE_ACTION_INCREASE,
                     PCNT_CHANNEL_EDGE_ACTION_HOLD), TAG, "edge action");
         ESP_RETURN_ON_ERROR(pcnt_channel_set_level_action(sensor->pcnt_chan,
-                                                         PCNT_CHANNEL_LEVEL_ACTION_HOLD,
-                                                         PCNT_CHANNEL_LEVEL_ACTION_HOLD), TAG, "level action");
+                                                         PCNT_CHANNEL_LEVEL_ACTION_KEEP,
+                                                         PCNT_CHANNEL_LEVEL_ACTION_KEEP), TAG, "level action");
 
         // Set watchpoint to trigger callback when count reaches N
         ESP_RETURN_ON_ERROR(pcnt_unit_add_watch_point(sensor->pcnt_unit, (int)initial_periods), TAG, "add watchpoint");
