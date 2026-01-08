@@ -26,7 +26,7 @@ extern "C" {
  * Configuration constants
  * ========================== */
 #define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval
-#define CAPTURE_RES_HZ        10000000  // 10 MHz capture resolution
+#define CAPTURE_RES_HZ        80000000  // 80 MHz - ESP32-S3 capture timer is ALWAYS APB_CLK (resolution_hz config ignored)
 
 /* ==========================
  * Sensor type identifier

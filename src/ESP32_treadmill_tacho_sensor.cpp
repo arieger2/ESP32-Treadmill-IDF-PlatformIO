@@ -113,7 +113,7 @@ volatile uint32_t timeout_cb_count_s2 = 0;
  * User configuration
  * ========================== */
 #define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval (fallback for low speed)
-#define CAPTURE_RES_HZ        10000000  // 10 MHz capture timer resolution => 0.1 µs precision for timestamps
+#define CAPTURE_RES_HZ        80000000  // 80 MHz - ESP32-S3 capture timer is ALWAYS APB_CLK (resolution_hz config ignored)
 
 /* ==========================
  * Shared resources

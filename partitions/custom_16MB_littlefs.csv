@@ -1,7 +1,9 @@
-# Custom 16MB layout — Single factory app (3MB) + 8MB LittleFS
-# Suitable for ESP32-S3 Arduino projects with many web assets
+# Custom 16MB layout — OTA Enabled (2x 3MB App) + LittleFS
+# Required for ElegantOTA / Native OTA
 # Name,     Type, SubType,  Offset,  Size,   Flags
-nvs,        data, nvs,      0x9000,  24K,
-coredump,   data, coredump, 0xF000,  4K,
-app0,       app,  factory,  0x10000, 3072K,
-littlefs,   data, littlefs, 0x310000, 13056K,
+nvs,        data, nvs,      0x9000,  20K,
+otadata,    data, ota,      0xE000,  8K,
+app0,       app,  ota_0,    0x10000, 3072K,
+app1,       app,  ota_1,    ,        3072K,
+coredump,   data, coredump, ,        4K,
+littlefs,   data, littlefs, ,        9600K,
