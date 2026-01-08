@@ -102,12 +102,8 @@ static const char *TAG = "speed_sensor";
 extern TreadmillMetrics metrics;
 
 // DEBUG: ISR call counters (not static so they can be accessed via extern)
-volatile uint32_t capture_cb_count_s1 = 0;
 volatile uint32_t capture_cb_count_s2 = 0;
-volatile uint32_t pcnt_cb_count_s1 = 0;
-volatile uint32_t pcnt_cb_count_s2 = 0;
-volatile uint32_t timeout_cb_count_s1 = 0;
-volatile uint32_t timeout_cb_count_s2 = 0;
+volatile uint32_t pcnt_count_s2 = 0;
 
 /* ==========================
  * User configuration
@@ -203,12 +199,14 @@ bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
     speed_sensor_t *sensor = (speed_sensor_t *)user_data;  // Identifies which sensor (1 or 2)
 
     uint32_t t = edata->cap_value;
-    
-    // DEBUG: Count ALL callback invocations (including filtered glitches)
-    if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-        capture_cb_count_s1++;
-    } else {
-        capture_cb_count_s2++;
+
+    // Glitch filter: ignore pulses closer than 500 µs (40 ticks @ 80 MHz)
+    // At 80 MHz: 500 µs = 40,000 ticks
+    const uint32_t MIN_DT_TICKS = 100000;  // 500 µs @ 80 MHz
+    uint32_t dt = tick_diff_u32(t, sensor->t_last);
+    // Filter: reject pulse if too close to previous one
+    if (sensor->t_last != 0 && dt < MIN_DT_TICKS) {
+        return false;  // Ignore glitch
     }
 
     // Valid edge: update timestamp
@@ -268,13 +266,6 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     (void)unit;
     speed_sensor_t *sensor = (speed_sensor_t *)user_data;
     
-    // DEBUG: Count PCNT callbacks
-    if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-        pcnt_cb_count_s1++;
-    } else {
-        pcnt_cb_count_s2++;
-    }
-
     // edata->watch_point_value is the count at trigger (target)
     uint32_t used = (uint32_t)edata->watch_point_value;
 
@@ -375,19 +366,7 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
         pcnt_unit_get_count(sensor->pcnt_unit, &count);
 
         // If we have at least 1 period, publish a result; else mark zero-speed
-        if (count > 0) {
-            // DEBUG: Count timeout callbacks
-            if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-                timeout_cb_count_s1++;
-            } else {
-                timeout_cb_count_s2++;
-                // Log ISR counters on every timeout
-                Serial.printf("[TIMEOUT] Motor(S2): capture=%lu pcnt=%lu timeout=%lu\n",
-                  (unsigned long)capture_cb_count_s2,
-                  (unsigned long)pcnt_cb_count_s2,
-                  (unsigned long)timeout_cb_count_s2);
-            }
-            
+        if (count > 0) {            
             uint32_t used = (uint32_t)count;
             uint32_t t_end = sensor->t_last;
             uint32_t dt = tick_diff_u32(t_end, sensor->t_start);
