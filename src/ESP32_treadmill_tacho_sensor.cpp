@@ -358,6 +358,7 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
         return false;
     }
 
+
     // NORMAL MODE: Check both real sensors
     speed_sensor_t *sensors[] = {&s_sensor1, &s_sensor2};
     
@@ -380,6 +381,11 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
                 timeout_cb_count_s1++;
             } else {
                 timeout_cb_count_s2++;
+                // Log ISR counters on every timeout
+                Serial.printf("[TIMEOUT] Motor(S2): capture=%lu pcnt=%lu timeout=%lu\n",
+                  (unsigned long)capture_cb_count_s2,
+                  (unsigned long)pcnt_cb_count_s2,
+                  (unsigned long)timeout_cb_count_s2);
             }
             
             uint32_t used = (uint32_t)count;

@@ -282,30 +282,6 @@ void loop() {
             sendFTMS_BLE_Data();
             sendHR_BLE_Data();  // Broadcast HR from belt to Zwift
         }
-                
-        // Debug every 5 seconds - show ISR counters
-        static uint32_t lastDebug = 0;
-        if (now - lastDebug >= 5000) {
-            lastDebug = now;
-            float kmh = metrics.mps * 3.6f;
-            
-            extern volatile uint32_t capture_cb_count_s1, capture_cb_count_s2;
-            extern volatile uint32_t pcnt_cb_count_s1, pcnt_cb_count_s2;
-            extern volatile uint32_t timeout_cb_count_s1, timeout_cb_count_s2;
-            
-            Serial.printf("\n=== ISR COUNTERS (5s) ===\n");
-            Serial.printf("Band (S1):  capture=%lu pcnt=%lu timeout=%lu\n", 
-                          (unsigned long)capture_cb_count_s1, 
-                          (unsigned long)pcnt_cb_count_s1,
-                          (unsigned long)timeout_cb_count_s1);
-            Serial.printf("Motor (S2): capture=%lu pcnt=%lu timeout=%lu\n",
-                          (unsigned long)capture_cb_count_s2,
-                          (unsigned long)pcnt_cb_count_s2,
-                          (unsigned long)timeout_cb_count_s2);
-            Serial.printf("Speed: %.2f km/h, RPM: %.1f, motorRPM: %.1f\n", 
-                          kmh, metrics.rpm, metrics.motorRPM);
-            Serial.printf("=========================\n\n");
-        }
     }
     
     // Issue #2: Use FreeRTOS task delay for explicit yield

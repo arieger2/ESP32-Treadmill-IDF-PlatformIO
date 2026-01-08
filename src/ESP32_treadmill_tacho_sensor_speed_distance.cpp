@@ -87,11 +87,6 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
     static float last_rpm_s2 = 0.0f;
     float *last_rpm = (sensor == &s_sensor1) ? &last_rpm_s1 : &last_rpm_s2;
     
-    // DIAGNOSTIC_LOG: Configuration
-    const char* sensor_name = (sensor == &s_sensor1) ? "BAND" : "MOTOR";
-    Serial.printf("[DIAG] %s sensor: pulses_per_rev=%lu, belt_dist_mm=%.1f\n", 
-                  sensor_name, (unsigned long)pulses_per_rev, belt_distance_mm);
-
     bool has_new = false;
     bool zero_pending = false;
     uint32_t used = 0;
@@ -112,12 +107,6 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         
     }
     portEXIT_CRITICAL_ISR(&sensor->mux);
-    
-    // DIAGNOSTIC_LOG: Raw sensor data
-    if (has_new || zero_pending) {
-        Serial.printf("[DIAG] %s RAW: zero=%d, has_new=%d, used=%lu, dt_ticks=%lu\n",
-                      sensor_name, zero_pending, has_new, (unsigned long)used, (unsigned long)dt);
-    }
 
     if (zero_pending) {
         *last_rpm = 0.0f;
@@ -139,10 +128,6 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         // Step 3: Convert to RPM
         *last_rpm = (hz * 60.0f) / (float)pulses_per_rev;
         
-        // DIAGNOSTIC_LOG: Calculation steps
-        Serial.printf("[DIAG] %s CALC: seconds=%.6f, hz=%.2f, rpm=%.2f\n",
-                      sensor_name, seconds, hz, *last_rpm);
-        
         // Always return current RPM (cached or newly calculated)
         result.rpm = *last_rpm;
         
@@ -153,17 +138,10 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         //       get_mps() should use ratio=1.0 to avoid double application
         float revolutions = (float)used / (float)pulses_per_rev;
         float distance_mm = 0.0f;
-        if (sensor->sensor_type == SENSOR_TYPE_BAND) { // Band sensor ration 1.0f
-            // No special handling needed
+        if (sensor->sensor_type == SENSOR_TYPE_BAND) {
             distance_mm = belt_distance_mm * revolutions;
-            // DIAGNOSTIC_LOG: Band distance
-            Serial.printf("[DIAG] %s DIST: revs=%.3f, dist_mm=%.2f (no ratio)\n",
-                          sensor_name, revolutions, distance_mm);
         } else {
             distance_mm = belt_distance_mm * revolutions * storedGlobals.MOTOR_TO_BELT_RATIO;
-            // DIAGNOSTIC_LOG: Motor distance
-            Serial.printf("[DIAG] %s DIST: revs=%.3f, ratio=%.6f, dist_mm=%.2f\n",
-                          sensor_name, revolutions, storedGlobals.MOTOR_TO_BELT_RATIO, distance_mm);
         }
         
         result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
@@ -222,10 +200,6 @@ float speed_sensor_get_mps(float rpm, float belt_distance_mm, float motor_to_bel
     // Calculate linear speed: distance per revolution × revolutions per second
     float mps = belt_distance_m * revolutions_per_second;
     
-    // DIAGNOSTIC_LOG: Speed conversion
-    Serial.printf("[DIAG] get_mps: rpm=%.2f, belt_m=%.3f, ratio=%.6f, rev_per_sec=%.3f, mps=%.3f\n",
-                  rpm, belt_distance_m, motor_to_belt_ratio, revolutions_per_second, mps);
-    
     return mps;
 }
 
@@ -263,17 +237,6 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
 
 void updateMetrics(TreadmillMetrics& metrics) {
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
-    
-    // DIAGNOSTIC_LOG: Sensor mode
-    const char* mode_name = (mode == SENSOR_BAND) ? "BAND" : (mode == SENSOR_MOTOR) ? "MOTOR" : "AUTO";
-    Serial.printf("\n[DIAG] === updateMetrics: mode=%s (%d) ===\n", mode_name, mode);
-
-    // DEBUG: Show raw ISR counters to verify signal integrity (requested by user)
-    extern volatile uint32_t capture_cb_count_s1, capture_cb_count_s2;
-    extern volatile uint32_t pcnt_cb_count_s1, pcnt_cb_count_s2;
-    Serial.printf("[DIAG] ISR COUNTS: Band(S1) Cap=%lu PCNT=%lu | Motor(S2) Cap=%lu PCNT=%lu\n",
-                  (unsigned long)capture_cb_count_s1, (unsigned long)pcnt_cb_count_s1,
-                  (unsigned long)capture_cb_count_s2, (unsigned long)pcnt_cb_count_s2);
 
     if (mode == SENSOR_BAND) {
         sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
@@ -283,8 +246,6 @@ void updateMetrics(TreadmillMetrics& metrics) {
             metrics.motorRPM = 0.0f;
             metrics.mps = 0.0f;
             bandFilterResetPending = true;
-            // DIAGNOSTIC_LOG: Band force reset
-            Serial.printf("[DIAG] BAND mode: FORCE_RESET\n");
         } else {
             metrics.rpm = result.rpm;
             metrics.motorRPM = 0.0f;
@@ -292,9 +253,6 @@ void updateMetrics(TreadmillMetrics& metrics) {
             if (result.delta_distance > 0.0f) {
                 metrics.workoutDistance += result.delta_distance;
             }
-            // DIAGNOSTIC_LOG: Band mode result
-            Serial.printf("[DIAG] BAND mode: rpm=%.2f, mps=%.3f, delta_dist=%.3fm\n",
-                          metrics.rpm, metrics.mps, result.delta_distance);
         }
     } else if (mode == SENSOR_MOTOR) {
         sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
@@ -304,8 +262,6 @@ void updateMetrics(TreadmillMetrics& metrics) {
             metrics.motorRPM = 0.0f;
             metrics.mps = 0.0f;
             motorFilterResetPending = true;
-            // DIAGNOSTIC_LOG: Motor force reset
-            Serial.printf("[DIAG] MOTOR mode: FORCE_RESET\n");
         } else {
             metrics.rpm = 0.0f;
             metrics.motorRPM = result.rpm;
@@ -313,9 +269,6 @@ void updateMetrics(TreadmillMetrics& metrics) {
             if (result.delta_distance > 0.0f) {
                 metrics.workoutDistance += result.delta_distance;
             }
-            // DIAGNOSTIC_LOG: Motor mode result
-            Serial.printf("[DIAG] MOTOR mode: motorRPM=%.2f, mps=%.3f, delta_dist=%.3fm\n",
-                          metrics.motorRPM, metrics.mps, result.delta_distance);
         }
     } else if (mode == SENSOR_AUTO) {
         sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
@@ -339,14 +292,7 @@ void updateMetrics(TreadmillMetrics& metrics) {
         } else {
             metrics.rpm = bandResult.rpm;
         }
-        // DIAGNOSTIC_LOG: Auto mode result
-        Serial.printf("[DIAG] AUTO mode: bandRPM=%.2f, motorRPM=%.2f, mps=%.3f\n",
-                      metrics.rpm, metrics.motorRPM, metrics.mps);
     }
-    
-    // DIAGNOSTIC_LOG: Final metrics
-    Serial.printf("[DIAG] === Final: rpm=%.2f, motorRPM=%.2f, mps=%.3f (%.2f km/h) ===\n\n",
-                  metrics.rpm, metrics.motorRPM, metrics.mps, metrics.mps * 3.6f);
 }
 
 /**
