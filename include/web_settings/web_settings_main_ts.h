@@ -99,10 +99,6 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             <input type="number" id="motorInterruptPin" name="motorInterruptPin" value="%MOTOR_INTERRUPT_PIN%" min="0" max="39">
           </div>
           <div class="form-group">
-            <label>LED Pin:</label>
-            <input type="number" id="ledPin" name="ledPin" value="%LED_PIN%" min="0" max="39">
-          </div>
-          <div class="form-group">
             <label>Speed Up Pin:</label>
             <input type="number" id="speedUpPin" name="speedUpPin" value="%SPEED_UP_PIN%" min="0" max="39">
           </div>

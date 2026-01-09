@@ -361,28 +361,28 @@ void writePress(uint8_t pin, bool pressed) {
   
   if (pin == storedGlobals.SPEED_UP_PIN) {
       if (pressed && !speedUpBusy) {
-          digitalWrite(pin, LOW);  // LOW = relay active
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           speedUpBusy = true;
           esp_timer_stop(speedUpTimer);
           esp_timer_start_once(speedUpTimer, PULSE_US);
       }
   } else if (pin == storedGlobals.SPEED_DOWN_PIN) {
       if (pressed && !speedUownBusy) {
-          digitalWrite(pin, LOW);  // LOW = relay active
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           speedUownBusy = true;
           esp_timer_stop(speedDownTimer);
           esp_timer_start_once(speedDownTimer, PULSE_US);
       }
   } else if (pin == storedGlobals.INCLINE_UP_PIN) {
       if (pressed && !inclineUpBusy) {
-          digitalWrite(pin, LOW);  // LOW = relay active
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           inclineUpBusy = true;
           esp_timer_stop(inclineUpTimer);
           esp_timer_start_once(inclineUpTimer, PULSE_US);
       }
   } else if (pin == storedGlobals.INCLINE_DOWN_PIN) {
       if (pressed && !inclineDownBusy) {
-          digitalWrite(pin, LOW);  // LOW = relay active
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           inclineDownBusy = true;
           esp_timer_stop(inclineDownTimer);
           esp_timer_start_once(inclineDownTimer, PULSE_US);
@@ -679,10 +679,10 @@ void updateCalibration() {
   if (!metrics.isRunning) {
     // Cleanup: release pins if we were pressing
     if (calState == CAL_PRESSING_UP) {
-      digitalWrite(storedGlobals.SPEED_UP_PIN, HIGH);  // Release relay
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // Release relay
     }
     if (calState == CAL_PRESSING_DOWN) {
-      digitalWrite(storedGlobals.SPEED_DOWN_PIN, HIGH);  // Release relay
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);  // Release relay
     }
     calState = CAL_ERROR;
     calMessage = "Error: Workout stopped during calibration";
@@ -699,7 +699,7 @@ void updateCalibration() {
     if (elapsed > 1000) {
       calState = CAL_PRESSING_UP;
       calStateChangeTime = now;
-      digitalWrite(storedGlobals.SPEED_UP_PIN, LOW);  // Start pressing (relay active)
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 0);  // Start pressing (relay active)
       Serial.println("Calibration UP: Pressing speed up (max 5s or 10 km/h)...");
     }
   } 
@@ -710,7 +710,7 @@ void updateCalibration() {
     
     // Stop if reached max speed OR max time
     if (elapsed >= CAL_MAX_PRESS_MS || currentSpeed >= CAL_MAX_SPEED_KMH) {
-      digitalWrite(storedGlobals.SPEED_UP_PIN, HIGH);  // Stop pressing (relay inactive)
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // Stop pressing (relay inactive)
       calUpPressTime_ms = elapsed;  // Store actual press time
       calMidSpeed = currentSpeed;   // Store speed AT RELEASE (not after waiting!)
       calState = CAL_WAITING_UP;
@@ -754,7 +754,7 @@ void updateCalibration() {
       calDownStartSpeed = metrics.mpsSmooth * 3.6f;  // Speed before pressing DOWN
       calState = CAL_PRESSING_DOWN;
       calStateChangeTime = now;
-      digitalWrite(storedGlobals.SPEED_DOWN_PIN, LOW);  // Start pressing (relay active)
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 0);  // Start pressing (relay active)
       Serial.printf("Calibration DOWN: Starting at %.1f km/h, pressing speed down (max 5s or min 2 km/h)...\n", calDownStartSpeed);
     }
   }
@@ -765,7 +765,7 @@ void updateCalibration() {
     
     // Stop if reached min speed OR max time
     if (elapsed >= CAL_MAX_PRESS_MS || currentSpeed <= CAL_MIN_SPEED_KMH) {
-      digitalWrite(storedGlobals.SPEED_DOWN_PIN, HIGH);  // Stop pressing (relay inactive)
+      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);  // Stop pressing (relay inactive)
       calDownPressTime_ms = elapsed;  // Store actual press time
       calEndSpeed = currentSpeed;     // Store speed AT RELEASE (not after waiting!)
       calState = CAL_WAITING_DOWN;

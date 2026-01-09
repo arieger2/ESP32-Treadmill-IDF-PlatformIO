@@ -70,7 +70,6 @@ struct TreadmillStoredGlobals {
     // Hardware pins
     int INTERRUPT_PIN = 4;
     int MOTOR_INTERRUPT_PIN = 5;
-    int LED_PIN = 2;
     int SPEED_UP_PIN = 10;
     int SPEED_DOWN_PIN = 11;
     int INCLINE_UP_PIN = 12;
@@ -156,7 +155,6 @@ namespace NVSKeys {
 
     extern const char* INT_PIN;
     extern const char* MOTOR_INT_PIN;
-    extern const char* LED_PIN;
     extern const char* SPEED_UP_PIN;
     extern const char* SPEED_DN_PIN;
     extern const char* INCL_UP_PIN;

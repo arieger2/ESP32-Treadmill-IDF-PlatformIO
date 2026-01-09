@@ -27,6 +27,8 @@
 
 #include "driver/pulse_cnt.h"
 #include "driver/gptimer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
 #include "esp_log.h"
 #include "esp_check.h"
 #include "ESP32_treadmill_tacho_sensor.h"
@@ -47,11 +49,15 @@ extern "C" {
 extern speed_sensor_t s_sensor1;
 extern speed_sensor_t s_sensor2;
 extern gptimer_handle_t s_timestamp_timer;
+extern TimerHandle_t s_zero_speed_timer;
 
 // External callback references (defined in sensor_new.cpp)
 extern bool on_pcnt_reach_cb(pcnt_unit_handle_t unit,
                              const pcnt_watch_event_data_t *edata,
                              void *user_data);
+                             
+// Forward declaration of zero-speed timer callback
+void zero_speed_check_callback(TimerHandle_t xTimer);
 
 /* ==========================
  * Private helper: Initialize one sensor
@@ -181,6 +187,25 @@ esp_err_t speed_sensor1_init(uint32_t initial_periods, int gpio_num)
     esp_err_t ret = sensor_init_internal(&s_sensor1, initial_periods);
     if (ret != ESP_OK) return ret;
 
+    // Create FreeRTOS timer for zero-speed detection (only once)
+    if (s_zero_speed_timer == NULL) {
+
+        s_zero_speed_timer = xTimerCreate(
+            "zero_spd",           // Timer name
+            pdMS_TO_TICKS(1000),  // 1 second period
+            pdTRUE,               // Auto-reload (periodic)
+            NULL,                 // Timer ID (unused)
+            zero_speed_check_callback
+        );
+        
+        if (s_zero_speed_timer != NULL) {
+            xTimerStart(s_zero_speed_timer, 0);
+            ESP_LOGI(TAG, "FreeRTOS zero-speed timer started (1s periodic)");
+        } else {
+            ESP_LOGW(TAG, "Failed to create zero-speed timer");
+        }
+    }
+
     return ESP_OK;
 }
 
@@ -211,6 +236,25 @@ esp_err_t speed_sensor2_init(uint32_t initial_periods, int gpio_num)
     
     esp_err_t ret = sensor_init_internal(&s_sensor2, initial_periods);
     if (ret != ESP_OK) return ret;
+
+    // Create FreeRTOS timer if not already created by sensor1_init
+    if (s_zero_speed_timer == NULL) {
+
+        s_zero_speed_timer = xTimerCreate(
+            "zero_spd",
+            pdMS_TO_TICKS(1000),
+            pdTRUE,
+            NULL,
+            zero_speed_check_callback
+        );
+        
+        if (s_zero_speed_timer != NULL) {
+            xTimerStart(s_zero_speed_timer, 0);
+            ESP_LOGI(TAG, "FreeRTOS zero-speed timer started (1s periodic)");
+        } else {
+            ESP_LOGW(TAG, "Failed to create zero-speed timer");
+        }
+    }
 
     return ESP_OK;
 }

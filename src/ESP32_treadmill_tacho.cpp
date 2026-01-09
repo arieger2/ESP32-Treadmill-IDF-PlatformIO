@@ -277,16 +277,6 @@ void loop() {
         
         // Apply speed filter in loop context (not ISR!)
         applySpeedFilter(metrics);
-
-        // Derive running state from actual belt speed so
-        // calibration/workout can start even when speed is
-        // set from the treadmill console (no BLE control).
-        float currentSpeedKmh = metrics.mpsSmooth * 3.6f;
-        if (currentSpeedKmh > 0.5f) {
-            metrics.isRunning = true;
-        } else if (currentSpeedKmh < 0.2f && !metrics.controlRequested && !metrics.isPaused) {
-            metrics.isRunning = false;
-        }
         
         if (bleData.clientConnected) {
             sendFTMS_BLE_Data();

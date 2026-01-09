@@ -34,7 +34,7 @@ namespace SettingsApp {
     }
 
     // Pin validation - collect all pins
-    const pinFields = ['interruptPin', 'motorInterruptPin', 'ledPin', 'speedUpPin', 'speedDownPin', 'inclineUpPin', 'inclineDownPin'];
+    const pinFields = ['interruptPin', 'motorInterruptPin', 'speedUpPin', 'speedDownPin', 'inclineUpPin', 'inclineDownPin'];
     const pins = pinFields.map(f => parseInt(data[f]));
 
     // Check pin ranges (0-39 for ESP32)

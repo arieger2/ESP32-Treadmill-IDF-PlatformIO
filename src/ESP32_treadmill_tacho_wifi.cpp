@@ -694,7 +694,7 @@ void wifiLoop() {
     if (now - lastRun < 500) return;
     lastRun = now;
     
-    digitalWrite(storedGlobals.LED_PIN, wifi.connected ? HIGH : LOW);
+    // LED removed - no visual WiFi status indication
     wifiStateMachine();
 }
 

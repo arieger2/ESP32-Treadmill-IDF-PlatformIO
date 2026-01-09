@@ -55,6 +55,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
+#include "freertos/timers.h"
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -81,6 +82,10 @@ extern TreadmillMetrics metrics;
  * ========================== */
 gptimer_handle_t s_timestamp_timer = NULL;
 portMUX_TYPE s_sensor_spinlock = portMUX_INITIALIZER_UNLOCKED;
+TimerHandle_t s_zero_speed_timer = NULL;
+
+// Zero-speed detection timeout (1 second)
+#define ZERO_SPEED_TIMEOUT_MS 1000
 
 /* ==========================
  * Sensor instances
@@ -108,6 +113,66 @@ speed_sensor_t s_sensor2 = {
 };
 
 
+
+/* ==========================
+ * FreeRTOS Timer Callback - Zero Speed Detection
+ * ==========================
+ * TRIGGER: Every 1 second (periodic)
+ * 
+ * PURPOSE:
+ * --------
+ * Detect when belt has stopped moving (no pulses received)
+ * PCNT cannot detect absence of pulses - needs external watchdog
+ * 
+ * OPERATION:
+ * ----------
+ * 1. Checks time since last PCNT measurement for each sensor
+ * 2. If > 1 second elapsed without new pulses → publish zero speed
+ * 3. Clears period_us to signal "no valid data"
+ * 
+ * RUNS IN: FreeRTOS timer daemon task (NOT ISR)
+ * CPU OVERHEAD: ~50-100 cycles every 1 second
+ * ========================== */
+void zero_speed_check_callback(TimerHandle_t xTimer)
+{
+    (void)xTimer;
+    bool sensor1Data = true;
+    bool sensor2Data = true;
+    uint64_t now;
+    gptimer_get_raw_count(s_timestamp_timer, &now);
+    
+    // Check sensor 1 (band sensor)
+    portENTER_CRITICAL(&s_sensor_spinlock);
+    uint64_t time_since_last_1 = now - s_sensor1.t_last;
+    if (time_since_last_1 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
+        // No pulses for >1 second → belt stopped
+        s_sensor1.period_us = 0;  // Signal zero speed
+        s_sensor1.used_periods = 0;
+        sensor1Data = false;
+    }
+    portEXIT_CRITICAL(&s_sensor_spinlock);
+    
+    // Check sensor 2 (motor sensor)
+    portENTER_CRITICAL(&s_sensor_spinlock);
+    uint64_t time_since_last_2 = now - s_sensor2.t_last;
+    if (time_since_last_2 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
+        // No pulses for >1 second → motor stopped
+        s_sensor2.period_us = 0;  // Signal zero speed
+        s_sensor2.used_periods = 0;
+        sensor2Data = false;
+    }
+    portEXIT_CRITICAL(&s_sensor_spinlock);
+    
+    if (sensor2Data == false || sensor1Data == false) {
+        metrics.rpm = 0.0f;
+        metrics.motorRPM = 0.0f;
+        metrics.mps = 0.0f;
+        metrics.isRunning = false;
+        ESP_LOGD(TAG, "Zero-speed detected: S1 data=%d, S2 data=%d", sensor1Data, sensor2Data);
+    } else {
+        metrics.isRunning = true;
+    }
+}
 
 /* ==========================
  * PCNT watchpoint callback

@@ -35,9 +35,6 @@ extern WorkoutExecutor gWorkout;
 // ============================================================================
 
 void initWebServer() {
-  pinMode(storedGlobals.LED_PIN, OUTPUT);
-  digitalWrite(storedGlobals.LED_PIN, HIGH);
-
   DefaultHeaders::Instance().addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
   DefaultHeaders::Instance().addHeader("Pragma", "no-cache");
   DefaultHeaders::Instance().addHeader("Expires", "0");
@@ -153,7 +150,6 @@ void initWebServer() {
 
       int    interruptPin     = extractJsonValue(jsonString, "interruptPin").toInt();
       int    motorInterruptPin= extractJsonValue(jsonString, "motorInterruptPin").toInt();
-      int    ledPin           = extractJsonValue(jsonString, "ledPin").toInt();
       int    speedUpPin       = extractJsonValue(jsonString, "speedUpPin").toInt();
       int    speedDownPin     = extractJsonValue(jsonString, "speedDownPin").toInt();
       int    inclineUpPin     = extractJsonValue(jsonString, "inclineUpPin").toInt();
@@ -180,7 +176,7 @@ void initWebServer() {
       uint32_t inertiaDelay   = extractJsonValue(jsonString, "inertiaDelay").toInt();
       float  overshootFactor  = extractJsonValue(jsonString, "overshootFactor").toFloat();
 
-      if (!validateSettings(wifiSSID, wifiPassword, bleDeviceName, interruptPin, motorInterruptPin, ledPin,
+      if (!validateSettings(wifiSSID, wifiPassword, bleDeviceName, interruptPin, motorInterruptPin,
                             speedUpPin, speedDownPin, inclineUpPin, inclineDownPin,
                             speedIncDecFreq, testdataFreq, beltDistance, debounceThreshold,
                             maxRevolutionTime, pulsesPerRev, motorPulsesPerRev, motorToBeltRatio)) {
@@ -194,7 +190,6 @@ void initWebServer() {
       storedGlobals.BLE_DEVICE_NAME          = bleDeviceName;
       storedGlobals.INTERRUPT_PIN            = interruptPin;
       storedGlobals.MOTOR_INTERRUPT_PIN      = motorInterruptPin;
-      storedGlobals.LED_PIN                  = ledPin;
       storedGlobals.SPEED_UP_PIN             = speedUpPin;
       storedGlobals.SPEED_DOWN_PIN           = speedDownPin;
       storedGlobals.INCLINE_UP_PIN           = inclineUpPin;

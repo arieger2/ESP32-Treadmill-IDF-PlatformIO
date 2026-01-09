@@ -79,7 +79,7 @@ var SettingsApp;
             return { valid: false, error: 'BLE Device Name must be 1-20 characters', fieldId: 'bleDeviceName' };
         }
         // Pin validation - collect all pins
-        var pinFields = ['interruptPin', 'motorInterruptPin', 'ledPin', 'speedUpPin', 'speedDownPin', 'inclineUpPin', 'inclineDownPin'];
+        var pinFields = ['interruptPin', 'motorInterruptPin', 'speedUpPin', 'speedDownPin', 'inclineUpPin', 'inclineDownPin'];
         var pins = pinFields.map(function (f) { return parseInt(data[f]); });
         // Check pin ranges (0-39 for ESP32)
         for (var i = 0; i < pins.length; i++) {

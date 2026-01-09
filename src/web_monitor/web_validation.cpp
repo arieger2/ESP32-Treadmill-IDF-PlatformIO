@@ -7,7 +7,7 @@
 #include <set>
 
 bool validateSettings(const String& wifiSSID, const String& wifiPassword, const String& bleDeviceName,
-    int interruptPin, int motorInterruptPin, int ledPin, int speedUpPin, int speedDownPin,
+    int interruptPin, int motorInterruptPin, int speedUpPin, int speedDownPin,
     int inclineUpPin, int inclineDownPin, uint32_t speedIncDecFreq,
     uint32_t testdataFreq, long beltDistance, long debounceThreshold,
     long maxRevolutionTime, long pulsesPerRev, long motorPulsesPerRev, float motorToBeltRatio)
@@ -17,12 +17,12 @@ bool validateSettings(const String& wifiSSID, const String& wifiPassword, const 
   if (bleDeviceName.length() == 0 || bleDeviceName.length() > 20) return false;
 
   auto pinOk = [](int p){ return p >= 0 && p <= 39; };
-  if (!pinOk(interruptPin) || !pinOk(motorInterruptPin) || !pinOk(ledPin) || !pinOk(speedUpPin) ||
+  if (!pinOk(interruptPin) || !pinOk(motorInterruptPin) || !pinOk(speedUpPin) ||
       !pinOk(speedDownPin) || !pinOk(inclineUpPin) || !pinOk(inclineDownPin)) return false;
 
   // Check for duplicate pins using std::set
-  std::set<int> pinSet = {interruptPin, motorInterruptPin, ledPin, speedUpPin, speedDownPin, inclineUpPin, inclineDownPin};
-  if (pinSet.size() != 7) return false; // Duplicates found
+  std::set<int> pinSet = {interruptPin, motorInterruptPin, speedUpPin, speedDownPin, inclineUpPin, inclineDownPin};
+  if (pinSet.size() != 6) return false; // Duplicates found
 
   if (speedIncDecFreq < 10 || speedIncDecFreq > 1000) return false;
   if (testdataFreq   < 1  || testdataFreq   > 1000) return false;

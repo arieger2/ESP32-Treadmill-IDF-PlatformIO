@@ -37,7 +37,6 @@ const char* NVSKeys::BLE_NAME      = "bleDeviceName";     // 13 (OK)
 
 const char* NVSKeys::INT_PIN       = "interruptPin";      // 12 (OK)
 const char* NVSKeys::MOTOR_INT_PIN = "mIntPin";           // was "motorInterruptPin"
-const char* NVSKeys::LED_PIN       = "ledPin";            // 6  (OK)
 const char* NVSKeys::SPEED_UP_PIN  = "speedUpPin";        // 11 (OK)
 const char* NVSKeys::SPEED_DN_PIN  = "speedDownPin";      // 13 (OK)
 const char* NVSKeys::INCL_UP_PIN   = "inclUpPin";         // was "inclineUpPin"
@@ -133,7 +132,6 @@ String saveSettings() {
     {NVSKeys::BLE_NAME,      putOrReplace(prefs, NVSKeys::BLE_NAME,     storedGlobals.BLE_DEVICE_NAME)},
     {NVSKeys::INT_PIN,       putOrReplace(prefs, NVSKeys::INT_PIN,      storedGlobals.INTERRUPT_PIN)},
     {NVSKeys::MOTOR_INT_PIN, putOrReplace(prefs, NVSKeys::MOTOR_INT_PIN,storedGlobals.MOTOR_INTERRUPT_PIN)},
-    {NVSKeys::LED_PIN,       putOrReplace(prefs, NVSKeys::LED_PIN,      storedGlobals.LED_PIN)},
     {NVSKeys::SPEED_UP_PIN,  putOrReplace(prefs, NVSKeys::SPEED_UP_PIN, storedGlobals.SPEED_UP_PIN)},
     {NVSKeys::SPEED_DN_PIN,  putOrReplace(prefs, NVSKeys::SPEED_DN_PIN, storedGlobals.SPEED_DOWN_PIN)},
     {NVSKeys::INCL_UP_PIN,   putOrReplace(prefs, NVSKeys::INCL_UP_PIN,  storedGlobals.INCLINE_UP_PIN)},
@@ -179,7 +177,6 @@ void loadSettings() {
 
   storedGlobals.INTERRUPT_PIN        = prefs.getInt (NVSKeys::INT_PIN,       4);
   storedGlobals.MOTOR_INTERRUPT_PIN  = prefs.getInt (NVSKeys::MOTOR_INT_PIN, 6);
-  storedGlobals.LED_PIN              = prefs.getInt (NVSKeys::LED_PIN,       2);
   storedGlobals.SPEED_UP_PIN         = prefs.getInt (NVSKeys::SPEED_UP_PIN, 10);
   storedGlobals.SPEED_DOWN_PIN       = prefs.getInt (NVSKeys::SPEED_DN_PIN, 11);
   storedGlobals.INCLINE_UP_PIN       = prefs.getInt (NVSKeys::INCL_UP_PIN,  12);
@@ -235,7 +232,6 @@ void loadDefaultSettings() {
     storedGlobals.BLE_DEVICE_NAME = "Rieger_Treatmill";
     storedGlobals.INTERRUPT_PIN = 4;
     storedGlobals.MOTOR_INTERRUPT_PIN = 6;
-    storedGlobals.LED_PIN = 2;
     storedGlobals.SPEED_UP_PIN = 10;
     storedGlobals.SPEED_DOWN_PIN = 11;
     storedGlobals.INCLINE_UP_PIN = 12;
@@ -264,7 +260,6 @@ void printSettings() {
   logPrint("Pins:\r\n"); 
   logPrintf("  Band Interrupt Pin  : %d\r\n", storedGlobals.INTERRUPT_PIN);
   logPrintf("  Motor Interrupt Pin : %d\r\n", storedGlobals.MOTOR_INTERRUPT_PIN);
-  logPrintf("  LED Pin             : %d\r\n", storedGlobals.LED_PIN); 
   logPrintf("  Speed Up Pin        : %d\r\n", storedGlobals.SPEED_UP_PIN); 
   logPrintf("  Speed Down Pin      : %d\r\n", storedGlobals.SPEED_DOWN_PIN);
   logPrintf("  Incline Up Pin      : %d\r\n", storedGlobals.INCLINE_UP_PIN); 
@@ -398,22 +393,22 @@ void pinModeSetup() {
 // Timer-Callbacks laufen im Timer-Task → Pin sicher loslassen
 static void speedUpReleaseCb(void*) {
     speedUpBusy = false;
-    digitalWrite(storedGlobals.SPEED_UP_PIN, HIGH);  // HIGH = relay inactive
+    gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // HIGH = relay inactive
 }
 
 static void speedDownReleaseCb(void*) {
     speedUownBusy = false;
-    digitalWrite(storedGlobals.SPEED_DOWN_PIN, HIGH); // HIGH = relay inactive
+    gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1); // HIGH = relay inactive
 }
 
 static void inclineUpReleaseCb(void*) {
     inclineUpBusy = false;
-    digitalWrite(storedGlobals.INCLINE_UP_PIN, HIGH);  // HIGH = relay inactive
+    gpio_set_level((gpio_num_t)storedGlobals.INCLINE_UP_PIN, 1);  // HIGH = relay inactive
 }
 
 static void inclineDownReleaseCb(void*) {
     inclineDownBusy = false;
-    digitalWrite(storedGlobals.INCLINE_DOWN_PIN, HIGH); // HIGH = relay inactive
+    gpio_set_level((gpio_num_t)storedGlobals.INCLINE_DOWN_PIN, 1); // HIGH = relay inactive
 }
 
 void pinTimerSetup() {

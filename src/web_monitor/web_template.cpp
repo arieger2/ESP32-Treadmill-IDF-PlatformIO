@@ -31,7 +31,7 @@ String processTemplate(const String& var) {
   if (var == "BLE_DEVICE_NAME")    return storedGlobals.BLE_DEVICE_NAME;
   if (var == "INTERRUPT_PIN")      return String(storedGlobals.INTERRUPT_PIN);
   if (var == "MOTOR_INTERRUPT_PIN")return String(storedGlobals.MOTOR_INTERRUPT_PIN);
-  if (var == "LED_PIN")            return String(storedGlobals.LED_PIN);
+
   if (var == "SPEED_UP_PIN")       return String(storedGlobals.SPEED_UP_PIN);
   if (var == "SPEED_DOWN_PIN")     return String(storedGlobals.SPEED_DOWN_PIN);
   if (var == "INCLINE_UP_PIN")     return String(storedGlobals.INCLINE_UP_PIN);
