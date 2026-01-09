@@ -46,17 +46,12 @@ extern "C" {
 // External references to sensors and timer (defined in sensor_new.cpp)
 extern speed_sensor_t s_sensor1;
 extern speed_sensor_t s_sensor2;
-extern gptimer_handle_t s_timeout_timer;
 extern gptimer_handle_t s_timestamp_timer;
 
 // External callback references (defined in sensor_new.cpp)
 extern bool on_pcnt_reach_cb(pcnt_unit_handle_t unit,
                              const pcnt_watch_event_data_t *edata,
                              void *user_data);
-
-extern bool on_timeout_cb(gptimer_handle_t timer,
-                          const gptimer_alarm_event_data_t *edata,
-                          void *user_data);
 
 /* ==========================
  * Private helper: Initialize one sensor
@@ -186,35 +181,6 @@ esp_err_t speed_sensor1_init(uint32_t initial_periods, int gpio_num)
     esp_err_t ret = sensor_init_internal(&s_sensor1, initial_periods);
     if (ret != ESP_OK) return ret;
 
-    // Create shared timeout timer on first init (either sensor1 or sensor2)
-    if (s_timeout_timer == NULL) {
-        gptimer_config_t gcfg = {
-            .clk_src = GPTIMER_CLK_SRC_DEFAULT,      // Use default APB clock (~80 MHz)
-            .direction = GPTIMER_COUNT_UP,           // Count upwards: 0→1→2→...→alarm
-            .resolution_hz = 1000000,                // 1 MHz = 1 tick per microsecond
-                                                     // Math: 80 MHz / 80 = 1 MHz
-                                                     // Makes alarm_count = microseconds (easy!)
-        };
-        ESP_RETURN_ON_ERROR(gptimer_new_timer(&gcfg, &s_timeout_timer), TAG, "new gptimer");
-
-        gptimer_event_callbacks_t tcbs = {
-            .on_alarm = on_timeout_cb,
-        };
-        ESP_RETURN_ON_ERROR(gptimer_register_event_callbacks(s_timeout_timer, &tcbs, NULL), TAG, "timer cbs");
-
-        gptimer_alarm_config_t acfg = {};
-        acfg.alarm_count = UPDATE_TIMEOUT_US;  // 200,000 µs = 200 ms
-        acfg.reload_count = 0;
-        acfg.flags.auto_reload_on_alarm = true;  // Periodic alarm every 200ms
-        
-        ESP_RETURN_ON_ERROR(gptimer_set_alarm_action(s_timeout_timer, &acfg), TAG, "set alarm");
-        ESP_RETURN_ON_ERROR(gptimer_enable(s_timeout_timer), TAG, "timer enable");
-        ESP_RETURN_ON_ERROR(gptimer_start(s_timeout_timer), TAG, "timer start");
-        
-        ESP_LOGI(TAG, "Shared timeout timer created (200ms periodic)");
-
-    }
-
     return ESP_OK;
 }
 
@@ -245,32 +211,6 @@ esp_err_t speed_sensor2_init(uint32_t initial_periods, int gpio_num)
     
     esp_err_t ret = sensor_init_internal(&s_sensor2, initial_periods);
     if (ret != ESP_OK) return ret;
-
-    // Create shared timeout timer if not already created
-    if (s_timeout_timer == NULL) {
-        gptimer_config_t gcfg = {
-            .clk_src = GPTIMER_CLK_SRC_DEFAULT,
-            .direction = GPTIMER_COUNT_UP,
-            .resolution_hz = 1000000,  // 1 MHz
-        };
-        ESP_RETURN_ON_ERROR(gptimer_new_timer(&gcfg, &s_timeout_timer), TAG, "new gptimer");
-
-        gptimer_event_callbacks_t tcbs = {
-            .on_alarm = on_timeout_cb,
-        };
-        ESP_RETURN_ON_ERROR(gptimer_register_event_callbacks(s_timeout_timer, &tcbs, NULL), TAG, "timer cbs");
-
-        gptimer_alarm_config_t acfg = {};
-        acfg.alarm_count = UPDATE_TIMEOUT_US;
-        acfg.reload_count = 0;
-        acfg.flags.auto_reload_on_alarm = true;
-        
-        ESP_RETURN_ON_ERROR(gptimer_set_alarm_action(s_timeout_timer, &acfg), TAG, "set alarm");
-        ESP_RETURN_ON_ERROR(gptimer_enable(s_timeout_timer), TAG, "timer enable");
-        ESP_RETURN_ON_ERROR(gptimer_start(s_timeout_timer), TAG, "timer start");
-        
-        ESP_LOGI(TAG, "Shared timeout timer created (200ms periodic)");
-    }
 
     return ESP_OK;
 }

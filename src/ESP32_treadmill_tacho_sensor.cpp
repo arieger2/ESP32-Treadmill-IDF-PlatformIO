@@ -3,78 +3,49 @@
  * 
  * ARCHITECTURE OVERVIEW:
  * ======================
- * Uses three ESP32 hardware peripherals working together:
+ * Uses two ESP32 hardware peripherals working together:
  * 
- * 1. MCPWM CAPTURE (10 MHz resolution = 0.1 µs precision)
- *    - Hardware timestamp capture on every GPIO edge
- *    - Provides precise time measurements (t_start, t_last)
- *    - ISR overhead: ~10-20 CPU cycles per pulse (just updates timestamp)
- * 
- * 2. PCNT (Pulse Counter)
+ * 1. PCNT (Pulse Counter)
  *    - Hardware pulse counting (zero CPU overhead during counting!)
  *    - Counts pulses in background until target reached (e.g., 100 pulses)
  *    - Triggers callback only when watchpoint (N pulses) is reached
+ *    - ISR-safe operations for count reading and watchpoint management
  * 
- * 3. GPTIMER (1 MHz = 1 µs resolution)
- *    - Timeout watchdog (200ms periodic check)
- *    - Ensures speed updates even at very low speeds or when stopped
+ * 2. GPTIMER (1 MHz = 1 µs resolution)
+ *    - Free-running timestamp timer
+ *    - Provides monotonic time reference for calculating elapsed time
+ *    - Used in PCNT ISR to measure time between measurements
  * 
  * DUAL SENSOR SUPPORT:
  * ====================
- * - Sensor 1: GPIO 18, MCPWM Group 0, dedicated PCNT unit
- * - Sensor 2: GPIO 19, MCPWM Group 1, dedicated PCNT unit
+ * - Sensor 1: GPIO 18, dedicated PCNT unit (Band sensor)
+ * - Sensor 2: GPIO 19, dedicated PCNT unit (Motor sensor)
  * - Each sensor independently identified by pcnt_unit handle
- * - Shared GPTimer checks both sensors every 200ms
+ * - Shared GPTimer provides timestamp reference
  * 
- * TWO MEASUREMENT MODES:
+ * MEASUREMENT OPERATION:
  * ======================
+ * - PCNT counts pulses in hardware (no CPU overhead)
+ * - Watchpoint set at target pulse count (configured via target_periods)
+ * - When watchpoint reached: ISR fires, calculates time delta, publishes result
+ * - Result: "N pulses in X microseconds" → converted to RPM
+ * - Example: At 1000 RPM with 100 pulse target, callback fires every ~50ms
  * 
- * MODE 1: Normal/High Speed (PCNT callback triggers first)
- * --------------------------------------------------------
- * - Waits for exactly N pulses (e.g., 100)
- * - Measures time between first and Nth pulse
- * - Result: "100 pulses in 47.3 ms" → very precise
- * - Example: At 1000 RPM, 100 pulses takes ~50ms
- * 
- * MODE 2: Slow/Stopped (Timeout triggers first at 200ms)
- * -------------------------------------------------------
- * - If N pulses not reached in 200ms, timeout fires
- * - Uses whatever pulses were counted (e.g., 8 pulses)
- * - Result: "8 pulses in 200 ms" → less precise but still valid
- * - Prevents infinite waiting at low speeds or when stopped
- * - Example: At 10 RPM, might only get 5 pulses in 200ms
- * 
- * WHY TIMEOUT IS NEEDED:
- * ======================
- * Without timeout:
- * - At low speed (10 RPM): waiting for 100 pulses = several seconds delay
- * - Motor stopped: waiting forever (deadlock)
- * 
- * With timeout:
- * - Always get speed update within 200ms maximum
- * - Low speed: use fewer pulses (less precision but acceptable)
- * - Stopped: detect zero speed quickly
- * 
- * RESOLUTION EXPLAINED:
- * =====================
- * - MCPWM 10 MHz: For PRECISE timestamp measurement (not related to timeout)
- *   → 1 tick = 0.1 microseconds = 100 nanosecond precision
- *   → Example: measure 47,385 ticks = 4.7385 milliseconds (very precise!)
- * 
- * - GPTimer 1 MHz: For timeout counter only (unrelated to measurement precision)
+ * TIMER RESOLUTION:
+ * ==================
+ * - GPTimer 1 MHz: For timestamp measurement
  *   → 1 tick = 1 microsecond
- *   → 200,000 ticks = 200 milliseconds timeout period
- *   → Easy math: alarm_count directly equals microseconds
+ *   → Provides microsecond precision for time deltas
+ *   → Free-running counter ensures monotonic timestamps
  * 
  * ISR EXECUTION FLOW:
  * ===================
- * Every pulse on GPIO triggers MCPWM callback:
- *   1. Updates s_t_last (lightweight, ~10 CPU cycles)
- *   2. FIRST pulse only: starts PCNT counting + saves t_start
- *   3. PCNT counts in hardware (zero CPU)
- *   4. When PCNT reaches N: triggers pcnt_reach_cb → publishes result
- *   OR
- *   5. If 200ms timeout: uses partial count → publishes result
+ * GPIO pulses increment PCNT hardware counter:
+ *   1. PCNT counts in hardware (zero CPU usage)
+ *   2. When count reaches watchpoint N: triggers on_pcnt_reach_cb ISR
+ *   3. ISR reads timestamp, calculates time delta since last measurement
+ *   4. Publishes result (pulse count + time elapsed)
+ *   5. Clears counter and starts next measurement cycle
  * 
  ******************************************************************************/
 
@@ -104,12 +75,10 @@ extern TreadmillMetrics metrics;
 /* ==========================
  * User configuration
  * ========================== */
-#define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval (fallback for low speed)
 
 /* ==========================
  * Shared resources
  * ========================== */
-gptimer_handle_t s_timeout_timer = NULL;
 gptimer_handle_t s_timestamp_timer = NULL;
 portMUX_TYPE s_sensor_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
@@ -122,7 +91,6 @@ speed_sensor_t s_sensor1 = {
     .sensor_type = SENSOR_TYPE_BAND,
     .gpio_num = -1,
     .target_periods = 100,
-    .t_start = 0,
     .t_last = 0,
     .used_periods = 0,
     .period_us = 0,
@@ -134,52 +102,44 @@ speed_sensor_t s_sensor2 = {
     .sensor_type = SENSOR_TYPE_MOTOR,
     .gpio_num = -1,
     .target_periods = 100,
-    .t_start = 0,
     .t_last = 0,
     .used_periods = 0,
     .period_us = 0,
 };
 
-typedef struct {
-    volatile uint32_t seq;
-    volatile uint64_t period_us;
-} rpm_ctx_t;
-
-/* ==========================
- * Helper: wrap-safe tick difference
- * ========================== */
-static inline uint32_t tick_diff_u32(uint32_t now, uint32_t then) {
-    return (uint32_t)(now - then); // unsigned wrap-safe
-}
-
 
 
 /* ==========================
- * PCNT watchpoint callback: MEASUREMENT MODE 1 (Normal/High Speed)
+ * PCNT watchpoint callback
  * ==========================
- * TRIGGER: When PCNT hardware counter reaches exactly N pulses (e.g., 100)
+ * TRIGGER: When PCNT hardware counter reaches exactly N pulses (watchpoint)
  * 
  * EXECUTION SCENARIO:
  * -------------------
- * Example at 1000 RPM (fast enough):
- *   - Started counting at t_start
+ * Example at 1000 RPM with 100 pulse target:
  *   - PCNT counts 1, 2, 3, ... 99, 100 (in hardware, no CPU)
  *   - Reaches 100 → THIS CALLBACK FIRES
- *   - Total time: ~50 milliseconds (well before 200ms timeout)
+ *   - Total time: ~50 milliseconds between measurements
  * 
  * WHAT IT DOES:
  * -------------
- * 1. Reads N (number of pulses that triggered this = watchpoint value)
- * 2. Uses t_last (timestamp of Nth pulse) as end time
- * 3. Calculates dt = t_end - t_start (time for N pulses)
- * 4. Publishes result: "N pulses in dt ticks"
- * 5. Stops PCNT, re-arms for next measurement cycle
+ * 1. Reads watchpoint value (number of pulses that triggered callback)
+ * 2. Gets current timestamp from free-running GPTimer
+ * 3. Calculates time delta since last measurement (now - t_last)
+ * 4. Publishes result: pulse count + time elapsed
+ * 5. Updates t_last to current timestamp for next measurement
+ * 6. Clears PCNT counter to restart counting
  * 
  * PRECISION:
  * ----------
- * - Full N pulses used (e.g., 100) → maximum precision
- * - Time measured with 0.1 µs resolution (10 MHz MCPWM)
- * - Example: 100 pulses in 47,385 ticks = 4.7385 ms → very precise RPM
+ * - Pulse count: Exact (hardware counted)
+ * - Time measured with 1 µs resolution (GPTimer at 1 MHz)
+ * - Example: 100 pulses in 50,234 µs = 50.234 ms → precise RPM calculation
+ * 
+ * SANITY CHECK:
+ * -------------
+ * - Rejects measurements > 1 second (invalid/stale data)
+ * - Prevents corrupted readings from glitches or resets
  * 
  * SENSOR IDENTIFICATION:
  * ----------------------
@@ -218,114 +178,6 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     pcnt_unit_clear_count(sensor->pcnt_unit);
     
     // Metrics will be updated in loop() every 200ms (not in ISR!)
-
-    return false;
-}
-
-
-/* ==========================
- * GPTimer timeout callback: MEASUREMENT MODE 2 (Slow/Stopped Fallback)
- * ==========================
- * TRIGGER: Every 200ms (periodic alarm), checks BOTH sensors
- * 
- * PURPOSE: Prevent waiting forever for N pulses at low speeds or when stopped
- * 
- * EXECUTION SCENARIO:
- * -------------------
- * Example at 10 RPM (too slow):
- *   - Started counting at t_start
- *   - Waiting for 100 pulses...
- *   - 200ms timeout fires → only 8 pulses counted so far
- *   - PCNT callback hasn't fired yet (needs 100)
- *   - THIS CALLBACK FIRES INSTEAD
- *   - Publishes: "8 pulses in 200 ms" → still valid, just less precise
- * 
- * WHAT IT DOES (for each sensor):
- * --------------------------------
- * 1. Check if sensor is running (actively measuring)
- *    - If not running: skip (still waiting for first edge)
- * 2. Read current PCNT count (partial count, e.g., 8 pulses)
- * 3. If count > 0: use whatever pulses we have
- *    - Calculate dt = t_last - t_start
- *    - Publish result: "count pulses in dt ticks"
- *    - Stop PCNT, re-arm for next cycle
- * 4. If count = 0: keep waiting (motor might be stopped)
- * 
- * WHY THIS IS NEEDED:
- * -------------------
- * Without timeout:
- *   - At 10 RPM: need to wait 10+ seconds for 100 pulses
- *   - Motor stopped: wait forever (deadlock!)
- * 
- * With timeout:
- *   - Always get speed update within 200ms
- *   - Low speed: acceptable precision with fewer pulses
- *   - Stopped: quickly detect zero speed
- * 
- * TIMER RESOLUTION:
- * -----------------
- * GPTimer configured at 1 MHz (1 µs ticks):
- *   - 200,000 ticks = 200 milliseconds
- *   - Easy conversion: alarm_count = microseconds
- *   - Unrelated to MCPWM measurement precision (that's 10 MHz)
- * ========================== */
-bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
-                                   const gptimer_alarm_event_data_t *edata,
-                                   void *user_data)
-{
-    (void)timer; (void)edata; (void)user_data;
-
-    // TEST MODE: Use simulated data instead of real sensors
-    extern volatile bool testdata;
-    if (testdata) {
-        extern void updateTestMetrics();
-        updateTestMetrics();
-        return false;
-    }
-
-
-    // NORMAL MODE: Check both real sensors
-    speed_sensor_t *sensors[] = {&s_sensor1, &s_sensor2};
-    
-    for (int i = 0; i < 2; i++) {
-        speed_sensor_t *sensor = sensors[i];
-
-        // Read current count (how many periods observed so far)
-        int count = 0;
-        pcnt_unit_get_count(sensor->pcnt_unit, &count);
-
-        // If we have at least 1 period, publish a result; else mark zero-speed
-        if (count > 0) {            
-            // Use the dedicated timestamp timer so values stay monotonic
-            uint64_t now;
-            gptimer_get_raw_count(s_timestamp_timer, &now);   // IRAM-safe
-            portENTER_CRITICAL_ISR(&s_sensor_spinlock);
-            uint64_t previous = sensor->t_last;
-            uint64_t diff = now - previous;
-            if (diff > CAPTURE_RES_HZ) { // 1 second sanity check
-                sensor->t_last = now;
-                portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
-                pcnt_unit_clear_count(sensor->pcnt_unit);
-                return false;
-            }
-
-            sensor->used_periods = count;
-            sensor->period_us = diff;
-            sensor->t_last = now;
-            portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
-
-            // reset counting, ready for next measurement cycle
-            pcnt_unit_clear_count(sensor->pcnt_unit);
-            
-            // Metrics will be updated in loop() every 200ms (not in ISR!)
-        } else {
-            portENTER_CRITICAL_ISR(&s_sensor_spinlock);
-            sensor->used_periods = 0;
-            sensor->period_us = 0;
-            portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
-            pcnt_unit_clear_count(sensor->pcnt_unit);
-        }
-    }
 
     return false;
 }

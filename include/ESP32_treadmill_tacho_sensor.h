@@ -61,9 +61,8 @@ typedef struct {
     int      gpio_num;
     uint32_t target_periods;
     
-    // Captured timestamps (hardware latched)
-    volatile uint64_t t_start;    // capture tick at first edge (window start)
-    volatile uint64_t t_last;     // last capture tick seen (always updated on cap event)
+    // Captured timestamps
+    volatile uint64_t t_last;     // last measurement timestamp
     
     // Published result (snapshot)
     volatile uint32_t used_periods; // how many periods used for last result
