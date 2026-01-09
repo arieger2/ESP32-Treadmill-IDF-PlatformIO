@@ -5,9 +5,8 @@
 // Forward declarations for sensor selection
 extern uint8_t sensorSelection(bool init);
 
-// ======= BLE steering shim (weak, can be overridden) =======
-__attribute__((weak)) void bleSetTreadmillSpeedKph(float speedKph) { (void)speedKph; }
-__attribute__((weak)) void bleSetTreadmillInclinePct(float inclinePct) { (void)inclinePct; } 
+// BLE control functions are implemented in ESP32_treadmill_ble_control.cpp
+// They set metrics.targetSpeed/targetInclination which is then chased by physicalSpeedControl() 
 
 // -------- local helper to extract key="value" (case-insensitive key) --------
 static bool _extractAttr(const String& src, const char* key, String& outVal) {
@@ -530,7 +529,7 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
                 diff_kmh, rate, calcPress_ms, inertiaComp_ms, targetPress_ms);
   
   // Activate relay and press for calculated duration
-  digitalWrite(pin, LOW);
+  gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
   
   uint32_t startTime = millis();
   uint32_t elapsed = 0;
@@ -587,7 +586,7 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
   }
   
   // Release relay
-  digitalWrite(pin, HIGH);
+  gpio_set_level((gpio_num_t)pin, 1);  // HIGH = relay inactive
   
   float finalSpeed = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
   Serial.printf("[Speed Control] Released after %u ms, speed: %.1f -> %.1f km/h\n",
@@ -600,7 +599,7 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
 void writePressForDuration(uint8_t pin, uint32_t duration_ms) {
   if (pin == 0) return;
   
-  digitalWrite(pin, LOW);  // Activate relay
+  gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
   
   // Split delay into small chunks with yield() to keep system responsive
   const uint32_t YIELD_INTERVAL_MS = 10;  // Yield every 10ms
@@ -613,7 +612,7 @@ void writePressForDuration(uint8_t pin, uint32_t duration_ms) {
     elapsed += chunk;
   }
   
-  digitalWrite(pin, HIGH); // Release relay
+  gpio_set_level((gpio_num_t)pin, 1);  // HIGH = relay inactive
 }
 
 // ============================================================================

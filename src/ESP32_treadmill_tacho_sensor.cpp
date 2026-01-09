@@ -146,8 +146,8 @@ void zero_speed_check_callback(TimerHandle_t xTimer)
     uint64_t time_since_last_1 = now - s_sensor1.t_last;
     if (time_since_last_1 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
         // No pulses for >1 second → belt stopped
-        s_sensor1.period_us = 0;  // Signal zero speed
-        s_sensor1.used_periods = 0;
+        s_sensor1.period_us = 0;  // Signal zero speed (dt = 0 triggers zero_pending)
+        s_sensor1.used_periods = 1;  // Must be non-zero to trigger read in get_rpm_and_delta
         sensor1Data = false;
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
@@ -157,13 +157,13 @@ void zero_speed_check_callback(TimerHandle_t xTimer)
     uint64_t time_since_last_2 = now - s_sensor2.t_last;
     if (time_since_last_2 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
         // No pulses for >1 second → motor stopped
-        s_sensor2.period_us = 0;  // Signal zero speed
-        s_sensor2.used_periods = 0;
+        s_sensor2.period_us = 0;  // Signal zero speed (dt = 0 triggers zero_pending)
+        s_sensor2.used_periods = 1;  // Must be non-zero to trigger read in get_rpm_and_delta
         sensor2Data = false;
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
     
-    if (sensor2Data == false || sensor1Data == false) {
+    if (sensor2Data == false && sensor1Data == false) {
         metrics.rpm = 0.0f;
         metrics.motorRPM = 0.0f;
         metrics.mps = 0.0f;

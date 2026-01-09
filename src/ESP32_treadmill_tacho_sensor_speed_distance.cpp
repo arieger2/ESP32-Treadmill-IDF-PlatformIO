@@ -100,6 +100,10 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         has_new = true;
         used = sensor->used_periods;
         dt = sensor->period_us;
+        // Check for zero-speed timeout signal from FreeRTOS timer
+        if (dt == 0) {
+            zero_pending = true;
+        }
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
 
