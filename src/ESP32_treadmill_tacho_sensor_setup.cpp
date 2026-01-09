@@ -25,7 +25,6 @@
  * This prevents resource conflicts between sensors
  ******************************************************************************/
 
-#include "driver/mcpwm_cap.h"
 #include "driver/pulse_cnt.h"
 #include "driver/gptimer.h"
 #include "esp_log.h"
@@ -48,12 +47,9 @@ extern "C" {
 extern speed_sensor_t s_sensor1;
 extern speed_sensor_t s_sensor2;
 extern gptimer_handle_t s_timeout_timer;
+extern gptimer_handle_t s_timestamp_timer;
 
 // External callback references (defined in sensor_new.cpp)
-extern bool on_capture_cb(mcpwm_cap_channel_handle_t cap_chan,
-                          const mcpwm_capture_event_data_t *edata,
-                          void *user_data);
-
 extern bool on_pcnt_reach_cb(pcnt_unit_handle_t unit,
                              const pcnt_watch_event_data_t *edata,
                              void *user_data);
@@ -96,33 +92,17 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
         return ESP_ERR_INVALID_ARG;
     }
 
-    /* ---- MCPWM Capture timer ---- */
-    {
-        mcpwm_capture_timer_config_t tcfg = {
-            .group_id = sensor->mcpwm_group_id,
-            .clk_src = MCPWM_CAPTURE_CLK_SRC_DEFAULT,
-            .resolution_hz = CAPTURE_RES_HZ,  // 10 MHz = 0.1 µs precision
+    /* ---- Shared timestamp timer (free-running) ---- */
+    if (s_timestamp_timer == NULL) {
+        gptimer_config_t tcfg = {
+            .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+            .direction = GPTIMER_COUNT_UP,
+            .resolution_hz = CAPTURE_RES_HZ,
         };
-        ESP_RETURN_ON_ERROR(mcpwm_new_capture_timer(&tcfg, &sensor->cap_timer), TAG, "new cap timer");
-
-        mcpwm_capture_channel_config_t ccfg = {};
-        ccfg.gpio_num = sensor->gpio_num;
-        ccfg.prescale = 1;
-        ccfg.flags.pos_edge = 1;  // Capture on rising edge
-        ccfg.flags.neg_edge = 0;  // Do NOT capture on falling edge
-        ccfg.flags.pull_up = 1;   // Enable internal pull-up to prevent floating signal
-        ccfg.flags.invert_cap_signal = 0;
-        
-        ESP_RETURN_ON_ERROR(mcpwm_new_capture_channel(sensor->cap_timer, &ccfg, &sensor->cap_chan), TAG, "new cap chan");
-
-        mcpwm_capture_event_callbacks_t cbs = {
-            .on_cap = on_capture_cb,
-        };
-        ESP_RETURN_ON_ERROR(mcpwm_capture_channel_register_event_callbacks(sensor->cap_chan, &cbs, sensor), TAG, "cap cbs");
-
-        ESP_RETURN_ON_ERROR(mcpwm_capture_channel_enable(sensor->cap_chan), TAG, "cap chan en");
-        ESP_RETURN_ON_ERROR(mcpwm_capture_timer_enable(sensor->cap_timer), TAG, "cap timer en");
-        ESP_RETURN_ON_ERROR(mcpwm_capture_timer_start(sensor->cap_timer), TAG, "cap timer start");
+        ESP_RETURN_ON_ERROR(gptimer_new_timer(&tcfg, &s_timestamp_timer), TAG, "new ts timer");
+        ESP_RETURN_ON_ERROR(gptimer_enable(s_timestamp_timer), TAG, "ts enable");
+        ESP_RETURN_ON_ERROR(gptimer_start(s_timestamp_timer), TAG, "ts start");
+        ESP_LOGI(TAG, "Shared timestamp timer started (free-running)");
     }
 
     /* ---- PCNT (Pulse Counter) ---- */
@@ -168,14 +148,12 @@ static esp_err_t sensor_init_internal(speed_sensor_t *sensor, uint32_t initial_p
         ESP_RETURN_ON_ERROR(pcnt_unit_register_event_callbacks(sensor->pcnt_unit, &pcbs, sensor), TAG, "pcnt cbs");
 
         ESP_RETURN_ON_ERROR(pcnt_unit_enable(sensor->pcnt_unit), TAG, "pcnt enable");
-        pcnt_unit_stop(sensor->pcnt_unit); // Don't start counting until first edge arrives
+        pcnt_unit_start(sensor->pcnt_unit); // Start counting immediately
     }
 
-    // Start in "running" state (wait for first edge to define t_start precisely)
-    sensor->running = false;
 
-    ESP_LOGI(TAG, "Sensor GPIO%d initialized. Target periods=%u, MCPWM group=%d", 
-             sensor->gpio_num, initial_periods, sensor->mcpwm_group_id);
+    ESP_LOGI(TAG, "Sensor GPIO%d initialized. Target periods=%u", 
+             sensor->gpio_num, initial_periods);
     return ESP_OK;
 }
 
@@ -234,6 +212,7 @@ esp_err_t speed_sensor1_init(uint32_t initial_periods, int gpio_num)
         ESP_RETURN_ON_ERROR(gptimer_start(s_timeout_timer), TAG, "timer start");
         
         ESP_LOGI(TAG, "Shared timeout timer created (200ms periodic)");
+
     }
 
     return ESP_OK;

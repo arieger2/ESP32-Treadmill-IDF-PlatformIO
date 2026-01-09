@@ -89,7 +89,6 @@
 #include "esp_err.h"
 #include "esp_check.h"
 
-#include "driver/mcpwm_cap.h"
 #include "driver/pulse_cnt.h"
 #include "driver/gptimer.h"
 
@@ -101,59 +100,50 @@ static const char *TAG = "speed_sensor";
 // External metrics reference
 extern TreadmillMetrics metrics;
 
-// DEBUG: ISR call counters (not static so they can be accessed via extern)
-volatile uint32_t capture_cb_count_s2 = 0;
-volatile uint32_t pcnt_count_s2 = 0;
 
 /* ==========================
  * User configuration
  * ========================== */
 #define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval (fallback for low speed)
-#define CAPTURE_RES_HZ        80000000  // 80 MHz - ESP32-S3 capture timer is ALWAYS APB_CLK (resolution_hz config ignored)
 
 /* ==========================
  * Shared resources
  * ========================== */
 gptimer_handle_t s_timeout_timer = NULL;
+gptimer_handle_t s_timestamp_timer = NULL;
+portMUX_TYPE s_sensor_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 /* ==========================
  * Sensor instances
  * ========================== */
 speed_sensor_t s_sensor1 = {
-    .cap_timer = NULL,
-    .cap_chan = NULL,
     .pcnt_unit = NULL,
     .pcnt_chan = NULL,
     .sensor_type = SENSOR_TYPE_BAND,
     .gpio_num = -1,
-    .mcpwm_group_id = 0,
     .target_periods = 100,
-    .running = false,
     .t_start = 0,
     .t_last = 0,
     .used_periods = 0,
-    .dt_ticks = 0,
-    .zero_pending = false,
-    .mux = portMUX_INITIALIZER_UNLOCKED
+    .period_us = 0,
 };
 
 speed_sensor_t s_sensor2 = {
-    .cap_timer = NULL,
-    .cap_chan = NULL,
     .pcnt_unit = NULL,
     .pcnt_chan = NULL,
     .sensor_type = SENSOR_TYPE_MOTOR,
     .gpio_num = -1,
-    .mcpwm_group_id = 1,  // Use different MCPWM group for sensor 2
     .target_periods = 100,
-    .running = false,
     .t_start = 0,
     .t_last = 0,
     .used_periods = 0,
-    .dt_ticks = 0,
-    .zero_pending = false,
-    .mux = portMUX_INITIALIZER_UNLOCKED
+    .period_us = 0,
 };
+
+typedef struct {
+    volatile uint32_t seq;
+    volatile uint64_t period_us;
+} rpm_ctx_t;
 
 /* ==========================
  * Helper: wrap-safe tick difference
@@ -162,70 +152,7 @@ static inline uint32_t tick_diff_u32(uint32_t now, uint32_t then) {
     return (uint32_t)(now - then); // unsigned wrap-safe
 }
 
-/* ==========================
- * MCPWM Capture callback - Called on EVERY pulse!
- * ==========================
- * EXECUTION: Every rising edge on GPIO triggers this ISR
- * 
- * WHAT HAPPENS ON EACH PULSE:
- * ----------------------------
- * 1. Updates s_t_last (always, very fast ~10 CPU cycles)
- *    - Keeps latest edge timestamp for end-of-measurement
- *    - Used by both PCNT callback and timeout callback
- * 
- * 2. FIRST PULSE ONLY (when  !running):
- *    - Captures precise start time (t_start)
- *    - Resets PCNT counter to 0
- *    - Starts PCNT hardware counting
- *    - Sets running=true to prevent re-entry
- * 
- * 3. SUBSEQUENT PULSES:
- *    - Only updates t_last (minimal overhead)
- *    - PCNT counts in hardware (no ISR overhead!)
- * 
- * EFFICIENCY:
- * -----------
- * - First pulse:  ~100-200 CPU cycles (setup PCNT)
- * - Other pulses: ~10-20 CPU cycles (just timestamp update)
- * - Counting: 0 CPU cycles (hardware PCNT does it!)
- * 
- * This design supports high-frequency signals (10+ kHz) with minimal CPU load.
- * ========================== */
-bool IRAM_ATTR on_capture_cb(mcpwm_cap_channel_handle_t chan,
-                                   const mcpwm_capture_event_data_t *edata,
-                                   void *user_data)
-{
-    (void)chan;
-    speed_sensor_t *sensor = (speed_sensor_t *)user_data;  // Identifies which sensor (1 or 2)
 
-    uint32_t t = edata->cap_value;
-
-    // Glitch filter: ignore pulses closer than 500 µs (40 ticks @ 80 MHz)
-    // At 80 MHz: 500 µs = 40,000 ticks
-    const uint32_t MIN_DT_TICKS = 100000;  // 500 µs @ 80 MHz
-    uint32_t dt = tick_diff_u32(t, sensor->t_last);
-    // Filter: reject pulse if too close to previous one
-    if (sensor->t_last != 0 && dt < MIN_DT_TICKS) {
-        return false;  // Ignore glitch
-    }
-
-    // Valid edge: update timestamp
-    sensor->t_last = t;
-
-    // Start logic: start measurement window on first edge when ready
-    if (!sensor->running) {
-        sensor->t_start = t;
-
-        // Reset & start PCNT counting from this edge onwards
-        pcnt_unit_clear_count(sensor->pcnt_unit);
-        pcnt_unit_start(sensor->pcnt_unit);
-
-        sensor->running = true;
-        
-    }
-
-    return false; // no yield
-}
 
 /* ==========================
  * PCNT watchpoint callback: MEASUREMENT MODE 1 (Normal/High Speed)
@@ -269,25 +196,32 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     // edata->watch_point_value is the count at trigger (target)
     uint32_t used = (uint32_t)edata->watch_point_value;
 
-    // Use the most recent capture timestamp as t_end (hardware-latched on edge)
-    uint32_t t_end = sensor->t_last;
-    uint32_t dt = tick_diff_u32(t_end, sensor->t_start);
+    // Use the dedicated timestamp timer so values stay monotonic
+    uint64_t now;
+    gptimer_get_raw_count(s_timestamp_timer, &now);   // IRAM-safe
+    portENTER_CRITICAL_ISR(&s_sensor_spinlock);
+    uint64_t previous = sensor->t_last;
+    uint64_t diff = now - previous;
+    if (diff > CAPTURE_RES_HZ) { // 1 second sanity check
+        sensor->t_last = now;
+        portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
+        pcnt_unit_clear_count(sensor->pcnt_unit);
+        return false;
+    }
 
-    // Publish result atomically (coarse-grain critical section)
-    portENTER_CRITICAL_ISR(&sensor->mux);
-    sensor->used_periods += used;
-    sensor->dt_ticks += dt;
-    sensor->zero_pending = false;
-    portEXIT_CRITICAL_ISR(&sensor->mux);
+    sensor->used_periods = used;
+    sensor->period_us = diff;
+    sensor->t_last = now;
+    portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
 
     // Stop counting, ready for next measurement cycle
-    pcnt_unit_stop(sensor->pcnt_unit);
-    sensor->running = false;
+    pcnt_unit_clear_count(sensor->pcnt_unit);
     
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 
     return false;
 }
+
 
 /* ==========================
  * GPTimer timeout callback: MEASUREMENT MODE 2 (Slow/Stopped Fallback)
@@ -355,11 +289,6 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
     
     for (int i = 0; i < 2; i++) {
         speed_sensor_t *sensor = sensors[i];
-        
-        // If not running, nothing to do (still waiting for first edge)
-        if (!sensor->running) {
-            continue;
-        }
 
         // Read current count (how many periods observed so far)
         int count = 0;
@@ -367,29 +296,34 @@ bool IRAM_ATTR on_timeout_cb(gptimer_handle_t timer,
 
         // If we have at least 1 period, publish a result; else mark zero-speed
         if (count > 0) {            
-            uint32_t used = (uint32_t)count;
-            uint32_t t_end = sensor->t_last;
-            uint32_t dt = tick_diff_u32(t_end, sensor->t_start);
+            // Use the dedicated timestamp timer so values stay monotonic
+            uint64_t now;
+            gptimer_get_raw_count(s_timestamp_timer, &now);   // IRAM-safe
+            portENTER_CRITICAL_ISR(&s_sensor_spinlock);
+            uint64_t previous = sensor->t_last;
+            uint64_t diff = now - previous;
+            if (diff > CAPTURE_RES_HZ) { // 1 second sanity check
+                sensor->t_last = now;
+                portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
+                pcnt_unit_clear_count(sensor->pcnt_unit);
+                return false;
+            }
 
-            portENTER_CRITICAL_ISR(&sensor->mux);
-            sensor->used_periods += used;
-            sensor->dt_ticks += dt;
-            sensor->zero_pending = false;
-            portEXIT_CRITICAL_ISR(&sensor->mux);
+            sensor->used_periods = count;
+            sensor->period_us = diff;
+            sensor->t_last = now;
+            portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
 
-            pcnt_unit_stop(sensor->pcnt_unit);
-            sensor->running = false;
+            // reset counting, ready for next measurement cycle
+            pcnt_unit_clear_count(sensor->pcnt_unit);
             
             // Metrics will be updated in loop() every 200ms (not in ISR!)
         } else {
-            portENTER_CRITICAL_ISR(&sensor->mux);
+            portENTER_CRITICAL_ISR(&s_sensor_spinlock);
             sensor->used_periods = 0;
-            sensor->dt_ticks = 0;
-            sensor->zero_pending = true;
-            portEXIT_CRITICAL_ISR(&sensor->mux);
-
-            pcnt_unit_stop(sensor->pcnt_unit);
-            sensor->running = false;
+            sensor->period_us = 0;
+            portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
+            pcnt_unit_clear_count(sensor->pcnt_unit);
         }
     }
 

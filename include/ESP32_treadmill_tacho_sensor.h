@@ -21,12 +21,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern portMUX_TYPE s_sensor_spinlock;
+
 
 /* ==========================
  * Configuration constants
  * ========================== */
 #define UPDATE_TIMEOUT_US     200000   // 200 ms max update interval
-#define CAPTURE_RES_HZ        80000000  // 80 MHz - ESP32-S3 capture timer is ALWAYS APB_CLK (resolution_hz config ignored)
+#define CAPTURE_RES_HZ        1000000  // 1 MHz - ESP32-S3 capture timer is ALWAYS APB_CLK (resolution_hz config ignored)
 
 /* ==========================
  * Sensor type identifier
@@ -51,31 +53,24 @@ typedef struct {
  * ========================== */
 typedef struct {
     // Hardware handles
-    mcpwm_cap_timer_handle_t   cap_timer;
-    mcpwm_cap_channel_handle_t cap_chan;
     pcnt_unit_handle_t         pcnt_unit;
     pcnt_channel_handle_t      pcnt_chan;
     
     // Configuration
     sensor_type_t sensor_type;   // Identifies if this is band or motor sensor
     int      gpio_num;
-    int      mcpwm_group_id;     // 0 or 1 for ESP32-S3
     uint32_t target_periods;
     
-    // Measurement control
-    volatile bool     running;    // measurement active (pcnt counting), false=ready for new measurement
-    
     // Captured timestamps (hardware latched)
-    volatile uint32_t t_start;    // capture tick at first edge (window start)
-    volatile uint32_t t_last;     // last capture tick seen (always updated on cap event)
+    volatile uint64_t t_start;    // capture tick at first edge (window start)
+    volatile uint64_t t_last;     // last capture tick seen (always updated on cap event)
     
     // Published result (snapshot)
     volatile uint32_t used_periods; // how many periods used for last result
-    volatile uint32_t dt_ticks;     // delta time in capture ticks for last result
-    volatile bool     zero_pending; // flag to force zero-speed publication
-    
-    portMUX_TYPE mux;
+    volatile uint64_t period_us;
 } speed_sensor_t;
+
+
 
 /**
  * Initialize sensor 1 (GPIO 18, MCPWM Group 0)

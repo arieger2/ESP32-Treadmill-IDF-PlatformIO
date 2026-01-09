@@ -38,6 +38,9 @@
  * - Static variables maintain last valid value per sensor
  ******************************************************************************/
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/portmacro.h"
+
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_sensor.h"
 #include "ESP32_treadmill_tacho_filters.h"
@@ -90,23 +93,15 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
     bool has_new = false;
     bool zero_pending = false;
     uint32_t used = 0;
-    uint32_t dt = 0;
+    uint64_t dt = 0;
 
-    // Atomic read of sensor result (ISR-safe critical section)
-    portENTER_CRITICAL_ISR(&sensor->mux);
-    if (sensor->zero_pending) {
-        zero_pending = true;
-        sensor->zero_pending = false;
-    }
+    portENTER_CRITICAL(&s_sensor_spinlock);
     if (sensor->used_periods) {
         has_new = true;
         used = sensor->used_periods;
-        sensor->used_periods = 0;  // Clear after reading
-        dt = sensor->dt_ticks;
-        sensor->dt_ticks = 0;      // Clear after reading
-        
+        dt = sensor->period_us;
     }
-    portEXIT_CRITICAL_ISR(&sensor->mux);
+    portEXIT_CRITICAL(&s_sensor_spinlock);
 
     if (zero_pending) {
         *last_rpm = 0.0f;
