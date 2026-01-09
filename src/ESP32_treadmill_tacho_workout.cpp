@@ -126,7 +126,7 @@ void WorkoutExecutor::update() {
   if (_state != WorkoutState::Running) return;
   
   // Auto-pause if treadmill is turned off (speed = 0)
-  float currentSpeed_kmh = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
+  float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
   if (currentSpeed_kmh < 0.5f) {
     Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
     pause();
@@ -435,7 +435,7 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     waitingForStabilization = false;
   }
 
-  const float current_kmh = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
+  const float current_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
   
   // If waiting for stabilization after a button press
   if (waitingForStabilization) {
@@ -488,12 +488,12 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
 // Just press for calculated time, then release and let physicalSpeedControl monitor
 // ============================================================================
 void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
-  const float startSpeed_kmh = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
+  const float startSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
   const float MAX_SPEED_KMH = 18.0f;          // Safety: never exceed this
   const float MIN_SPEED_KMH = 1.6f;           // Treadmill minimum
   const uint32_t MAX_PRESS_MS = 30000;        // Safety timeout: 30 seconds max
   const uint32_t MIN_PRESS_MS = 50;           // Minimum press time
-  const uint32_t CHECK_INTERVAL_MS = 50;      // Check speed every 50ms (less CPU)
+  const uint32_t CHECK_INTERVAL_MS = 800;      // Check speed every 50ms (less CPU)
   
   // Safety limits
   if (speedUp && targetSpeed_kmh > MAX_SPEED_KMH) targetSpeed_kmh = MAX_SPEED_KMH;
@@ -547,32 +547,29 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
     
     // Metrics are updated automatically by ISR callbacks - no manual update needed
     // OLD SYSTEM REMOVED: Previously called updateMetricsMotor/Band here
-    if (elapsed - lastSensorUpdate >= 500) {
-      lastSensorUpdate = elapsed;
+
+    lastSensorUpdate = elapsed;
       
-      // Check if speed is still changing in the expected direction
-      float currentSpeed_kmh = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
-      float speedChange = currentSpeed_kmh - lastSpeed_kmh;
+    // Check if speed is still changing in the expected direction
+    float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
+    float speedChange = currentSpeed_kmh - lastSpeed_kmh;
       
-      // For UP: speed should increase (positive change)
+    // For UP: speed should increase (positive change)
       // For DOWN: speed should decrease (negative change)
-      bool expectedChange = speedUp ? (speedChange > 0.05f) : (speedChange < -0.05f);
+    bool expectedChange = speedUp ? (speedChange > 0.05f) : (speedChange < -0.05f);
       
-      if (!expectedChange && elapsed > 1000) {  // Only check after 1 second
-        noChangeCount++;
-        if (noChangeCount >= NO_CHANGE_THRESHOLD) {
-          Serial.printf("[Speed Control] No more %s change detected after %u ms at %.1f km/h\n",
-                        speedUp ? "UP" : "DOWN", elapsed, currentSpeed_kmh);
-          break;
-        }
-      } else {
-        noChangeCount = 0;  // Reset counter if speed is changing
+    if (!expectedChange && elapsed > 1000) {  // Only check after 1 second
+      noChangeCount++;
+      if (noChangeCount >= NO_CHANGE_THRESHOLD) {
+        Serial.printf("[Speed Control] No more %s change detected after %u ms at %.1f km/h\n",
+                     speedUp ? "UP" : "DOWN", elapsed, currentSpeed_kmh);
+        break;
       }
-      
-      lastSpeed_kmh = currentSpeed_kmh;
+    } else {
+      noChangeCount = 0;  // Reset counter if speed is changing
     }
-    
-    float currentSpeed_kmh = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
+      
+    lastSpeed_kmh = currentSpeed_kmh;
     
     // Safety: stop if exceeding limits
     if (speedUp && currentSpeed_kmh >= MAX_SPEED_KMH) {
@@ -588,7 +585,7 @@ void pressUntilSpeedChanges(uint8_t pin, bool speedUp, float targetSpeed_kmh) {
   // Release relay
   gpio_set_level((gpio_num_t)pin, 1);  // HIGH = relay inactive
   
-  float finalSpeed = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
+  float finalSpeed = (metrics.mps + metrics.mpsOffset) * 3.6f;
   Serial.printf("[Speed Control] Released after %u ms, speed: %.1f -> %.1f km/h\n",
                 elapsed, startSpeed_kmh, finalSpeed);
 }
@@ -657,7 +654,7 @@ void startSpeedCalibration() {
   
   // Reset state for new calibration
   calState = CAL_STARTING_UP;
-  calStartSpeed = metrics.mpsSmooth * 3.6f;  // Convert to km/h
+  calStartSpeed = metrics.mps * 3.6f;  // Convert to km/h
   calMidSpeed = 0;  // Speed at release for UP test
   calEndSpeed = 0;  // Speed at release for DOWN test  
   calUpPressTime_ms = 0;
@@ -703,7 +700,7 @@ void updateCalibration() {
     }
   } 
   else if (calState == CAL_PRESSING_UP) {
-    float currentSpeed = metrics.mpsSmooth * 3.6f;
+    float currentSpeed = metrics.mps * 3.6f;
     const float CAL_MAX_SPEED_KMH = 10.0f;  // Safety: stop at 10 km/h
     const uint32_t CAL_MAX_PRESS_MS = 5000; // Max 5 seconds
     
@@ -750,7 +747,7 @@ void updateCalibration() {
   else if (calState == CAL_STARTING_DOWN) {
     // Wait 1 second before pressing down, record current stable speed as DOWN start
     if (elapsed > 1000) {
-      calDownStartSpeed = metrics.mpsSmooth * 3.6f;  // Speed before pressing DOWN
+      calDownStartSpeed = metrics.mps * 3.6f;  // Speed before pressing DOWN
       calState = CAL_PRESSING_DOWN;
       calStateChangeTime = now;
       gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 0);  // Start pressing (relay active)
@@ -758,7 +755,7 @@ void updateCalibration() {
     }
   }
   else if (calState == CAL_PRESSING_DOWN) {
-    float currentSpeed = metrics.mpsSmooth * 3.6f;
+    float currentSpeed = metrics.mps * 3.6f;
     const float CAL_MIN_SPEED_KMH = 2.0f;   // Safety: stop at ~2 km/h (above minimum)
     const uint32_t CAL_MAX_PRESS_MS = 5000; // Max 5 seconds
     
