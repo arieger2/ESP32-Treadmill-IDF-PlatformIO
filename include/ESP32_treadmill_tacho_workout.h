@@ -106,3 +106,34 @@ private:
   // 0 ⇒ unknown; set from <thresholdSecPerKm> if present, else derived from speedAtIF1_kph
   float zwo_threshold_sec_per_km_ = 0.0f;
 };
+
+// ===========================================================================
+// Speed Control Functions (from workout_speed_control.cpp)
+// ===========================================================================
+
+// Get current speed with outlier filtering (removes unrealistic spikes)
+// Returns: Filtered speed in km/h
+float getCurrentSpeedWithOutlierFilter();
+
+// Helper: Simple button press
+void writePress(uint8_t pin, bool pressed);
+
+// Helper: Press button for specific duration with yield
+void writePressForDuration(uint8_t pin, uint32_t duration_ms);
+
+// ===========================================================================
+// Calibration Functions (from workout_calibration.cpp)
+// ===========================================================================
+
+// Start speed calibration sequence
+// Prerequisites: Treadmill must be running
+// Will test speed UP and DOWN buttons to measure response rates
+void startSpeedCalibration();
+
+// Update calibration state machine (non-blocking)
+// Call regularly from main loop
+void updateCalibration();
+
+// Get current calibration status as JSON string
+// Returns: JSON object with state, message, speeds, and rates
+String getCalibrationStatus();
