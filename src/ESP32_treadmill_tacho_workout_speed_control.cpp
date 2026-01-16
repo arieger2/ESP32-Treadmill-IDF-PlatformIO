@@ -129,7 +129,8 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
           return;
         }
 
-        float rate = speedUp ? storedGlobals.SPEED_UP_RATE : storedGlobals.SPEED_DOWN_RATE;
+        // Use interpolated rate based on current speed for non-linear response
+        float rate = getInterpolatedRateForSpeed(current_kmh, speedUp);
         if (rate < 0.1f) rate = 0.5f;  // Fallback if not calibrated
 
         // Calculate press time: diff / rate, subtract inertia delay

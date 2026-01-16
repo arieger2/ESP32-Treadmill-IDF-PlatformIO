@@ -125,9 +125,9 @@ void writePressForDuration(uint8_t pin, uint32_t duration_ms);
 // Calibration Functions (from workout_calibration.cpp)
 // ===========================================================================
 
-// Start speed calibration sequence
+// Start multi-point speed calibration sequence
 // Prerequisites: Treadmill must be running
-// Will test speed UP and DOWN buttons to measure response rates
+// Will test speed UP and DOWN with continuous pressing and checkpoints
 void startSpeedCalibration();
 
 // Update calibration state machine (non-blocking)
@@ -137,3 +137,10 @@ void updateCalibration();
 // Get current calibration status as JSON string
 // Returns: JSON object with state, message, speeds, and rates
 String getCalibrationStatus();
+
+// Get interpolated rate for a specific speed based on calibration data
+// Parameters:
+//   currentSpeed_kmh - Current treadmill speed in km/h
+//   speedUp - true for speed up, false for speed down
+// Returns: Appropriate rate (km/h per second) for this speed range
+float getInterpolatedRateForSpeed(float currentSpeed_kmh, bool speedUp);
