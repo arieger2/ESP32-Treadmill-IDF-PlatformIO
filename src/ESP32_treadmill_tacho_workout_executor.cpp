@@ -197,7 +197,7 @@ void WorkoutExecutor::_applyTargets(const WorkoutStep& st) {
 
 void WorkoutExecutor::_advanceStep() {
   if (_currentIndex + 1 < _steps.size()) {
-    _currentIndex++;
+    _currentIndex += 1;
     _stepStart_ms   = _now();
     _pausedTotal_ms = 0;
     _applyTargets(_steps[_currentIndex]);

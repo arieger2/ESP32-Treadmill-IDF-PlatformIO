@@ -63,7 +63,7 @@ void IRAM_ATTR updateTestMetrics() {
         return;
     }
 
-    test_isr_call_count++;  // Track ISR calls for debugging
+    test_isr_call_count += 1;  // Track ISR calls for debugging
 
     portENTER_CRITICAL_ISR(&test_metrics_mux);
 
