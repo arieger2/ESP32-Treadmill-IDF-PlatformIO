@@ -8,12 +8,17 @@ extern TreadmillStoredGlobals storedGlobals;
 
 // ===========================================================================
 // REALTIME SPEED FILTER - Outlier rejection with minimal lag
+// NOTE: Filter is bypassed during SC_PRESSING to see real speed
 // ===========================================================================
+float getCurrentSpeedRaw() {
+  return (metrics.mps + metrics.mpsOffset) * 3.6f;
+}
+
 float getCurrentSpeedWithOutlierFilter() {
   static float lastSpeed = 0;
   static uint32_t lastTime = 0;
 
-  const float raw_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
+  const float raw_kmh = getCurrentSpeedRaw();
   const uint32_t now = millis();
   const uint32_t dt = now - lastTime;
 
@@ -94,8 +99,9 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     return;
   }
 
-  // Get filtered realtime speed (outlier rejection)
-  const float current_kmh = getCurrentSpeedWithOutlierFilter();
+  // Get speed - use RAW during pressing to see real speed immediately
+  // Use filtered speed during IDLE/STABILIZING to avoid jitter
+  const float current_kmh = (state == SC_PRESSING) ? getCurrentSpeedRaw() : getCurrentSpeedWithOutlierFilter();
   const float diff = targetSpeed_kmh - current_kmh;
 
   // State machine
@@ -157,8 +163,30 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     case SC_PRESSING: {
       uint32_t elapsed = now_ms - pressStartTime;
 
+      // CRITICAL: Early release to compensate for mechanical inertia
+      // Release BEFORE target to account for overshoot/undershoot
+      // Overshoot compensation: ~2 km/h for UP, ~1 km/h for DOWN
+      const float OVERSHOOT_COMPENSATION_UP = 1.8f;    // km/h before target
+      const float OVERSHOOT_COMPENSATION_DOWN = 0.8f;  // km/h before target
+
+      if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMPENSATION_UP)) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h overshoot)\n",
+                      current_kmh, elapsed, targetSpeed_kmh, OVERSHOOT_COMPENSATION_UP);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+      else if (!speedUp && current_kmh <= (targetSpeed_kmh + OVERSHOOT_COMPENSATION_DOWN)) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h undershoot)\n",
+                      current_kmh, elapsed, targetSpeed_kmh, OVERSHOOT_COMPENSATION_DOWN);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
       // Check if press duration reached
-      if (elapsed >= targetPressDuration) {
+      else if (elapsed >= targetPressDuration) {
         gpio_set_level((gpio_num_t)activePin, 1);  // HIGH = relay inactive
         Serial.printf("[Speed Control] Released after %u ms at %.1f km/h\n", elapsed, current_kmh);
 
