@@ -113,19 +113,22 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
 
     portENTER_CRITICAL(&s_sensor_spinlock);
     if (sensor->used_periods) {
-        has_new = true;
         used = sensor->sum_used_periods - *last_valid_used_periods;
-        // Use timestamp delta for accumulated pulses (handles multiple ISR events between reads)
-        if (*last_valid_timestamp == 0) {
-            // First read: use period_us from latest ISR event
-            dt = sensor->period_us;
-        } else {
-            // Subsequent reads: calculate time span for accumulated pulses
-            dt = sensor->ts_us - *last_valid_timestamp;
-        }
-        // Check for zero-speed timeout signal from FreeRTOS timer
-        if (dt == 0 || sensor->period_us == 0) {
-            zero_pending = true;
+        // Only process if there are actually NEW pulses since last read
+        if (used > 0) {
+            has_new = true;
+            // Use timestamp delta for accumulated pulses (handles multiple ISR events between reads)
+            if (*last_valid_timestamp == 0) {
+                // First read: use period_us from latest ISR event
+                dt = sensor->period_us;
+            } else {
+                // Subsequent reads: calculate time span for accumulated pulses
+                dt = sensor->ts_us - *last_valid_timestamp;
+            }
+            // Check for zero-speed timeout signal from FreeRTOS timer
+            if (dt == 0 || sensor->period_us == 0) {
+                zero_pending = true;
+            }
         }
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
