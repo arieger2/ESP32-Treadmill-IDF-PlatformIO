@@ -79,7 +79,7 @@ void sendFTMS_BLE_Data() {
     uint8_t ftmsData[20] = {0};
     size_t idx = 0;
 
-    float    speedKmh            = (metrics.mps + metrics.mpsOffset) * 3.6f;
+    float    speedKmh            = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
     uint16_t instantaneousSpeed  = (uint16_t)(speedKmh * 100.0f); // 0.01 km/h
     uint16_t averageSpeed        = instantaneousSpeed;
     uint32_t totalDistanceMeters = (uint32_t)metrics.workoutDistance; // float meters -> uint32_t
