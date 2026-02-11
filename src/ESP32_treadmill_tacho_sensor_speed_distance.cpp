@@ -58,178 +58,86 @@ static volatile bool motorFilterResetPending = false;
 
 
 /**
- * Get RPM and delta distance from sensor
- * 
- * Returns both RPM and distance traveled since last measurement.
- * This function combines RPM calculation with distance measurement in a single
- * atomic sensor read operation.
- * 
+ * Get RPM, speed (m/s) and delta distance from sensor
+ *
+ * Reads accumulated pulse data from sensor, calculates RPM, linear speed
+ * and distance traveled since last call. Belt ratio is applied uniformly
+ * to both mps and delta_distance - no separate conversion needed.
+ *
  * @param sensor Pointer to sensor structure
  * @param pulses_per_rev Number of pulses in one complete revolution
  * @param belt_distance_mm Belt circumference in millimeters
- * @param belt_ratio Motor-to-belt ratio (1.0 for direct drive)
- * @return sensor_result_t containing rpm and delta_distance (in meters)
- * 
- * 
- * BEHAVIOR:
- * ---------
- * - Returns {0.0, 0.0} if sensor pointer is NULL
- * - Returns last valid RPM with 0.0 distance if no new measurement
- * - Returns updated RPM and distance when new measurement available
- * - Thread-safe: uses critical section for atomic access
+ * @param belt_ratio Motor-to-belt gear ratio (1.0 for band sensor / direct drive)
+ * @return sensor_result_t with rpm, mps, delta_distance, has_new, force_reset
  */
-sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
-                                                 float belt_distance_mm)
+sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev,
+                                                 float belt_distance_mm, float belt_ratio)
 {
-    sensor_result_t result = {0.0f, 0.0f, false, false};
+    sensor_result_t result = {0.0f, 0.0f, 0.0f, false, false};
 
     if (sensor == NULL) return result;
 
-    // Maintain separate static cache for each sensor (grouped by sensor)
+    // Per-sensor static state (RPM cache + accumulator bookkeeping)
     float *last_rpm;
-    uint64_t *last_valid_timestamp;
-    uint64_t *last_valid_used_periods;
+    uint64_t *last_ts;
+    uint64_t *last_sum;
 
     if (sensor == &s_sensor1) {
-        static float last_rpm_s1 = 0.0f;
-        static uint64_t last_timestamp_s1 = 0;
-        static uint64_t last_used_periods_s1 = 0;
-        last_rpm = &last_rpm_s1;
-        last_valid_timestamp = &last_timestamp_s1;
-        last_valid_used_periods = &last_used_periods_s1;
+        static float s1_rpm = 0.0f;
+        static uint64_t s1_ts = 0, s1_sum = 0;
+        last_rpm = &s1_rpm; last_ts = &s1_ts; last_sum = &s1_sum;
     } else {
-        static float last_rpm_s2 = 0.0f;
-        static uint64_t last_timestamp_s2 = 0;
-        static uint64_t last_used_periods_s2 = 0;
-        last_rpm = &last_rpm_s2;
-        last_valid_timestamp = &last_timestamp_s2;
-        last_valid_used_periods = &last_used_periods_s2;
+        static float s2_rpm = 0.0f;
+        static uint64_t s2_ts = 0, s2_sum = 0;
+        last_rpm = &s2_rpm; last_ts = &s2_ts; last_sum = &s2_sum;
     }
 
-    bool has_new = false;
-    bool zero_pending = false;
+    // --- Atomic read of accumulated sensor data ---
     uint32_t used = 0;
     uint64_t dt = 0;
+    bool zero_pending = false;
 
     portENTER_CRITICAL(&s_sensor_spinlock);
     if (sensor->used_periods) {
-        used = sensor->sum_used_periods - *last_valid_used_periods;
-        // Only process if there are actually NEW pulses since last read
+        used = sensor->sum_used_periods - *last_sum;
         if (used > 0) {
-            has_new = true;
-            // Use timestamp delta for accumulated pulses (handles multiple ISR events between reads)
-            if (*last_valid_timestamp == 0) {
-                // First read: use period_us from latest ISR event
-                dt = sensor->period_us;
-            } else {
-                // Subsequent reads: calculate time span for accumulated pulses
-                dt = sensor->ts_us - *last_valid_timestamp;
-            }
-            // Check for zero-speed timeout signal from FreeRTOS timer
-            if (dt == 0 || sensor->period_us == 0) {
+            dt = (*last_ts == 0) ? sensor->period_us
+                                 : (sensor->ts_us - *last_ts);
+            if (dt == 0 || sensor->period_us == 0)
                 zero_pending = true;
-            }
         }
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
 
+    // --- Zero-speed timeout ---
     if (zero_pending) {
         *last_rpm = 0.0f;
-        result.rpm = 0.0f;
-        result.delta_distance = 0.0f;
         result.has_new = true;
         result.force_reset = true;
         return result;
     }
 
-    // Calculate new RPM and distance if we have valid new data
-    if (has_new && dt > 0 && pulses_per_rev > 0) {
-        // Step 1: Convert timer ticks to seconds
+    // --- New data: calculate RPM, mps, distance ---
+    if (used > 0 && dt > 0 && pulses_per_rev > 0) {
         float seconds = (float)dt / (float)CAPTURE_RES_HZ;
-        
-        // Step 2: Calculate frequency in Hz
         float hz = (float)used / seconds;
-        
-        // Step 3: Convert to RPM
         *last_rpm = (hz * 60.0f) / (float)pulses_per_rev;
-        
-        // Always return current RPM (cached or newly calculated)
+
         result.rpm = *last_rpm;
-        
-        // Step 4: Calculate delta distance in meters
-        // revolutions = pulses / pulses_per_rev
-        // distance = belt_circumference × revolutions × belt_ratio
-        // NOTE: belt_ratio applied HERE for delta_distance calculation
-        //       get_mps() should use ratio=1.0 to avoid double application
+        result.mps = (belt_distance_mm / 1000.0f) * (*last_rpm * belt_ratio / 60.0f);
+
         float revolutions = (float)used / (float)pulses_per_rev;
-        float distance_mm = 0.0f;
-        if (sensor->sensor_type == SENSOR_TYPE_BAND) {
-            distance_mm = belt_distance_mm * revolutions;
-        } else {
-            distance_mm = belt_distance_mm * revolutions * storedGlobals.MOTOR_TO_BELT_RATIO;
-        }
-        
-        result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
+        result.delta_distance = belt_distance_mm * revolutions * belt_ratio / 1000.0f;
         result.has_new = true;
 
-        // Update state for next delta calculation (CRITICAL for accumulator pattern!)
-        *last_valid_used_periods = sensor->sum_used_periods;
-        *last_valid_timestamp = sensor->ts_us;
-    }
-    else {
-        // No new data - return last valid RPM
+        *last_sum = sensor->sum_used_periods;
+        *last_ts  = sensor->ts_us;
+    } else {
+        // No new data - return cached RPM and mps
         result.rpm = *last_rpm;
-        result.delta_distance = 0.0f;
-        result.has_new = false;
+        result.mps = (belt_distance_mm / 1000.0f) * (*last_rpm * belt_ratio / 60.0f);
     }
     return result;
-}
-
-/**
- * Convert RPM to meters per second (m/s)
- * 
- * Converts rotational speed (RPM) to linear speed (m/s) based on
- * belt/wheel circumference.
- * 
- * @param rpm Rotational speed in revolutions per minute
- * @param belt_distance_mm Belt circumference in millimeters
- * @param motor_to_belt_ratio Motor to belt ratio for gear compensation
- * @return Linear speed in meters per second
- * 
- * ---------------
- * // Band sensor with 1600mm belt circumference
- * float mps = speed_sensor_get_mps(rpm, 1600.0f, 1.0f);
- * 
- * // Motor sensor - needs to account for belt ratio
- * float mps = speed_sensor_get_mps(motorRPM, belt_mm, motor_to_belt_ratio);
- * 
- * CALCULATION:
- * ------------
- * - Belt distance per revolution = belt_distance_mm / 1000 (convert to meters)
- * - Revolutions per second = rpm * motor_to_belt_ratio / 60
- * - Speed (m/s) = (belt_distance_mm / 1000) × (rpm * motor_to_belt_ratio / 60)
- * 
- * Example:
- * --------
- * - Belt: 1600 mm = 1.6 meters
- * - RPM: 100
- * - Ratio: 0.5
- * - Speed = 1.6 × (100 * 0.5 / 60) = 1.33 m/s
- */
-float speed_sensor_get_mps(float rpm, float belt_distance_mm, float motor_to_belt_ratio) {
-    if (rpm < 0.0f) return 0.0f;
-    if (belt_distance_mm <= 0.0f) return 0.0f;
-    
-    // Convert belt distance from mm to meters
-    float belt_distance_m = belt_distance_mm / 1000.0f;
-    
-    // Convert RPM to revolutions per second
-    float revolutions_per_second = rpm * motor_to_belt_ratio / 60.0f;
-    
-    // Calculate linear speed: distance per revolution × revolutions per second
-    float mps = belt_distance_m * revolutions_per_second;
-    
-    return mps;
 }
 
 /**
@@ -266,61 +174,35 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
 
 void updateMetrics(TreadmillMetrics& metrics) {
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
+    bool isBand = (mode == SENSOR_BAND);
 
-    if (mode == SENSOR_BAND) {
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
-                                                                  storedGlobals.BELT_DISTANCE_MM);
-        if (result.force_reset) {
-            metrics.rpm = 0.0f;
-            metrics.motorRPM = 0.0f;
-            metrics.mps = 0.0f;
-            bandFilterResetPending = true;
-        } else {
-            metrics.rpm = result.rpm;
-            metrics.motorRPM = 0.0f;
-            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, 1.0f);
-            if (result.delta_distance > 0.0f) {
-                metrics.workoutDistance += result.delta_distance;
-            }
-        }
-    } else if (mode == SENSOR_MOTOR) {
-        sensor_result_t result = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
-                                                                  storedGlobals.BELT_DISTANCE_MM);
-        if (result.force_reset) {
-            metrics.rpm = 0.0f;
-            metrics.motorRPM = 0.0f;
-            metrics.mps = 0.0f;
-            motorFilterResetPending = true;
-        } else {
-            metrics.rpm = 0.0f;
-            metrics.motorRPM = result.rpm;
-            metrics.mps = speed_sensor_get_mps(result.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-            if (result.delta_distance > 0.0f) {
-                metrics.workoutDistance += result.delta_distance;
-            }
-        }
-    } else if (mode == SENSOR_AUTO) {
-        sensor_result_t motorResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor2(), storedGlobals.MOTOR_PULSES_PER_REV,
-                                                                           storedGlobals.BELT_DISTANCE_MM);
-        if (motorResult.force_reset) {
-            metrics.motorRPM = 0.0f;
-            metrics.mps = 0.0f;
-            motorFilterResetPending = true;
-        } else {
-            metrics.motorRPM = motorResult.rpm;
-            metrics.mps = speed_sensor_get_mps(motorResult.rpm, storedGlobals.BELT_DISTANCE_MM, storedGlobals.MOTOR_TO_BELT_RATIO);
-            if (motorResult.delta_distance > 0.0f) {
-                metrics.workoutDistance += motorResult.delta_distance;
-            }
-        }
+    // Primary sensor: band in BAND mode, motor in MOTOR/AUTO mode
+    speed_sensor_t *sensor = isBand ? speed_sensor_get_sensor1() : speed_sensor_get_sensor2();
+    uint32_t ppr            = isBand ? storedGlobals.PULSES_PER_REV : storedGlobals.MOTOR_PULSES_PER_REV;
+    float    ratio          = isBand ? 1.0f : storedGlobals.MOTOR_TO_BELT_RATIO;
 
-        sensor_result_t bandResult = speed_sensor_get_rpm_and_delta(speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
-                                                                      storedGlobals.BELT_DISTANCE_MM);
-        if (bandResult.force_reset) {
-            metrics.rpm = 0.0f;
-        } else {
-            metrics.rpm = bandResult.rpm;
-        }
+    sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, ppr,
+                                storedGlobals.BELT_DISTANCE_MM, ratio);
+
+    if (result.force_reset) {
+        metrics.rpm = 0.0f;
+        metrics.motorRPM = 0.0f;
+        metrics.mps = 0.0f;
+        (isBand ? bandFilterResetPending : motorFilterResetPending) = true;
+    } else {
+        metrics.rpm      = isBand ? result.rpm : 0.0f;
+        metrics.motorRPM = isBand ? 0.0f : result.rpm;
+        metrics.mps      = result.mps;
+        if (result.delta_distance > 0.0f)
+            metrics.workoutDistance += result.delta_distance;
+    }
+
+    // AUTO mode: also read band sensor for band RPM display
+    if (mode == SENSOR_AUTO) {
+        sensor_result_t band = speed_sensor_get_rpm_and_delta(
+            speed_sensor_get_sensor1(), storedGlobals.PULSES_PER_REV,
+            storedGlobals.BELT_DISTANCE_MM, 1.0f);
+        metrics.rpm = band.force_reset ? 0.0f : band.rpm;
     }
 }
 

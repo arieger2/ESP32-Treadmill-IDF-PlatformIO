@@ -43,6 +43,7 @@ typedef enum {
  * ========================== */
 typedef struct {
     float rpm;              // Rotational speed in revolutions per minute
+    float mps;              // Linear speed in meters per second (belt_ratio already applied)
     float delta_distance;   // Distance traveled in meters since last measurement
     bool  has_new;          // True when fresh data (including forced zero) is available
     bool  force_reset;      // True when filters should reset (zero-speed timeout)
@@ -114,54 +115,19 @@ esp_err_t speed_sensor2_init(uint32_t initial_periods, int gpio_num);
 esp_err_t speed_sensor_set_target_pulses(speed_sensor_t *sensor, uint32_t periods);
 
 /**
- * Compute RPM from last measurement
- * 
- * @param sensor Pointer to sensor structure
- * @param pulses_per_rev Number of pulses per complete revolution
- * @return RPM value (0.0 if no new data available)
- * 
- * Example:
- *   float rpm = speed_sensor_get_rpm(speed_sensor_get_sensor1(), 48);
- */
-float speed_sensor_get_rpm(speed_sensor_t *sensor, uint32_t pulses_per_rev);
-
-/**
- * Get RPM and delta distance from sensor
- * 
- * Returns both RPM and distance traveled since last measurement.
- * 
+ * Get RPM, speed (m/s) and delta distance from sensor
+ *
+ * Returns RPM, linear speed and distance traveled since last measurement.
+ * Belt ratio is applied to both mps and delta_distance.
+ *
  * @param sensor Pointer to sensor structure
  * @param pulses_per_rev Number of pulses in one complete revolution
  * @param belt_distance_mm Belt circumference in millimeters
- * @return sensor_result_t containing rpm and delta_distance (in meters)
- * 
- * Example:
- *   sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, 48, 1600.0f);
- *   float rpm = result.rpm;
- *   float meters = result.delta_distance;
+ * @param belt_ratio Motor-to-belt ratio (1.0 for band sensor / direct drive)
+ * @return sensor_result_t containing rpm, mps and delta_distance (in meters)
  */
-sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev, 
-                                                 float belt_distance_mm);
-
-/**
- * Convert RPM to meters per second (m/s)
- * 
- * Converts rotational speed (RPM) to linear speed (m/s) based on
- * belt/wheel circumference and motor-to-belt ratio.
- * 
- * @param rpm Rotational speed in revolutions per minute
- * @param belt_distance_mm Belt/wheel circumference in millimeters
- * @param motor_to_belt_ratio Gear ratio compensation (1.0 for direct drive)
- * @return Linear speed in meters per second
- * 
- * Example:
- *   // Band sensor (direct drive, ratio = 1.0)
- *   float mps = speed_sensor_get_mps(100.0f, 1600.0f, 1.0f);
- *   
- *   // Motor sensor (with gear ratio compensation)
- *   float mps = speed_sensor_get_mps(motorRPM, 1600.0f, 0.5f);
- */
-float speed_sensor_get_mps(float rpm, float belt_distance_mm, float motor_to_belt_ratio);
+sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t pulses_per_rev,
+                                                 float belt_distance_mm, float belt_ratio);
 
 /**
  * Get pointer to sensor 1 structure (BAND SENSOR)
