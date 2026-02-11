@@ -67,7 +67,10 @@ typedef struct {
     // Published result (snapshot)
     volatile uint32_t used_periods; // how many periods used for last result
     volatile uint64_t period_us;
+    volatile uint64_t sum_used_periods; // how many periods used for last result
+    volatile uint64_t ts_us;
 } speed_sensor_t;
+
 
 
 

@@ -237,6 +237,8 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     sensor->used_periods = used;
     sensor->period_us = diff;
     sensor->t_last = now;
+    sensor->sum_used_periods += used; // how many periods used for last result
+    sensor->ts_us = now; // timestamp of this measurement (for debugging)
     portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
 
     // Stop counting, ready for next measurement cycle

@@ -82,14 +82,30 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
                                                  float belt_distance_mm)
 {
     sensor_result_t result = {0.0f, 0.0f, false, false};
-    
+
     if (sensor == NULL) return result;
-    
-    // Maintain separate static cache for each sensor
-    static float last_rpm_s1 = 0.0f;
-    static float last_rpm_s2 = 0.0f;
-    float *last_rpm = (sensor == &s_sensor1) ? &last_rpm_s1 : &last_rpm_s2;
-    
+
+    // Maintain separate static cache for each sensor (grouped by sensor)
+    float *last_rpm;
+    uint64_t *last_valid_timestamp;
+    uint64_t *last_valid_used_periods;
+
+    if (sensor == &s_sensor1) {
+        static float last_rpm_s1 = 0.0f;
+        static uint64_t last_timestamp_s1 = 0;
+        static uint64_t last_used_periods_s1 = 0;
+        last_rpm = &last_rpm_s1;
+        last_valid_timestamp = &last_timestamp_s1;
+        last_valid_used_periods = &last_used_periods_s1;
+    } else {
+        static float last_rpm_s2 = 0.0f;
+        static uint64_t last_timestamp_s2 = 0;
+        static uint64_t last_used_periods_s2 = 0;
+        last_rpm = &last_rpm_s2;
+        last_valid_timestamp = &last_timestamp_s2;
+        last_valid_used_periods = &last_used_periods_s2;
+    }
+
     bool has_new = false;
     bool zero_pending = false;
     uint32_t used = 0;
@@ -98,8 +114,8 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
     portENTER_CRITICAL(&s_sensor_spinlock);
     if (sensor->used_periods) {
         has_new = true;
-        used = sensor->used_periods;
-        dt = sensor->period_us;
+        used = sensor->sum_used_periods - *last_valid_used_periods;
+        dt = sensor->ts_us - *last_valid_timestamp;
         // Check for zero-speed timeout signal from FreeRTOS timer
         if (dt == 0) {
             zero_pending = true;
@@ -145,6 +161,10 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
         
         result.delta_distance = distance_mm / 1000.0f;  // Convert mm to meters
         result.has_new = true;
+
+        // Update state for next delta calculation (CRITICAL for accumulator pattern!)
+        *last_valid_used_periods = sensor->sum_used_periods;
+        *last_valid_timestamp = sensor->ts_us;
     }
     else {
         // No new data - return last valid RPM
