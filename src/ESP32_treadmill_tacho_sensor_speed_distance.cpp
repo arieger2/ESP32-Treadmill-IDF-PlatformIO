@@ -172,6 +172,87 @@ speed_sensor_t* speed_sensor_get_sensor2(void) {
     return &s_sensor2;
 }
 
+/**
+ * Check signal quality based on pulse timing consistency and frequency
+ * 
+ * Tracks the last 5 pulse intervals and calculates coefficient of variation (CV)
+ * to detect signal quality issues like loose magnets, sensor misalignment,
+ * or electrical noise.
+ * 
+ * Frequency validation ranges:
+ * - Band sensor (type 0): 3-600 Hz (nominal 5-500 Hz)
+ * - Motor sensor (type 1): 3-4500 Hz (nominal 5-4000 Hz)
+ * 
+ * @param dt Time elapsed in microseconds
+ * @param used Number of pulses counted
+ * @param sensor_type Sensor identifier (0=band, 1=motor)
+ * @return signal_quality_t structure with CV, frequency, and quality flag
+ */
+static signal_quality_t check_signal_quality(uint64_t dt, uint32_t used, uint8_t sensor_type) {
+    signal_quality_t quality = {0.0f, 0.0f, false};
+    
+    if (used == 0 || dt == 0) {
+        return quality;
+    }
+    
+    // Calculate average interval per pulse and frequency
+    float avg_interval_us = (float)dt / (float)used;
+    quality.frequency = 1000000.0f / avg_interval_us;  // Convert µs to Hz
+    
+    // Per-sensor static tracking for CV calculation
+    static float intervals_s1[5] = {0};
+    static float intervals_s2[5] = {0};
+    static uint8_t idx_s1 = 0, idx_s2 = 0;
+    static uint8_t count_s1 = 0, count_s2 = 0;
+    
+    float *intervals = (sensor_type == 0) ? intervals_s1 : intervals_s2;
+    uint8_t *idx = (sensor_type == 0) ? &idx_s1 : &idx_s2;
+    uint8_t *count = (sensor_type == 0) ? &count_s1 : &count_s2;
+    
+    // Store interval in ring buffer
+    intervals[*idx] = avg_interval_us;
+    *idx = (*idx + 1) % 5;
+    if (*count < 5) (*count)++;
+    
+    // Sensor-specific frequency limits
+    // Band sensor (type 0): 5-500 Hz typical, use 3-600 Hz with margin
+    // Motor sensor (type 1): 5-4000 Hz typical, use 3-4500 Hz with margin
+    const float MIN_FREQ = 3.0f;
+    const float MAX_FREQ = (sensor_type == 0) ? 600.0f : 4500.0f;
+    
+    // Need at least 3 samples for meaningful CV
+    if (*count < 3) {
+        quality.cv = 0.0f;
+        quality.is_good = (quality.frequency >= MIN_FREQ && quality.frequency <= MAX_FREQ);
+        return quality;
+    }
+    
+    // Calculate coefficient of variation (CV = stddev / mean)
+    float mean = 0.0f;
+    for (uint8_t i = 0; i < *count; i++) {
+        mean += intervals[i];
+    }
+    mean /= (float)(*count);
+    
+    float variance = 0.0f;
+    for (uint8_t i = 0; i < *count; i++) {
+        float diff = intervals[i] - mean;
+        variance += diff * diff;
+    }
+    variance /= (float)(*count);
+    float stddev = sqrtf(variance);
+    quality.cv = (mean > 0.0f) ? (stddev / mean) : 0.0f;
+    
+    // Quality thresholds: CV < 0.15 (15%) = acceptable signal consistency
+    const float MAX_CV = 0.15f;
+    
+    quality.is_good = (quality.cv < MAX_CV) && 
+                     (quality.frequency >= MIN_FREQ) && 
+                     (quality.frequency <= MAX_FREQ);
+    
+    return quality;
+}
+
 void updateMetrics(TreadmillMetrics& metrics) {
     uint8_t mode = storedGlobals.SENSOR_SOURCE_MODE;
     bool isBand = (mode == SENSOR_BAND);
@@ -183,6 +264,31 @@ void updateMetrics(TreadmillMetrics& metrics) {
 
     sensor_result_t result = speed_sensor_get_rpm_and_delta(sensor, ppr,
                                 storedGlobals.BELT_DISTANCE_MM, ratio);
+
+    // Check signal quality from raw sensor data
+    uint64_t dt = 0;
+    uint32_t used = 0;
+    portENTER_CRITICAL(&s_sensor_spinlock);
+    dt = sensor->period_us;
+    used = sensor->used_periods;
+    portEXIT_CRITICAL(&s_sensor_spinlock);
+    
+    signal_quality_t quality = check_signal_quality(dt, used, sensor->sensor_type);
+    
+    // Update metrics with signal quality data
+    metrics.signalCV = quality.cv;
+    metrics.signalFrequency = quality.frequency;
+    metrics.signalQualityGood = quality.is_good;
+    
+    // Log signal quality issues (only when running and bad quality detected)
+    static bool last_quality_good = true;
+    if (metrics.isRunning && !quality.is_good && last_quality_good) {
+        const char* sensor_name = (sensor->sensor_type == 0) ? "Band" : "Motor";
+        const float max_freq = (sensor->sensor_type == 0) ? 600.0f : 4500.0f;
+        Serial.printf("[Signal Quality] %s sensor - Bad signal: CV=%.2f%%, Freq=%.1fHz (valid range: 3-%.0fHz)\n",
+                     sensor_name, quality.cv * 100.0f, quality.frequency, max_freq);
+    }
+    last_quality_good = quality.is_good;
 
     if (result.force_reset) {
         metrics.rpm = 0.0f;

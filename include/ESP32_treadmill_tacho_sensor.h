@@ -159,6 +159,14 @@ speed_sensor_t* speed_sensor_get_sensor2(void);
 
 // C++ only functions
 #ifdef __cplusplus
+
+/* Signal quality structure */
+typedef struct {
+    float cv;           // Coefficient of variation (0-1, lower is better)
+    float frequency;    // Signal frequency in Hz
+    bool is_good;       // Overall quality flag
+} signal_quality_t;
+
 struct TreadmillMetrics;
 void updateMetrics(TreadmillMetrics& metrics);
 void applySpeedFilter(TreadmillMetrics& metrics);

@@ -125,6 +125,11 @@ struct TreadmillMetrics {
     bool isPaused = false;
     bool controlRequested = false;
     unsigned long sessionStartTime = 0;
+    
+    // Signal quality metrics
+    float signalCV = 0.0f;          // Coefficient of variation (0-1, lower is better)
+    float signalFrequency = 0.0f;   // Current signal frequency in Hz
+    bool signalQualityGood = true;  // Overall quality flag
 };
 
 struct BLEData {
