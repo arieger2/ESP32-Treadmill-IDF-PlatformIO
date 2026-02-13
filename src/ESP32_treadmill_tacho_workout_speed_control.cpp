@@ -11,7 +11,14 @@ extern TreadmillStoredGlobals storedGlobals;
 // NOTE: Filter is bypassed during SC_PRESSING to see real speed
 // ===========================================================================
 float getCurrentSpeedRaw() {
-  return (metrics.mps + metrics.mpsOffset) * 3.6f;
+  static portMUX_TYPE metrics_spinlock = portMUX_INITIALIZER_UNLOCKED;
+  float speed;
+  
+  portENTER_CRITICAL(&metrics_spinlock);
+  speed = (metrics.mps + metrics.mpsOffset) * 3.6f;
+  portEXIT_CRITICAL(&metrics_spinlock);
+  
+  return speed;
 }
 
 float getCurrentSpeedWithOutlierFilter() {
