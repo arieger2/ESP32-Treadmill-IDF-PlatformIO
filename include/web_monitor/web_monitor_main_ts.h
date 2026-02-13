@@ -51,6 +51,10 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
     .button-red:hover { background:rgba(220,53,69,0.7); }
     .button-green { background:rgba(40,167,69,0.3); }
     .button-green:hover { background:rgba(40,167,69,0.5); }
+    .quality-excellent { background:rgba(40,167,69,0.3) !important; }
+    .quality-good { background:rgba(255,193,7,0.3) !important; }
+    .quality-fair { background:rgba(255,152,0,0.3) !important; }
+    .quality-bad { background:rgba(220,53,69,0.3) !important; }
     @media (max-width: 768px) {
       h2 { font-size:1.5rem; }
       .metric-value { font-size:1.5rem; }
@@ -164,6 +168,24 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
       <p style="margin-top:15px;">
         <button id="testdata-btn" class="button" onclick="toggleTestMode(); return false;"><i class="fas fa-vial"></i> <span id="testdata-text">Test Mode</span></button>
       </p>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-signal"></i> Signal Quality</h2>
+      <div class="metric-grid">
+        <div class="metric %SIGNAL_QUALITY_CLASS%">
+          <div class="metric-label">Status</div>
+          <div class="metric-value"><span id="signal-quality">%SIGNAL_QUALITY%</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Consistency (CV)</div>
+          <div class="metric-value"><span id="signal-cv">%SIGNAL_CV%</span>%%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Frequency</div>
+          <div class="metric-value"><span id="signal-freq">%SIGNAL_FREQUENCY%</span> Hz</div>
+        </div>
+      </div>
     </div>
   </div>
 

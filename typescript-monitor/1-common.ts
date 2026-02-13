@@ -66,6 +66,18 @@ namespace MonitorApp {
         setTextById('rr', data.rr);
         setTextById('datetime', data.datetime);
         
+        // Update signal quality
+        setTextById('signal-quality', data.signalquality);
+        setTextById('signal-cv', data.signalcv);
+        setTextById('signal-freq', data.signalfreq);
+        
+        // Update signal quality color coding
+        const qualityEl = document.getElementById('signal-quality');
+        if (qualityEl && qualityEl.parentElement && qualityEl.parentElement.parentElement) {
+          const metricDiv = qualityEl.parentElement.parentElement;
+          metricDiv.className = 'metric ' + (data.signalclass || 'quality-good');
+        }
+        
         // Update testdata button appearance
         const testBtn = document.getElementById('testdata-btn');
         const testText = document.getElementById('testdata-text');

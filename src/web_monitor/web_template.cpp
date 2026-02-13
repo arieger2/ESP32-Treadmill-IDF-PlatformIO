@@ -65,5 +65,11 @@ String processTemplate(const String& var) {
 
   if (var == "TESTDATABUTTONCLASS") return testdata ? "button-red" : "button-green";
 
+  // Signal quality placeholders
+  if (var == "SIGNAL_QUALITY")       return getSignalQuality();
+  if (var == "SIGNAL_CV")            return getSignalCV();
+  if (var == "SIGNAL_FREQUENCY")     return getSignalFrequency();
+  if (var == "SIGNAL_QUALITY_CLASS") return getSignalQualityClass();
+
   return String("");
 }

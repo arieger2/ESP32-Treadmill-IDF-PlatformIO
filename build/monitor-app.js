@@ -72,6 +72,16 @@ var MonitorApp;
             setTextById('heartrate', data.heartrate);
             setTextById('rr', data.rr);
             setTextById('datetime', data.datetime);
+            // Update signal quality
+            setTextById('signal-quality', data.signalquality);
+            setTextById('signal-cv', data.signalcv);
+            setTextById('signal-freq', data.signalfreq);
+            // Update signal quality color coding
+            var qualityEl = document.getElementById('signal-quality');
+            if (qualityEl && qualityEl.parentElement && qualityEl.parentElement.parentElement) {
+                var metricDiv = qualityEl.parentElement.parentElement;
+                metricDiv.className = 'metric ' + (data.signalclass || 'quality-good');
+            }
             // Update testdata button appearance
             var testBtn = document.getElementById('testdata-btn');
             var testText = document.getElementById('testdata-text');

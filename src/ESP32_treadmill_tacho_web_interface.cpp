@@ -64,7 +64,11 @@ void initWebServer() {
     json += "\"heartrate\":\"" + getHeartRate() + "\",";
     json += "\"rr\":\"" + getRR() + "\",";
     json += "\"datetime\":\"" + getDateTime() + "\",";
-    json += "\"testdata\":" + String(testdata ? "true" : "false");
+    json += "\"testdata\":" + String(testdata ? "true" : "false") + ",";
+    json += "\"signalquality\":\"" + getSignalQuality() + "\",";
+    json += "\"signalcv\":\"" + getSignalCV() + "\",";
+    json += "\"signalfreq\":\"" + getSignalFrequency() + "\",";
+    json += "\"signalclass\":\"" + getSignalQualityClass() + "\"";
     json += "}";
     r->send(200, "application/json", json);
   });

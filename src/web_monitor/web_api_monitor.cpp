@@ -201,3 +201,25 @@ String getDateTime() {
 String getTestDataButtonText() {
   return testdata ? String("Turn Test Data OFF") : String("Turn Test Data ON");
 }
+
+String getSignalQuality() {
+  if (metrics.signalCV < 0.05f) return String("Excellent");
+  if (metrics.signalCV < 0.10f) return String("Good");
+  if (metrics.signalCV < 0.15f) return String("Fair");
+  return String("Bad");
+}
+
+String getSignalCV() {
+  return String(metrics.signalCV * 100.0f, 1);
+}
+
+String getSignalFrequency() {
+  return String((int)metrics.signalFrequency);
+}
+
+String getSignalQualityClass() {
+  if (metrics.signalCV < 0.05f) return String("quality-excellent");
+  if (metrics.signalCV < 0.10f) return String("quality-good");
+  if (metrics.signalCV < 0.15f) return String("quality-fair");
+  return String("quality-bad");
+}
