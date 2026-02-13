@@ -1,3 +1,5 @@
 {
-    "idf.currentSetup": "/Users/rra1imb/development/esp32/esp-idf"
+    "idf.currentSetup": "/Users/rra1imb/development/esp32/esp-idf",
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json"
 }
