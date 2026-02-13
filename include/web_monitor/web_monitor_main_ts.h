@@ -179,7 +179,7 @@ static const char MONITOR_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         </div>
         <div class="metric">
           <div class="metric-label">Consistency (CV)</div>
-          <div class="metric-value"><span id="signal-cv">%SIGNAL_CV%</span>%%</div>
+          <div class="metric-value"><span id="signal-cv">%SIGNAL_CV%</span>%</div>
         </div>
         <div class="metric">
           <div class="metric-label">Frequency</div>
