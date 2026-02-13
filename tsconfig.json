@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ES2015",
     "module": "amd",
-    "outFile": "./build/workout-app.js",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -11,10 +10,13 @@
     "noUnusedParameters": true,
     "removeComments": true,
     "lib": ["ES2015", "DOM"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "typescript/**/*.ts"
+    "typescript-workout/**/*.ts",
+    "typescript-monitor/**/*.ts",
+    "typescript-settings/**/*.ts"
   ],
   "exclude": [
     "node_modules",
