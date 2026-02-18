@@ -15,8 +15,8 @@ void sendRSC_BLE_Data() {
   float   stepsPerMinute = metrics.rpm * 2.0f;
   uint8_t cadence        = (stepsPerMinute > 255.0f) ? 255 : (uint8_t)stepsPerMinute;
 
-  // speed for RSC: m/s * 256
-  float    mps       = metrics.mps + metrics.mpsOffset;
+  // speed for RSC: m/s * 256 (use mpsSmooth, same source as FTMS)
+  float    mps       = metrics.mpsSmooth + metrics.mpsOffset;
   uint16_t instSpeed = (uint16_t)(mps * 256.0f);
 
   // flags: bit0=Instantaneous Cadence present
