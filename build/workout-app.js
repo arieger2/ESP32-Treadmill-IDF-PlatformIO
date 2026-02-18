@@ -296,7 +296,7 @@ var WorkoutApp;
             var vh = maxV > 0 ? (step.v / maxV) * (h - 16) : 0; // Leave space for label at top
             ctx.fillStyle = '#4a90e2';
             ctx.fillRect(x0, xAxisY - vh, barW, vh);
-            // Pace label - above the bar
+            // Pace label - horizontal for wide bars, rotated for narrow bars
             if (barW >= 26) {
                 var cx = x0 + barW / 2;
                 var labelY = xAxisY - vh - 2;
@@ -305,6 +305,20 @@ var WorkoutApp;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(WorkoutApp.kmhToPaceStr(step.v || 0), cx, labelY);
+            }
+            else if (barW >= 8 && vh >= 20) {
+                // Narrow bar: rotate text -90° and place inside/above bar
+                var cx = x0 + barW / 2;
+                var labelY = xAxisY - vh - 4;
+                ctx.save();
+                ctx.translate(cx, labelY);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillStyle = '#000';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(WorkoutApp.kmhToPaceStr(step.v || 0), 0, 0);
+                ctx.restore();
             }
             t0 += step.d;
         }
@@ -479,30 +493,77 @@ var WorkoutApp;
 var WorkoutApp;
 (function (WorkoutApp) {
     function initControl() {
+        var thresholdInput = document.getElementById('thresholdInput');
+        var btnThreshold = document.getElementById('btnThreshold');
+        var thresholdHint = document.getElementById('thresholdHint');
+        // Convert seconds/km to "m:ss" display string
+        function secToMinKm(sec) {
+            if (sec <= 0)
+                return '';
+            var m = Math.floor(sec / 60);
+            var s = Math.round(sec % 60);
+            return "".concat(m, ":").concat(s < 10 ? '0' + s : s);
+        }
+        // Parse "m:ss" to seconds, returns NaN on bad input
+        function minKmToSec(txt) {
+            var p = txt.trim().split(':');
+            if (p.length !== 2)
+                return NaN;
+            var m = parseInt(p[0], 10), s = parseInt(p[1], 10);
+            if (isNaN(m) || isNaN(s) || s < 0 || s > 59 || m < 0)
+                return NaN;
+            return m * 60 + s;
+        }
+        // Fetch current threshold from backend and update the field
+        function refreshThreshold() {
+            fetch('/api/workout/threshold')
+                .then(function (r) { return r.text(); })
+                .then(function (tv) {
+                var sec = parseFloat(tv);
+                if (isNaN(sec) || sec <= 0)
+                    return;
+                if (thresholdInput)
+                    thresholdInput.value = secToMinKm(sec);
+                if (thresholdHint)
+                    thresholdHint.textContent =
+                        "".concat(secToMinKm(sec), " min/km \u2248 ").concat((3600 / sec).toFixed(1), " km/h bei IF=1.0");
+            }).catch(function () { });
+        }
+        // SET: send typed threshold to backend (backend rescales steps + stores)
+        function applyThreshold() {
+            var _a;
+            var sec = minKmToSec((_a = thresholdInput === null || thresholdInput === void 0 ? void 0 : thresholdInput.value) !== null && _a !== void 0 ? _a : '');
+            if (isNaN(sec) || sec <= 0) {
+                if (thresholdHint)
+                    thresholdHint.textContent = '\u26a0\ufe0f Format: mm:ss (z.B. 5:30)';
+                return;
+            }
+            WorkoutApp.doAction(btnThreshold, '/api/workout/threshold', "val=".concat(sec))
+                .then(function () { return refreshThreshold(); });
+        }
+        btnThreshold === null || btnThreshold === void 0 ? void 0 : btnThreshold.addEventListener('click', applyThreshold);
+        thresholdInput === null || thresholdInput === void 0 ? void 0 : thresholdInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter')
+                applyThreshold();
+        });
+        // -pace / +pace: backend scales steps AND threshold together
+        var paceDown = document.getElementById('paceDown');
+        var paceUp = document.getElementById('paceUp');
+        paceDown === null || paceDown === void 0 ? void 0 : paceDown.addEventListener('click', function () {
+            return WorkoutApp.doAction(paceDown, '/api/workout/scale/nudge', 'rel=-0.01').then(function () { return refreshThreshold(); });
+        });
+        paceUp === null || paceUp === void 0 ? void 0 : paceUp.addEventListener('click', function () {
+            return WorkoutApp.doAction(paceUp, '/api/workout/scale/nudge', 'rel=+0.01').then(function () { return refreshThreshold(); });
+        });
         var btnStart = document.getElementById('btnStart');
         var btnPause = document.getElementById('btnPause');
         var btnResume = document.getElementById('btnResume');
         var btnStop = document.getElementById('btnStop');
-        var paceDown = document.getElementById('paceDown');
-        var paceUp = document.getElementById('paceUp');
-        btnStart === null || btnStart === void 0 ? void 0 : btnStart.addEventListener('click', function () {
-            return WorkoutApp.doAction(btnStart, '/api/workout/control', 'action=start');
-        });
-        btnPause === null || btnPause === void 0 ? void 0 : btnPause.addEventListener('click', function () {
-            return WorkoutApp.doAction(btnPause, '/api/workout/control', 'action=pause');
-        });
-        btnResume === null || btnResume === void 0 ? void 0 : btnResume.addEventListener('click', function () {
-            return WorkoutApp.doAction(btnResume, '/api/workout/control', 'action=resume');
-        });
-        btnStop === null || btnStop === void 0 ? void 0 : btnStop.addEventListener('click', function () {
-            return WorkoutApp.doAction(btnStop, '/api/workout/control', 'action=stop');
-        });
-        paceDown === null || paceDown === void 0 ? void 0 : paceDown.addEventListener('click', function () {
-            return WorkoutApp.doAction(paceDown, '/api/workout/scale/nudge', 'rel=-0.01');
-        });
-        paceUp === null || paceUp === void 0 ? void 0 : paceUp.addEventListener('click', function () {
-            return WorkoutApp.doAction(paceUp, '/api/workout/scale/nudge', 'rel=+0.01');
-        });
+        btnStart === null || btnStart === void 0 ? void 0 : btnStart.addEventListener('click', function () { return WorkoutApp.doAction(btnStart, '/api/workout/control', 'action=start'); });
+        btnPause === null || btnPause === void 0 ? void 0 : btnPause.addEventListener('click', function () { return WorkoutApp.doAction(btnPause, '/api/workout/control', 'action=pause'); });
+        btnResume === null || btnResume === void 0 ? void 0 : btnResume.addEventListener('click', function () { return WorkoutApp.doAction(btnResume, '/api/workout/control', 'action=resume'); });
+        btnStop === null || btnStop === void 0 ? void 0 : btnStop.addEventListener('click', function () { return WorkoutApp.doAction(btnStop, '/api/workout/control', 'action=stop'); });
+        refreshThreshold();
     }
     WorkoutApp.initControl = initControl;
 })(WorkoutApp || (WorkoutApp = {}));

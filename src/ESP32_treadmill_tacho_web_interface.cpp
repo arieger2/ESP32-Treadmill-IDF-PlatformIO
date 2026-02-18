@@ -421,6 +421,26 @@ void initWebServer() {
     float factor = 1.0f + rel;
     if (factor <= 0.0f) { req->send(400, "text/plain", "Bad factor"); return; }
     gWorkout.scaleAllSpeeds(factor);
+    // Keep threshold in sync: threshold is s/km (inverse of speed), so divide by factor
+    float curThr = gWorkout.getThreshold();
+    if (curThr > 0.0f) gWorkout.setThreshold(curThr / factor);
+    req->send(200, "text/plain", "OK");
+  });
+
+  // Threshold: GET returns current s/km; POST val=<s/km> rescales steps and stores new threshold
+  server.on("/api/workout/threshold", HTTP_GET, [](AsyncWebServerRequest* r){
+    r->send(200, "text/plain", String(gWorkout.getThreshold(), 1));
+  });
+
+  server.on("/api/workout/threshold", HTTP_POST, [](AsyncWebServerRequest* req){
+    if (!req->hasParam("val", true)) { req->send(400, "text/plain", "Missing val"); return; }
+    float newThr = req->getParam("val", true)->value().toFloat();
+    if (newThr <= 0.0f || newThr > 3600.0f) { req->send(400, "text/plain", "Bad value"); return; }
+    float oldThr = gWorkout.getThreshold();
+    if (oldThr > 0.0f && fabsf(newThr - oldThr) > 0.01f) {
+      gWorkout.scaleAllSpeeds(oldThr / newThr); // rescale steps proportionally
+    }
+    gWorkout.setThreshold(newThr);
     req->send(200, "text/plain", "OK");
   });
 

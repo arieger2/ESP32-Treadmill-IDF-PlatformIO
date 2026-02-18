@@ -106,6 +106,16 @@ static const char WORKOUT_HTML_TS[] PROGMEM = R"rawliteral(
         <span id="paceNow">100%</span>
         <button class="btn pace" id="paceUp"><i class="fas fa-plus"></i> pace</button>
         <span class="hint">(±1% affects all intervals)</span>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;justify-content:center;">
+          <span class="hint">&#x2753; Threshold:</span>
+          <input type="text" id="thresholdInput" maxlength="5" placeholder="6:00"
+            style="width:72px;font-family:monospace;font-size:1em;text-align:center;
+                   background:rgba(0,0,0,0.3);color:#fff;border:1px solid rgba(255,255,255,0.3);
+                   border-radius:4px;padding:4px;" />
+          <span class="hint">min/km</span>
+          <button class="btn pace" id="btnThreshold"><i class="fas fa-check"></i> Set</button>
+          <span class="hint" id="thresholdHint"></span>
+        </div>
       </div>
     </section>
 

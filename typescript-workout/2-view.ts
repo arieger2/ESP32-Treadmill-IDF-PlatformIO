@@ -81,7 +81,7 @@ namespace WorkoutApp {
       ctx.fillStyle = '#4a90e2';
       ctx.fillRect(x0, xAxisY - vh, barW, vh);
 
-      // Pace label - above the bar
+      // Pace label - horizontal for wide bars, rotated for narrow bars
       if (barW >= 26) {
         const cx = x0 + barW / 2;
         const labelY = xAxisY - vh - 2;
@@ -90,6 +90,19 @@ namespace WorkoutApp {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText(kmhToPaceStr(step.v || 0), cx, labelY);
+      } else if (barW >= 8 && vh >= 20) {
+        // Narrow bar: rotate text -90° and place inside/above bar
+        const cx = x0 + barW / 2;
+        const labelY = xAxisY - vh - 4;
+        ctx.save();
+        ctx.translate(cx, labelY);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = '#000';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(kmhToPaceStr(step.v || 0), 0, 0);
+        ctx.restore();
       }
 
       t0 += step.d;

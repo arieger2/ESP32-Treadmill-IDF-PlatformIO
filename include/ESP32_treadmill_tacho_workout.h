@@ -66,6 +66,13 @@ public:
   float getSpeedScale() const { return speed_scale_; }
   void scaleAllSpeeds(float factor);
 
+  // Threshold (s/km at IF=1.0). 0 = use speedAtIF1_kph fallback.
+  void  setThreshold(float secPerKm) { zwo_threshold_sec_per_km_ = secPerKm < 0.0f ? 0.0f : secPerKm; }
+  float getThreshold() const {
+    return (zwo_threshold_sec_per_km_ > 0.0f) ? zwo_threshold_sec_per_km_
+                                              : (speedAtIF1_kph > 0.0f ? 3600.0f / speedAtIF1_kph : 0.0f);
+  }
+
   // Optional callback on step begin
   std::function<void(const WorkoutStep&, uint32_t)> onStepBegin;
 
