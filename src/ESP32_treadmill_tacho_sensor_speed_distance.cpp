@@ -105,6 +105,10 @@ sensor_result_t speed_sensor_get_rpm_and_delta(speed_sensor_t *sensor, uint32_t 
                                  : (sensor->ts_us - *last_ts);
             if (dt == 0 || sensor->period_us == 0)
                 zero_pending = true;
+        } else if (sensor->period_us == 0) {
+            // Zero-speed timeout fired (zero_speed_check_callback set period_us=0)
+            // but no new pulses since last read → force zero via same path.
+            zero_pending = true;
         }
     }
     portEXIT_CRITICAL(&s_sensor_spinlock);
@@ -215,9 +219,10 @@ static signal_quality_t check_signal_quality(uint64_t dt, uint32_t used, uint8_t
     if (*count < 5) (*count)++;
     
     // Sensor-specific frequency limits
-    // Band sensor (type 0): 5-500 Hz typical, use 3-600 Hz with margin
-    // Motor sensor (type 1): 5-4000 Hz typical, use 3-4500 Hz with margin
-    const float MIN_FREQ = 3.0f;
+    // Band sensor (type 0): 0.5-500 Hz typical (0.5 Hz = ~0.4 km/h minimum speed)
+    // Motor sensor (type 1): 0.5-4000 Hz typical
+    // Lowered MIN_FREQ from 3.0 to 0.5 Hz to support very low treadmill speeds
+    const float MIN_FREQ = 0.5f;
     const float MAX_FREQ = (sensor_type == 0) ? 600.0f : 4500.0f;
     
     // Need at least 3 samples for meaningful CV
@@ -294,6 +299,7 @@ void updateMetrics(TreadmillMetrics& metrics) {
         metrics.rpm = 0.0f;
         metrics.motorRPM = 0.0f;
         metrics.mps = 0.0f;
+        metrics.mpsSmooth = 0.0f;  // Immediately zero for BLE/web, no waiting for applySpeedFilter
         (isBand ? bandFilterResetPending : motorFilterResetPending) = true;
     } else {
         metrics.rpm      = isBand ? result.rpm : 0.0f;

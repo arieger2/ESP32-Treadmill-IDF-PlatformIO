@@ -51,6 +51,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 #include <math.h>
 
 #include "freertos/FreeRTOS.h"
@@ -84,8 +85,12 @@ gptimer_handle_t s_timestamp_timer = NULL;
 portMUX_TYPE s_sensor_spinlock = portMUX_INITIALIZER_UNLOCKED;
 TimerHandle_t s_zero_speed_timer = NULL;
 
-// Zero-speed detection timeout (1 second)
-#define ZERO_SPEED_TIMEOUT_MS 1000
+// Zero-speed detection: minimum timeout floor (1 second = 1,000,000 µs).
+// Effective per-sensor timeout is dynamic: 2× last measurement duration, or
+// target_periods × 100,000 µs when no measurement exists yet.
+// This ensures high PULSE_MULTIPLIER values (large target_periods) are never
+// falsely flagged as zero-speed before a full measurement window completes.
+#define ZERO_SPEED_MIN_TIMEOUT_US 1000000ULL
 
 /* ==========================
  * Sensor instances
@@ -126,9 +131,22 @@ speed_sensor_t s_sensor2 = {
  * 
  * OPERATION:
  * ----------
- * 1. Checks time since last PCNT measurement for each sensor
- * 2. If > 1 second elapsed without new pulses → publish zero speed
- * 3. Clears period_us to signal "no valid data"
+ * 1. Reads time since last PCNT measurement for each sensor
+ * 2. Computes a DYNAMIC per-sensor timeout:
+ *      - If a measurement has been received: timeout = 2 × last measurement duration
+ *        (scales automatically with target_periods and current speed)
+ *      - If no measurement yet (boot/after stop): timeout = target_periods × 100 ms
+ *        (generous estimate for slowest expected speed)
+ *      - Hard floor: minimum 1 second regardless of target_periods
+ * 3. If elapsed time > dynamic timeout → publish zero speed
+ * 4. Clears period_us to signal "no valid data"
+ * 
+ * WHY DYNAMIC TIMEOUT?
+ * --------------------
+ * With PULSE_MULTIPLIER > 1, target_periods increases proportionally.
+ * Time to count N pulses = N / freq_Hz → can exceed 1 second at low speeds.
+ * A fixed 1 second threshold would incorrectly trigger zero-speed during
+ * legitimate slow-speed measurements at high PULSE_MULTIPLIER settings.
  * 
  * RUNS IN: FreeRTOS timer daemon task (NOT ISR)
  * CPU OVERHEAD: ~50-100 cycles every 1 second
@@ -140,29 +158,56 @@ void zero_speed_check_callback(TimerHandle_t xTimer)
     bool sensor2Data = true;
     uint64_t now;
     gptimer_get_raw_count(s_timestamp_timer, &now);
-    
-    // Check sensor 1 (band sensor)
+
+    /* ---- Sensor 1 (band) ---- */
     portENTER_CRITICAL(&s_sensor_spinlock);
     uint64_t time_since_last_1 = now - s_sensor1.t_last;
-    if (time_since_last_1 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
-        // No pulses for >1 second → belt stopped
-        s_sensor1.period_us = 0;  // Signal zero speed (dt = 0 triggers zero_pending)
-        s_sensor1.used_periods = 1;  // Must be non-zero to trigger read in get_rpm_and_delta
-        sensor1Data = false;
-    }
+    uint64_t period_us_1       = s_sensor1.period_us;
+    uint32_t target_1          = s_sensor1.target_periods;
     portEXIT_CRITICAL(&s_sensor_spinlock);
-    
-    // Check sensor 2 (motor sensor)
+
+    // Dynamic timeout: 2× last known measurement window (scales with target_periods
+    // and actual speed). Falls back to target_periods × 100 ms when no
+    // measurement has been received yet (boot / after stop).
+    uint64_t timeout_us_1 = (period_us_1 > 0)
+        ? period_us_1 * 2
+        : (uint64_t)target_1 * 100000ULL;
+    if (timeout_us_1 < ZERO_SPEED_MIN_TIMEOUT_US)
+        timeout_us_1 = ZERO_SPEED_MIN_TIMEOUT_US;
+
+    if (time_since_last_1 > timeout_us_1) {
+        portENTER_CRITICAL(&s_sensor_spinlock);
+        s_sensor1.period_us   = 0;
+        s_sensor1.used_periods = 1;
+        portEXIT_CRITICAL(&s_sensor_spinlock);
+        sensor1Data = false;
+        ESP_LOGD(TAG, "S1 zero-speed: elapsed=%" PRIu64 " us, timeout=%" PRIu64 " us (target=%u)", 
+                 time_since_last_1, timeout_us_1, target_1);
+    }
+
+    /* ---- Sensor 2 (motor) ---- */
     portENTER_CRITICAL(&s_sensor_spinlock);
     uint64_t time_since_last_2 = now - s_sensor2.t_last;
-    if (time_since_last_2 > (ZERO_SPEED_TIMEOUT_MS * 1000)) {
-        // No pulses for >1 second → motor stopped
-        s_sensor2.period_us = 0;  // Signal zero speed (dt = 0 triggers zero_pending)
-        s_sensor2.used_periods = 1;  // Must be non-zero to trigger read in get_rpm_and_delta
-        sensor2Data = false;
-    }
+    uint64_t period_us_2       = s_sensor2.period_us;
+    uint32_t target_2          = s_sensor2.target_periods;
     portEXIT_CRITICAL(&s_sensor_spinlock);
-    
+
+    uint64_t timeout_us_2 = (period_us_2 > 0)
+        ? period_us_2 * 2
+        : (uint64_t)target_2 * 100000ULL;
+    if (timeout_us_2 < ZERO_SPEED_MIN_TIMEOUT_US)
+        timeout_us_2 = ZERO_SPEED_MIN_TIMEOUT_US;
+
+    if (time_since_last_2 > timeout_us_2) {
+        portENTER_CRITICAL(&s_sensor_spinlock);
+        s_sensor2.period_us   = 0;
+        s_sensor2.used_periods = 1;
+        portEXIT_CRITICAL(&s_sensor_spinlock);
+        sensor2Data = false;
+        ESP_LOGD(TAG, "S2 zero-speed: elapsed=%" PRIu64 " us, timeout=%" PRIu64 " us (target=%u)",
+                 time_since_last_2, timeout_us_2, target_2);
+    }
+
     if (sensor2Data == false && sensor1Data == false) {
         metrics.rpm = 0.0f;
         metrics.motorRPM = 0.0f;
@@ -227,7 +272,9 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
     portENTER_CRITICAL_ISR(&s_sensor_spinlock);
     uint64_t previous = sensor->t_last;
     uint64_t diff = now - previous;
-    if (diff > CAPTURE_RES_HZ) { // 1 second sanity check
+    
+    // First measurement after init or timeout: just set baseline timestamp
+    if (previous == 0 || diff > CAPTURE_RES_HZ) {
         sensor->t_last = now;
         portEXIT_CRITICAL_ISR(&s_sensor_spinlock);
         pcnt_unit_clear_count(sensor->pcnt_unit);
@@ -243,6 +290,8 @@ bool IRAM_ATTR on_pcnt_reach_cb(pcnt_unit_handle_t unit,
 
     // Stop counting, ready for next measurement cycle
     pcnt_unit_clear_count(sensor->pcnt_unit);
+    
+    // Metrics will be updated in loop() every 200ms (not in ISR!)
     
     // Metrics will be updated in loop() every 200ms (not in ISR!)
 

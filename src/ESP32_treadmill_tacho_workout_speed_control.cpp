@@ -237,7 +237,37 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
 // HELPER: Simple button press with GPIO
 // ============================================================================
 void writePress(uint8_t pin, bool pressed) {
-  if (pin == 0) {
+  if (pin == 0) return;
+  
+  if (pin == storedGlobals.SPEED_UP_PIN) {
+      if (pressed && !speedUpBusy) {
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
+          speedUpBusy = true;
+          esp_timer_stop(speedUpTimer);
+          esp_timer_start_once(speedUpTimer, PULSE_US);
+      }
+  } else if (pin == storedGlobals.SPEED_DOWN_PIN) {
+      if (pressed && !speedUownBusy) {
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
+          speedUownBusy = true;
+          esp_timer_stop(speedDownTimer);
+          esp_timer_start_once(speedDownTimer, PULSE_US);
+      }
+  } else if (pin == storedGlobals.INCLINE_UP_PIN) {
+      if (pressed && !inclineUpBusy) {
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
+          inclineUpBusy = true;
+          esp_timer_stop(inclineUpTimer);
+          esp_timer_start_once(inclineUpTimer, PULSE_US);
+      }
+  } else if (pin == storedGlobals.INCLINE_DOWN_PIN) {
+      if (pressed && !inclineDownBusy) {
+          gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
+          inclineDownBusy = true;
+          esp_timer_stop(inclineDownTimer);
+          esp_timer_start_once(inclineDownTimer, PULSE_US);
+      }
+  } else {
       Serial.println("ERROR PIN not defined");
   }
 }

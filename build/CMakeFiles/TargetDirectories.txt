@@ -150,6 +150,13 @@
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/esp_bootloader_format/CMakeFiles/install/local.dir
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/esp_bootloader_format/CMakeFiles/install/strip.dir
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/__idf_app_update.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/blank_ota_data.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/read-otadata.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/read_otadata.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/erase-otadata.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/erase_otadata.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/otadata-flash.dir
+/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/encrypted-otadata-flash.dir
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/edit_cache.dir
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/rebuild_cache.dir
 /Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build/esp-idf/app_update/CMakeFiles/list_install_components.dir
