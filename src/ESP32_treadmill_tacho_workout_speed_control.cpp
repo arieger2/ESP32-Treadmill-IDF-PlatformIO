@@ -114,9 +114,6 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
   // State machine
   switch (state) {
     case SC_IDLE: {
-      // Don't start any new press while belt is not moving (e.g. after treadmill fully stopped)
-      if (current_kmh < 0.5f) break;
-
       // Check if we need to adjust speed
       if (fabsf(diff) > HYSTERESIS) {
         // Don't press if already at limits
@@ -172,17 +169,6 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
 
     case SC_PRESSING: {
       uint32_t elapsed = now_ms - pressStartTime;
-
-      // Belt has come to a full stop during a DOWN press (e.g. user physically stopped treadmill
-      // after workout stop was pressed) - release GPIO immediately
-      if (!speedUp && current_kmh < 0.5f) {
-        gpio_set_level((gpio_num_t)activePin, 1);  // HIGH = relay inactive
-        Serial.printf("[Speed Control] Belt stopped (%.1f km/h) after workout stop - releasing DOWN button after %u ms\n",
-                      current_kmh, elapsed);
-        state = SC_IDLE;
-        activePin = 0;
-        break;
-      }
 
       // CRITICAL: Early release to compensate for mechanical inertia
       // Release BEFORE target to account for overshoot/undershoot
