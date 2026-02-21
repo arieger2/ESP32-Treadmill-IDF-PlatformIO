@@ -118,7 +118,7 @@ void WorkoutExecutor::resume() {
 void WorkoutExecutor::stop() {
   _state = WorkoutState::Finished;
   // Set target to minimum speed - the reactive speed control will handle ramping down
-  bleSetTreadmillSpeedKph(1.6f);  // Minimum treadmill speed
+  bleSetTreadmillSpeedKph(0.9f);  // Minimum treadmill speed
   bleSetTreadmillInclinePct(0.0f);
 }
 

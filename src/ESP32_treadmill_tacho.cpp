@@ -257,12 +257,18 @@ void loop() {
     }
 
     // Speed control - ONLY when workout is active
-    if (metrics.mps > 0 && metrics.isRunning && !metrics.isPaused) {
-        if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS ) {
-            physicalSpeedControl(metrics.targetSpeed, metrics.mps);
-            speedIncDecElapsed = 0;
+    if (metrics.isRunning && !metrics.isPaused) {
+        if (metrics.mps > 0) {
+            if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS) {
+                physicalSpeedControl(metrics.targetSpeed, metrics.mps);
+                speedIncDecElapsed = 0;
+            }
+            speedIncDecElapsed += delta;
+        } else {
+            // Belt at 0 km/h after workout stop: call physicalSpeedControl for GPIO cleanup
+            // (releases any active DOWN press that was ongoing when belt stopped)
+            physicalSpeedControl(metrics.targetSpeed, 0.0f);
         }
-        speedIncDecElapsed += delta;
     }
     
     // Calibration state machine (non-blocking)
