@@ -2,6 +2,8 @@
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_workout.h"
 
+uint8_t workoutStatus = WORKOUT_OFF;
+
 // Forward declarations for sensor selection
 extern uint8_t sensorSelection(bool init);
 
@@ -85,7 +87,7 @@ bool WorkoutExecutor::loadFromZwoString(const String& xml) {
 void WorkoutExecutor::start() {
   if (_steps.empty()) { _state = WorkoutState::Error; _lastError = "No workout loaded."; return; }
   if (!metrics.isRunning) { _state = WorkoutState::Error; _lastError = "Cannot start: treadmill not running"; return; }
-
+  workoutStatus = WORKOUT_RUNNING;
   _state = WorkoutState::Running;
   _workoutStart_ms = _now();
   _pausedTotal_ms  = 0;
@@ -118,7 +120,7 @@ void WorkoutExecutor::resume() {
 void WorkoutExecutor::stop() {
   _state = WorkoutState::Finished;
   // Set target to minimum speed - the reactive speed control will handle ramping down
-  bleSetTreadmillSpeedKph(1.6f);  // Minimum treadmill speed
+  bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
   bleSetTreadmillInclinePct(0.0f);
 }
 

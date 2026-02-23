@@ -41,6 +41,8 @@
 #define FTMS_NOT_SUPPORTED          0x02
 #define FTMS_INVALID_PARAMETER      0x03
 
+#define MIN_SPEED_KMH 0.7f
+#define MAX_SPEED_KMH 18.0f
 // ============================================================================
 // DATA STRUCTURES
 // ============================================================================
@@ -50,6 +52,14 @@ enum SensorSourceMode : uint8_t {
     SENSOR_BAND  = 1,   // force belt sensor
     SENSOR_MOTOR = 2    // force motor sensor
 };
+
+enum WorkoutStatus : uint8_t {
+    WORKOUT_OFF  = 0,   // Workout is off
+    WORKOUT_RUNNING  = 1,   // Workout is running
+    WORKOUT_SPEED_ZERO = 2    // Workout active but zero speed
+};
+
+extern uint8_t workoutStatus;
 
 // RR-Interval structure
 struct RRValue {

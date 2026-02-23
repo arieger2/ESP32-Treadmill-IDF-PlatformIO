@@ -76,8 +76,6 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
   static bool speedUp = false;
 
   const uint32_t now_ms = millis();
-  const float MAX_SPEED_KMH = 18.0f;
-  const float MIN_SPEED_KMH = 1.6f;
   const float HYSTERESIS = 0.35f;  // Fixed hysteresis for jitter tolerance
 
   // Reset on treadmill start
