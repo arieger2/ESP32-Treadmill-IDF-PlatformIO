@@ -21,7 +21,7 @@ float getCurrentSpeedRaw() {
   return speed;
 }
 
-float getCurrentSpeedWithOutlierFilter() {
+  float getCurrentSpeedWithOutlierFilter() {
   static float lastSpeed = 0;
   static uint32_t lastTime = 0;
 

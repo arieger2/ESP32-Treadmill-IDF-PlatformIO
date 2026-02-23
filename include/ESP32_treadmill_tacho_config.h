@@ -54,9 +54,9 @@ enum SensorSourceMode : uint8_t {
 };
 
 enum WorkoutStatus : uint8_t {
-    WORKOUT_OFF  = 0,   // Workout is off
+    WORKOUT_STOPPED  = 0,   // Workout is off
     WORKOUT_RUNNING  = 1,   // Workout is running
-    WORKOUT_SPEED_ZERO = 2    // Workout active but zero speed
+    WORKOUT_INACTIVE = 2    // Workout active but zero speed
 };
 
 extern uint8_t workoutStatus;

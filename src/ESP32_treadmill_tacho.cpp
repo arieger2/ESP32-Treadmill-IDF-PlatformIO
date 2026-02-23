@@ -263,6 +263,10 @@ void loop() {
             speedIncDecElapsed = 0;
         }
         speedIncDecElapsed += delta;
+    } else if (workoutStatus == WORKOUT_STOPPED && !metrics.isRunning) {
+        // If workout is active but speed is zero, set status to INACTIVE
+        workoutStatus = WORKOUT_INACTIVE;
+        physicalSpeedControl(0.0f, 0.0f); // Ensure treadmill is stopped
     }
     
     // Calibration state machine (non-blocking)

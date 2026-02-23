@@ -2,7 +2,7 @@
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_workout.h"
 
-uint8_t workoutStatus = WORKOUT_OFF;
+uint8_t workoutStatus = WORKOUT_INACTIVE;
 
 // Forward declarations for sensor selection
 extern uint8_t sensorSelection(bool init);
@@ -44,6 +44,7 @@ bool WorkoutExecutor::_getAttrU32(const String& tag, const char* key, uint32_t& 
 
 // ===================== Public API =====================
 void WorkoutExecutor::clear() {
+  workoutStatus = WORKOUT_STOPPED;
   _steps.clear();
   _state = WorkoutState::Idle;
   _lastError = "";
@@ -85,6 +86,7 @@ bool WorkoutExecutor::loadFromZwoString(const String& xml) {
 }
 
 void WorkoutExecutor::start() {
+  workoutStatus = WORKOUT_STOPPED;
   if (_steps.empty()) { _state = WorkoutState::Error; _lastError = "No workout loaded."; return; }
   if (!metrics.isRunning) { _state = WorkoutState::Error; _lastError = "Cannot start: treadmill not running"; return; }
   workoutStatus = WORKOUT_RUNNING;
@@ -98,6 +100,7 @@ void WorkoutExecutor::start() {
 }
 
 void WorkoutExecutor::pause() {
+  workoutStatus = WORKOUT_RUNNING;
   if (_state == WorkoutState::Running) { _state = WorkoutState::Paused; _pauseStart_ms = _now(); }
 }
 
@@ -119,6 +122,7 @@ void WorkoutExecutor::resume() {
 
 void WorkoutExecutor::stop() {
   _state = WorkoutState::Finished;
+  workoutStatus = WORKOUT_STOPPED;
   // Set target to minimum speed - the reactive speed control will handle ramping down
   bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
   bleSetTreadmillInclinePct(0.0f);
@@ -129,7 +133,7 @@ void WorkoutExecutor::update() {
 
   // Auto-pause if treadmill is turned off (speed = 0)
   float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
-  if (currentSpeed_kmh < 0.5f) {
+  if (!metrics.isRunning) {
     Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
     pause();
     return;
@@ -205,7 +209,7 @@ void WorkoutExecutor::_advanceStep() {
     _applyTargets(_steps[_currentIndex]);
     if (onStepBegin) onStepBegin(_steps[_currentIndex], _currentIndex);
   } else {
-    _state = WorkoutState::Finished;
+    stop();
   }
 }
 
