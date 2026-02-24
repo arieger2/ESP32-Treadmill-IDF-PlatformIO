@@ -257,16 +257,16 @@ void loop() {
     }
 
     // Speed control - ONLY when workout is active
-    if (metrics.mps > 0 && metrics.isRunning && !metrics.isPaused) {
+    if (workoutStatus != WORKOUT_INACTIVE) {
         if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS ) {
             physicalSpeedControl(metrics.targetSpeed, metrics.mps);
             speedIncDecElapsed = 0;
         }
         speedIncDecElapsed += delta;
-    } else if (workoutStatus == WORKOUT_STOPPED && !metrics.isRunning) {
+    } else if ( !metrics.isRunning && workoutStatus != WORKOUT_INACTIVE ) {
         // If workout is active but speed is zero, set status to INACTIVE
-        workoutStatus = WORKOUT_INACTIVE;
         physicalSpeedControl(0.0f, 0.0f); // Ensure treadmill is stopped
+        workoutStatus = WORKOUT_INACTIVE;
     }
     
     // Calibration state machine (non-blocking)
