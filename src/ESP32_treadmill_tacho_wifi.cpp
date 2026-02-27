@@ -443,8 +443,9 @@ static void wifiInitSTA() {
     strncpy((char*)wifi_config.sta.password, storedGlobals.WIFI_PASSWORD.c_str(), 
             sizeof(wifi_config.sta.password) - 1);
     
-    // WPA2/WPA3 with PMF for AUTH_EXPIRE fix
-    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+    // WPA2/WPA3 transition support with PMF for AUTH_EXPIRE fix
+    // WIFI_AUTH_WPA2_WPA3_PSK accepts WPA2-only, WPA3-only, and WPA2/WPA3 transition APs
+    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_WPA3_PSK;
     wifi_config.sta.pmf_cfg.capable = true;
     wifi_config.sta.pmf_cfg.required = false;
     
