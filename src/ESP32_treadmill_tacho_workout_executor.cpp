@@ -44,7 +44,7 @@ bool WorkoutExecutor::_getAttrU32(const String& tag, const char* key, uint32_t& 
 
 // ===================== Public API =====================
 void WorkoutExecutor::clear() {
-  workoutStatus = WORKOUT_INACTIVE;
+  workoutStatus = WORKOUT_STOPPED;
   _steps.clear();
   _state = WorkoutState::Idle;
   _lastError = "";
@@ -103,8 +103,10 @@ void WorkoutExecutor::pause() {
   workoutStatus = WORKOUT_RUNNING;
   if (_state == WorkoutState::Running) { 
     _state = WorkoutState::Paused; _pauseStart_ms = _now(); 
-    bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
-    bleSetTreadmillInclinePct(0.0f);
+    if (metrics.isRunning) {
+      bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
+      bleSetTreadmillInclinePct(0.0f);
+    }
   }
 }
 
@@ -130,68 +132,23 @@ void WorkoutExecutor::stop() {
   // Set target to minimum speed - the reactive speed control will handle ramping down
   bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
   bleSetTreadmillInclinePct(0.0f);
-  // Init plateau detection: wait until speed stops decreasing
-  _stopCheckTime      = 0;
-  _stopCheckLastSpeed = -1.0f;
 }
 
 void WorkoutExecutor::update() {
-  // ---- Post-stop plateau detection ----
-  // After stop() the speed control ramps down. Once the speed stops
-  // decreasing (plateau ≤ 0.15 km/h per check interval), assume the
-  // treadmill has reached its natural minimum and do a full clear.
-  if (_state == WorkoutState::Finished) {
-    const uint32_t CHECK_INTERVAL_MS = 1500;
-    const uint32_t FORCE_CLEAR_MS    = 60000;  // Safety timeout
-    const float    PLATEAU_THRESHOLD = 0.15f;  // km/h drop to consider stopped
-
-    float currentSpeed = getCurrentSpeedWithOutlierFilter();
-    uint32_t now = _now();
-
-    if (_stopCheckTime == 0) {
-      // First call after stop – just record baseline
-      _stopCheckTime      = now;
-      _stopCheckLastSpeed = currentSpeed;
-      return;
-    }
-
-    bool plateau   = false;
-    uint32_t elapsed = now - _stopCheckTime;
-
-    if (elapsed >= CHECK_INTERVAL_MS) {
-      float drop = _stopCheckLastSpeed - currentSpeed;
-      Serial.printf("[Workout] Stop-ramp check: %.2f -> %.2f km/h (drop %.2f km/h)\n",
-                    _stopCheckLastSpeed, currentSpeed, drop);
-      if (drop < PLATEAU_THRESHOLD) {
-        plateau = true;
-        Serial.printf("[Workout] Speed plateaued at %.2f km/h – running full clear\n", currentSpeed);
-      } else {
-        // Still decreasing – update baseline for next window
-        _stopCheckLastSpeed = currentSpeed;
-        _stopCheckTime      = now;
-      }
-    }
-
-    if (!plateau && elapsed >= FORCE_CLEAR_MS) {
-      Serial.println("[Workout] Force-clear timeout reached");
-      plateau = true;
-    }
-
-    if (plateau) {
-      metrics.controlRequested = false;
-      metrics.sessionStartTime = 0;  // Reset session timer
-      clear();  // Sets workoutStatus=INACTIVE, _state=Idle, clears steps
-    }
-    return;
-  }
-
   if (_state != WorkoutState::Running) return;
 
-  // Auto-pause if treadmill is turned off (speed = 0)
   float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
+  static float avgSpeed = (currentSpeed_kmh + avgSpeed) / 2.0f; // simple moving average to prevent noise-triggered pauses
+
+  // Auto-pause if treadmill is turned off (speed = 0)
   if (!metrics.isRunning) {
     Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
     pause();
+    return;
+  } else if (workoutStatus == WORKOUT_STOPPED && (currentSpeed_kmh - avgSpeed) < 0.3f) {
+    clear();
+    workoutStatus = WORKOUT_INACTIVE;
+    metrics.targetSpeed = 0.0f;
     return;
   }
 
