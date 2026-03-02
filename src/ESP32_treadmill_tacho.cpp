@@ -267,6 +267,7 @@ void loop() {
         // If workout is active but speed is zero, set status to INACTIVE
         physicalSpeedControl(0.0f, 0.0f); // Ensure treadmill is stopped
         workoutStatus = WORKOUT_INACTIVE;
+        metrics.targetSpeed = 0.0f;
     }
     
     // Calibration state machine (non-blocking)

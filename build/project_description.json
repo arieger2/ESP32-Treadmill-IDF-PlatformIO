@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "treadmill",
-    "project_version":    "v2.0-38-ga5c03e5-dirty",
+    "project_version":    "v2.0-47-g7f53544-dirty",
     "project_path":       "/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO",
     "idf_path":           "/Users/rra1imb/development/esp32/esp-idf",
     "build_dir":          "/Users/rra1imb/Documents/private_development/ESP32/ESP32-Treadmill-IDF-PlatformIO/build",

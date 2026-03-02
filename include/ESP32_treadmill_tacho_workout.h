@@ -94,6 +94,10 @@ private:
   uint32_t _currentIndex = 0;
   uint32_t _stepStart_ms  = 0;
 
+  // Speed-plateau detection after stop()
+  uint32_t _stopCheckTime       = 0;
+  float    _stopCheckLastSpeed  = -1.0f;
+
   // Parsing
   bool _parseZwo(const String& xml);
 
