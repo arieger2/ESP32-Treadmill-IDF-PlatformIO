@@ -24,7 +24,7 @@ esp_timer_handle_t speedDownTimer = nullptr;
 esp_timer_handle_t inclineUpTimer = nullptr;
 esp_timer_handle_t inclineDownTimer = nullptr;
 volatile bool speedUpBusy = false;
-volatile bool speedUownBusy = false;
+volatile bool speedDownBusy = false;
 volatile bool inclineUpBusy = false;
 volatile bool inclineDownBusy = false;
 
@@ -397,7 +397,7 @@ static void speedUpReleaseCb(void*) {
 }
 
 static void speedDownReleaseCb(void*) {
-    speedUownBusy = false;
+    speedDownBusy = false;
     gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1); // HIGH = relay inactive
 }
 

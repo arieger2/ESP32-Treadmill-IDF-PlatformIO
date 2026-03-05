@@ -140,6 +140,10 @@ struct TreadmillMetrics {
     float signalCV = 0.0f;          // Coefficient of variation (0-1, lower is better)
     float signalFrequency = 0.0f;   // Current signal frequency in Hz
     bool signalQualityGood = true;  // Overall quality flag
+
+    // Acceleration derived from motor sensor (always, regardless of SENSOR_SOURCE_MODE)
+    // Positive = speeding up, negative = braking  [m/s²]
+    float acceleration = 0.0f;
 };
 
 struct BLEData {
@@ -245,7 +249,7 @@ extern esp_timer_handle_t speedDownTimer;
 extern esp_timer_handle_t inclineUpTimer;
 extern esp_timer_handle_t inclineDownTimer;
 extern volatile bool speedUpBusy;
-extern volatile bool speedUownBusy;
+extern volatile bool speedDownBusy;
 extern volatile bool inclineUpBusy;
 extern volatile bool inclineDownBusy;
 

@@ -258,11 +258,11 @@ void loop() {
 
     // Speed control - ONLY when workout is active
     if (workoutStatus != WORKOUT_INACTIVE) {
-        if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS ) {
+        //if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS ) {
             physicalSpeedControl(metrics.targetSpeed, metrics.mps);
             speedIncDecElapsed = 0;
-        }
-        speedIncDecElapsed += delta;
+        //}
+        //speedIncDecElapsed += delta;
     } 
     /*else if ( !metrics.isRunning && workoutStatus != WORKOUT_INACTIVE ) {
         // If workout is active but speed is zero, set status to INACTIVE
@@ -282,6 +282,9 @@ void loop() {
         
         // Apply speed filter in loop context (not ISR!)
         applySpeedFilter(metrics);
+
+        // Acceleration from motor sensor (always), real dt measured internally
+        calculateAcceleration(metrics);
         
         if (bleData.clientConnected) {
             sendFTMS_BLE_Data();

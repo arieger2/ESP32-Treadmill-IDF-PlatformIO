@@ -183,6 +183,32 @@ void logPrintf(const char* format, ...) {
 }
 
 /**
+ * Append a formatted message to the boot log file at runtime.
+ * Safe to call after stopBootLog() — filesystem stays mounted.
+ * Also echoes to Serial.
+ */
+void logAppendPrintf(const char* format, ...) {
+    char buffer[256];
+
+    va_list args;
+    va_start(args, format);
+    int len = vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    if (len <= 0) return;
+
+    Serial.print(buffer);
+
+    if (!filesystemMounted) return;
+
+    FILE *f = fopen(BOOT_LOG_FILE, "a");
+    if (!f) return;
+
+    fwrite(buffer, 1, (size_t)len, f);
+    fclose(f);
+}
+
+/**
  * Read boot log file content
  * Returns empty string if file doesn't exist
  */

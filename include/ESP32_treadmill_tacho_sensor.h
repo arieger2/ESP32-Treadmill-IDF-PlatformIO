@@ -170,6 +170,7 @@ typedef struct {
 struct TreadmillMetrics;
 void updateMetrics(TreadmillMetrics& metrics);
 void applySpeedFilter(TreadmillMetrics& metrics);
+void calculateAcceleration(TreadmillMetrics& metrics);
 #endif
 
 #endif // ESP32_TREADMILL_TACHO_SENSOR_NEW_H

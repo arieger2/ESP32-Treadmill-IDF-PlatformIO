@@ -45,4 +45,11 @@ void logPrint(const char* message);
  */
 void logPrintf(const char* format, ...);
 
+/**
+ * Append a formatted message to the boot log file at runtime.
+ * Safe to call after stopBootLog() — the LittleFS filesystem remains mounted.
+ * Also echoes to Serial.
+ */
+void logAppendPrintf(const char* format, ...);
+
 #endif // ESP32_TREADMILL_TACHO_BOOTLOG_H

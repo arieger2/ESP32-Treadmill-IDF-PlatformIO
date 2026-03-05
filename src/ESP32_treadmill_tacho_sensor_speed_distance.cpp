@@ -352,3 +352,52 @@ void applySpeedFilter(TreadmillMetrics& metrics) {
     bool isDecelerating = (metrics.mps < metrics.mpsSmooth);
     metrics.mpsSmooth = activeFilter->update(metrics.mps, isDecelerating);
 }
+
+/**
+ * Calculate treadmill acceleration from the motor sensor
+ *
+ * Always reads from Sensor 2 (motor) regardless of SENSOR_SOURCE_MODE.
+ * The motor sensor has higher pulse resolution than the band sensor, making
+ * it more suitable for detecting small velocity changes over short windows.
+ *
+ * Uses esp_timer_get_time() for the real elapsed dt so accuracy is
+ * independent of loop() jitter. Safe to call from loop() context only.
+ *
+ * Result stored in metrics.acceleration [m/s²]:
+ *   > 0  → belt accelerating
+ *   < 0  → belt decelerating / braking
+ *   = 0  → constant speed or motor stopped
+ *
+ * @param metrics Reference to TreadmillMetrics to read mps from and write acceleration to
+ */
+void calculateAcceleration(TreadmillMetrics& metrics) {
+    static float  prev_motor_mps = 0.0f;
+    static int64_t prev_time_us  = 0;
+
+    // Always fetch motor sensor speed, regardless of active SENSOR_SOURCE_MODE
+    sensor_result_t motor = speed_sensor_get_rpm_and_delta(
+        speed_sensor_get_sensor2(),
+        storedGlobals.MOTOR_PULSES_PER_REV,
+        storedGlobals.BELT_DISTANCE_MM,
+        storedGlobals.MOTOR_TO_BELT_RATIO);
+
+    float motor_mps = motor.force_reset ? 0.0f : motor.mps;
+
+    int64_t now_us = esp_timer_get_time();  // monotonic µs counter, no CPU overhead
+
+    if (prev_time_us > 0) {
+        float dt_s = (float)(now_us - prev_time_us) * 1e-6f;
+        // Guard against spurious tiny dt (e.g. first call after reset)
+        if (dt_s >= 0.05f) {
+            metrics.acceleration = (motor_mps - prev_motor_mps) / dt_s;
+        }
+    }
+
+    // On a force_reset (zero-speed timeout) clear acceleration immediately
+    if (motor.force_reset) {
+        metrics.acceleration = 0.0f;
+    }
+
+    prev_motor_mps = motor_mps;
+    prev_time_us   = now_us;
+}

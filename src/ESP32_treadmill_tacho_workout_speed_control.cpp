@@ -2,6 +2,7 @@
 #include <driver/gpio.h>
 #include "ESP32_treadmill_tacho_config.h"
 #include "ESP32_treadmill_tacho_workout.h"
+#include "ESP32_treadmill_tacho_bootlog.h"
 
 extern TreadmillMetrics metrics;
 extern TreadmillStoredGlobals storedGlobals;
@@ -171,9 +172,23 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
       // CRITICAL: Early release to compensate for mechanical inertia
       // Release BEFORE target to account for overshoot/undershoot
       // Overshoot compensation: ~2 km/h for UP, ~1 km/h for DOWN
-      const float OVERSHOOT_COMPENSATION_UP = 1.8f;    // km/h before target
+      const float OVERSHOOT_COMPENSATION_UP = 0.2f;    // km/h before target
       const float OVERSHOOT_COMPENSATION_DOWN = 0.8f;  // km/h before target
 
+      if (speedUp && metrics.acceleration < -0.06f ) { // Block UP if strong deceleration detected (treadmill braking)
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Blocking UP due to strong deceleration: %.4f m/s²\n", metrics.acceleration);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+       if (speedUp && metrics.acceleration > 0.1f ) { // Block up because the treadmill is accelerating by itself (speeding up)
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Blocking UP due to strong acceleration: %.4f m/s²\n", metrics.acceleration);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
       if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMPENSATION_UP)) {
         gpio_set_level((gpio_num_t)activePin, 1);
         Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h overshoot)\n",
@@ -237,29 +252,30 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
 void writePress(uint8_t pin, bool pressed) {
   if (pin == 0) return;
   
-  if (pin == storedGlobals.SPEED_UP_PIN) {
-      if (pressed && !speedUpBusy) {
+  if (pin == storedGlobals.SPEED_UP_PIN ) { 
+      //logAppendPrintf("[writePress] SPEED_UP blocked: acceleration=%.4f m/s2 (threshold +-0.042)\n", metrics.acceleration);
+      if (pressed && !speedUpBusy && !speedDownBusy ) {   // interlock: block if DOWN active // block if the treadmill is not abording. ±0.042 m/s² = 0.15km/h per second
           gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           speedUpBusy = true;
           esp_timer_stop(speedUpTimer);
           esp_timer_start_once(speedUpTimer, PULSE_US);
-      }
+      } 
   } else if (pin == storedGlobals.SPEED_DOWN_PIN) {
-      if (pressed && !speedUownBusy) {
+      if (pressed && !speedDownBusy && !speedUpBusy) {   // interlock: block if UP active
           gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
-          speedUownBusy = true;
+          speedDownBusy = true;
           esp_timer_stop(speedDownTimer);
           esp_timer_start_once(speedDownTimer, PULSE_US);
       }
   } else if (pin == storedGlobals.INCLINE_UP_PIN) {
-      if (pressed && !inclineUpBusy) {
+      if (pressed && !inclineUpBusy && !inclineDownBusy) {   // interlock: block if DOWN active
           gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           inclineUpBusy = true;
           esp_timer_stop(inclineUpTimer);
           esp_timer_start_once(inclineUpTimer, PULSE_US);
       }
   } else if (pin == storedGlobals.INCLINE_DOWN_PIN) {
-      if (pressed && !inclineDownBusy) {
+      if (pressed && !inclineDownBusy && !inclineUpBusy) {   // interlock: block if UP active
           gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
           inclineDownBusy = true;
           esp_timer_stop(inclineDownTimer);
@@ -270,24 +286,3 @@ void writePress(uint8_t pin, bool pressed) {
   }
 }
 
-// ============================================================================
-// Continuous press for calculated duration (non-blocking with yield)
-// ============================================================================
-void writePressForDuration(uint8_t pin, uint32_t duration_ms) {
-  if (pin == 0) return;
-
-  gpio_set_level((gpio_num_t)pin, 0);  // LOW = relay active
-
-  // Split delay into small chunks with yield() to keep system responsive
-  const uint32_t YIELD_INTERVAL_MS = 10;  // Yield every 10ms
-  uint32_t elapsed = 0;
-
-  while (elapsed < duration_ms) {
-    uint32_t chunk = (duration_ms - elapsed) > YIELD_INTERVAL_MS ? YIELD_INTERVAL_MS : (duration_ms - elapsed);
-    delay(chunk);
-    yield();  // Let other tasks run (WiFi, Web Server, etc.)
-    elapsed += chunk;
-  }
-
-  gpio_set_level((gpio_num_t)pin, 1);  // HIGH = relay inactive
-}
