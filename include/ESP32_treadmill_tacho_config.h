@@ -144,6 +144,10 @@ struct TreadmillMetrics {
     // Acceleration derived from motor sensor (always, regardless of SENSOR_SOURCE_MODE)
     // Positive = speeding up, negative = braking  [m/s²]
     float acceleration = 0.0f;
+
+    // Jerk = rate of change of acceleration (da/dt) [m/s³]
+    // Positive = acceleration increasing, negative = acceleration decreasing
+    float jerk = 0.0f;
 };
 
 struct BLEData {

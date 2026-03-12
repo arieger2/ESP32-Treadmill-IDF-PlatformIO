@@ -368,11 +368,17 @@ void applySpeedFilter(TreadmillMetrics& metrics) {
  *   < 0  → belt decelerating / braking
  *   = 0  → constant speed or motor stopped
  *
- * @param metrics Reference to TreadmillMetrics to read mps from and write acceleration to
+ * Also computes metrics.jerk [m/s³] (rate of change of acceleration):
+ *   > 0  → acceleration increasing
+ *   < 0  → acceleration decreasing
+ *   ≈ 0  → acceleration constant (steady ramp or cruise)
+ *
+ * @param metrics Reference to TreadmillMetrics to read mps from and write acceleration/jerk to
  */
 void calculateAcceleration(TreadmillMetrics& metrics) {
-    static float  prev_motor_mps = 0.0f;
-    static int64_t prev_time_us  = 0;
+    static float   prev_motor_mps    = 0.0f;
+    static int64_t prev_time_us      = 0;
+    static float   prev_acceleration = 0.0f;
 
     // Always fetch motor sensor speed, regardless of active SENSOR_SOURCE_MODE
     sensor_result_t motor = speed_sensor_get_rpm_and_delta(
@@ -389,13 +395,18 @@ void calculateAcceleration(TreadmillMetrics& metrics) {
         float dt_s = (float)(now_us - prev_time_us) * 1e-6f;
         // Guard against spurious tiny dt (e.g. first call after reset)
         if (dt_s >= 0.05f) {
-            metrics.acceleration = (motor_mps - prev_motor_mps) / dt_s;
+            float new_accel = (motor_mps - prev_motor_mps) / dt_s;
+            metrics.jerk = (new_accel - prev_acceleration) / dt_s;
+            prev_acceleration = new_accel;
+            metrics.acceleration = new_accel;
         }
     }
 
     // On a force_reset (zero-speed timeout) clear acceleration immediately
     if (motor.force_reset) {
         metrics.acceleration = 0.0f;
+        metrics.jerk = 0.0f;
+        prev_acceleration = 0.0f;
     }
 
     prev_motor_mps = motor_mps;

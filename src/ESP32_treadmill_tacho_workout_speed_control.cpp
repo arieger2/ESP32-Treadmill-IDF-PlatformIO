@@ -175,9 +175,9 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
       const float OVERSHOOT_COMPENSATION_UP = 0.2f;    // km/h before target
       const float OVERSHOOT_COMPENSATION_DOWN = 0.8f;  // km/h before target
 
-      if (speedUp && metrics.acceleration < -0.06f ) { // Block UP if strong deceleration detected (treadmill braking)
+      if (speedUp && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) { // Block UP if strong deceleration detected AND not recovering (jerk <= 0)
         gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Blocking UP due to strong deceleration: %.4f m/s²\n", metrics.acceleration);
+        Serial.printf("[Speed Control] Blocking UP due to strong deceleration: %.4f m/s², jerk: %.4f m/s³\n", metrics.acceleration, metrics.jerk);
         stabilizationStartTime = now_ms;
         state = SC_STABILIZING;
         activePin = 0;
