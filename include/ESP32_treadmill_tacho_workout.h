@@ -118,10 +118,6 @@ private:
 // Speed Control Functions (from workout_speed_control.cpp)
 // ===========================================================================
 
-// Get current speed with outlier filtering (removes unrealistic spikes)
-// Returns: Filtered speed in km/h
-float getCurrentSpeedWithOutlierFilter();
-
 // Helper: Simple button press
 void writePress(uint8_t pin, bool pressed);
 

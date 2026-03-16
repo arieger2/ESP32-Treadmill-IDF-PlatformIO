@@ -8,8 +8,7 @@ extern TreadmillMetrics metrics;
 extern TreadmillStoredGlobals storedGlobals;
 
 // ===========================================================================
-// REALTIME SPEED FILTER - Outlier rejection with minimal lag
-// NOTE: Filter is bypassed during SC_PRESSING to see real speed
+// RAW SPEED - Thread-safe read from sensor (200ms measurement window)
 // ===========================================================================
 float getCurrentSpeedRaw() {
   static portMUX_TYPE metrics_spinlock = portMUX_INITIALIZER_UNLOCKED;
@@ -20,59 +19,6 @@ float getCurrentSpeedRaw() {
   portEXIT_CRITICAL(&metrics_spinlock);
   
   return speed;
-}
-
-float getCurrentSpeedWithOutlierFilter() {
-  static float last_mps = 0;         // last accepted speed in m/s
-  static float prev_raw_mps = -1;    // previous raw reading to detect new sensor data
-  static uint32_t lastTime = 0;
-
-  const float raw_mps = (metrics.mps + metrics.mpsOffset);
-  const uint32_t now = millis();
-  const uint32_t dt = now - lastTime;
-
-  if (last_mps == 0 || dt > 2000) {
-    last_mps = raw_mps;
-    prev_raw_mps = raw_mps;
-    lastTime = now;
-    return raw_mps * 3.6f;
-  }
-
-  // Only apply filter when sensor delivers a new reading (~every 200ms)
-  // Between updates raw_mps stays the same — just return last accepted
-  if (fabsf(raw_mps - prev_raw_mps) < 0.001f) {
-    return last_mps * 3.6f;
-  }
-  prev_raw_mps = raw_mps;
-
-  float dt_s = dt / 1000.0f;
-
-  // Physics-based prediction using acceleration (m/s²) and jerk (m/s³)
-  float predicted_mps = last_mps
-                      + metrics.acceleration * dt_s
-                      + 0.5f * metrics.jerk * dt_s * dt_s;
-
-  // Tolerance: sensor noise floor + scaled by acceleration magnitude
-  // 0.08 m/s ≈ 0.3 km/h sensor resolution
-  // During acceleration/deceleration, widen tolerance proportionally
-  float tolerance_mps = 0.08f + fabsf(metrics.acceleration) * dt_s * 2.0f;
-
-  float deviation = fabsf(raw_mps - predicted_mps);
-
-  float valid_mps;
-  if (deviation > tolerance_mps) {
-    // Outlier: clamp toward prediction
-    valid_mps = predicted_mps + ((raw_mps > predicted_mps) ? tolerance_mps : -tolerance_mps);
-    if (valid_mps < 0) valid_mps = 0;
-    Serial.printf("[Speed Filter] Outlier: %.2f -> %.2f m/s (predicted %.2f, tolerance %.3f, clamped to %.2f)\n",
-                  last_mps, raw_mps, predicted_mps, tolerance_mps, valid_mps);
-  } else {
-    valid_mps = raw_mps;
-  }
-
-  last_mps = valid_mps;
-  lastTime = now;
-  return valid_mps * 3.6f;
 }
 
 // ===========================================================================
@@ -93,15 +39,28 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
   static uint32_t stabilizationStartTime = 0;
   static uint8_t activePin = 0;
   static bool speedUp = false;
+  static float speedBeforePress = 0.0f;
+  static uint8_t consecutiveFailures = 0;
 
   const uint32_t now_ms = millis();
-  const float HYSTERESIS = 0.35f;  // Fixed hysteresis for jitter tolerance
+  const float HYSTERESIS = 0.35f;
+
+  // Acceleration thresholds derived from treadmill physics:
+  // - Nominal button-press acceleration: ~0.11 m/s² (from calibration rate 0.398 km/h/s)
+  // - Natural belt deceleration after release: ~0.08 m/s²
+  // - Shutdown deceleration: 0.24-0.42 m/s²
+  // Coast threshold: high enough to avoid triggering on sensor noise
+  const float ACCEL_COAST_THRESHOLD = 0.10f;  // m/s² — skip press if already moving toward target this fast
+  // Decel guard threshold: clearly fighting our press direction (only checked after minimum elapsed)
+  const float ACCEL_GUARD_THRESHOLD = 0.10f;  // m/s² — abort press if decelerating this hard after 1s
+  const uint32_t GUARD_MIN_ELAPSED_MS = 1000; // Treadmill needs time to respond to relay press
 
   // Reset on treadmill start
   if (!wasRunning && metrics.isRunning && !metrics.isPaused) {
     state = SC_IDLE;
     lastTargetSpeed = -1.0f;
     activePin = 0;
+    consecutiveFailures = 0;
   }
 
   wasRunning = metrics.isRunning && !metrics.isPaused;
@@ -109,56 +68,53 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
   // Abort and cleanup if workout stops
   if (!metrics.isRunning || metrics.isPaused) {
     if (state == SC_PRESSING && activePin != 0) {
-      gpio_set_level((gpio_num_t)activePin, 1);  // Release button
+      gpio_set_level((gpio_num_t)activePin, 1);
       Serial.println("[Speed Control] Workout stopped - releasing button");
     }
     state = SC_IDLE;
     lastTargetSpeed = -1.0f;
     activePin = 0;
+    consecutiveFailures = 0;
     return;
   }
 
-  // Safety: Treadmill minimum speed
   if (targetSpeed_kmh < MIN_SPEED_KMH) {
     return;
   }
 
-  // Get speed - use RAW during pressing to see real speed immediately
-  // Use filtered speed during IDLE/STABILIZING to avoid jitter
-  const float current_kmh = (state == SC_PRESSING) ? getCurrentSpeedRaw() : getCurrentSpeedWithOutlierFilter();
+  const float current_kmh = getCurrentSpeedRaw();
   const float diff = targetSpeed_kmh - current_kmh;
 
-  // State machine
   switch (state) {
     case SC_IDLE: {
-      // Check if we need to adjust speed
       if (fabsf(diff) > HYSTERESIS) {
         // Don't press if already at limits
-        if (diff > 0 && current_kmh >= MAX_SPEED_KMH) {
-          Serial.printf("[Speed Control] At max speed %.1f km/h\n", current_kmh);
+        if (diff > 0 && current_kmh >= MAX_SPEED_KMH) return;
+        if (diff < 0 && current_kmh <= MIN_SPEED_KMH) return;
+
+        // Don't press if treadmill is already moving toward target on its own
+        if (diff > 0 && metrics.acceleration > ACCEL_COAST_THRESHOLD && metrics.jerk >= 0.0f) {
           return;
         }
-        if (diff < 0 && current_kmh <= MIN_SPEED_KMH) {
-          Serial.printf("[Speed Control] At min speed %.1f km/h\n", current_kmh);
+        if (diff < 0 && metrics.acceleration < -ACCEL_COAST_THRESHOLD && metrics.jerk <= 0.0f) {
           return;
         }
 
-        // Don't press if treadmill is already accelerating toward target on its own
-        if (diff > 0 && metrics.acceleration > 0.06f && metrics.jerk >= 0.0f) {
-          return;  // Already accelerating — let it coast
-        }
-        if (diff < 0 && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) {
-          return;  // Already decelerating — let it coast
+        // Persistent failure: stop trying if consecutive presses all fail
+        if (consecutiveFailures >= 5) {
+          Serial.printf("[Speed Control] Giving up after %d consecutive failures (speed %.1f, target %.1f)\n",
+                        consecutiveFailures, current_kmh, targetSpeed_kmh);
+          return;
         }
 
         // Log new target
         if (lastTargetSpeed < 0.0f || fabsf(targetSpeed_kmh - lastTargetSpeed) > 0.05f) {
           lastTargetSpeed = targetSpeed_kmh;
+          consecutiveFailures = 0;  // New target resets failure counter
           Serial.printf("[Speed Control] New target: %.1f km/h, Current: %.1f km/h, Diff: %.2f km/h\n",
                         targetSpeed_kmh, current_kmh, diff);
         }
 
-        // Calculate press duration
         speedUp = (diff > 0);
         activePin = speedUp ? storedGlobals.SPEED_UP_PIN : storedGlobals.SPEED_DOWN_PIN;
 
@@ -167,24 +123,21 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
           return;
         }
 
-        // Use interpolated rate based on current speed for non-linear response
         float rate = getInterpolatedRateForSpeed(current_kmh, speedUp);
-        if (rate < 0.1f) rate = 0.5f;  // Fallback if not calibrated
+        if (rate < 0.1f) rate = 0.5f;
 
-        // Calculate press time: diff / rate, subtract inertia delay
         uint32_t calcPress_ms = (uint32_t)((fabsf(diff) / rate) * 1000.0f);
         uint32_t inertiaComp_ms = storedGlobals.INERTIA_DELAY_MS;
         targetPressDuration = (calcPress_ms > inertiaComp_ms) ? (calcPress_ms - inertiaComp_ms) : 50;
 
-        // Safety limits
         if (targetPressDuration < 50) targetPressDuration = 50;
         if (targetPressDuration > 30000) targetPressDuration = 30000;
 
-        Serial.printf("[Speed Control] %s: %.1f -> %.1f km/h (rate=%.3f, press=%u ms)\n",
+        Serial.printf("[Speed Control] %s: %.1f -> %.1f km/h (rate=%.3f, press=%u ms, failures=%d)\n",
                       speedUp ? "UP" : "DOWN", current_kmh, targetSpeed_kmh,
-                      rate, targetPressDuration);
+                      rate, targetPressDuration, consecutiveFailures);
 
-        // Start pressing
+        speedBeforePress = current_kmh;
         gpio_set_level((gpio_num_t)activePin, 0);  // LOW = relay active
         pressStartTime = now_ms;
         state = SC_PRESSING;
@@ -195,48 +148,12 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     case SC_PRESSING: {
       uint32_t elapsed = now_ms - pressStartTime;
 
-      // CRITICAL: Early release to compensate for mechanical inertia
-      // Release BEFORE target to account for overshoot/undershoot
-      // Overshoot compensation: ~2 km/h for UP, ~1 km/h for DOWN
-      const float OVERSHOOT_COMPENSATION_UP = 0.2f;    // km/h before target
-      const float OVERSHOOT_COMPENSATION_DOWN = 0.8f;  // km/h before target
+      // Overshoot compensation using configurable factor
+      const float OVERSHOOT_COMP_UP = 0.2f * storedGlobals.OVERSHOOT_FACTOR;
+      const float OVERSHOOT_COMP_DOWN = 0.8f * storedGlobals.OVERSHOOT_FACTOR;
 
-      // Safety: abort press if treadmill decelerates against our direction (mechanical issue)
-      if (speedUp && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Blocking UP: decel %.4f m/s², jerk %.4f m/s³ after %u ms\n",
-                      metrics.acceleration, metrics.jerk, elapsed);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      else if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMPENSATION_UP)) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h overshoot)\n",
-                      current_kmh, elapsed, targetSpeed_kmh, OVERSHOOT_COMPENSATION_UP);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      else if (!speedUp && current_kmh <= (targetSpeed_kmh + OVERSHOOT_COMPENSATION_DOWN)) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h undershoot)\n",
-                      current_kmh, elapsed, targetSpeed_kmh, OVERSHOOT_COMPENSATION_DOWN);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      // Check if press duration reached
-      else if (elapsed >= targetPressDuration) {
-        gpio_set_level((gpio_num_t)activePin, 1);  // HIGH = relay inactive
-        Serial.printf("[Speed Control] Released after %u ms at %.1f km/h\n", elapsed, current_kmh);
-
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      // Safety checks during pressing
-      else if (speedUp && current_kmh >= MAX_SPEED_KMH) {
+      // --- SAFETY FIRST: hard speed limits ---
+      if (speedUp && current_kmh >= MAX_SPEED_KMH) {
         gpio_set_level((gpio_num_t)activePin, 1);
         Serial.printf("[Speed Control] Safety stop at max: %.1f km/h after %u ms\n", current_kmh, elapsed);
         stabilizationStartTime = now_ms;
@@ -250,17 +167,71 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         state = SC_STABILIZING;
         activePin = 0;
       }
+      // --- Early release: approaching target speed ---
+      else if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMP_UP)) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f)\n",
+                      current_kmh, elapsed, targetSpeed_kmh);
+        consecutiveFailures = 0;  // Reached target
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+      else if (!speedUp && current_kmh <= (targetSpeed_kmh + OVERSHOOT_COMP_DOWN)) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f)\n",
+                      current_kmh, elapsed, targetSpeed_kmh);
+        consecutiveFailures = 0;  // Reached target
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+      // --- Decel guard: abort if treadmill fights press AFTER it had time to respond ---
+      else if (speedUp && elapsed >= GUARD_MIN_ELAPSED_MS
+               && metrics.acceleration < -ACCEL_GUARD_THRESHOLD && metrics.jerk <= 0.0f) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Abort UP: decel %.4f m/s², jerk %.4f after %u ms\n",
+                      metrics.acceleration, metrics.jerk, elapsed);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+      else if (!speedUp && elapsed >= GUARD_MIN_ELAPSED_MS
+               && metrics.acceleration > ACCEL_GUARD_THRESHOLD && metrics.jerk >= 0.0f) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Abort DOWN: accel %.4f m/s², jerk %.4f after %u ms\n",
+                      metrics.acceleration, metrics.jerk, elapsed);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
+      // --- Duration reached ---
+      else if (elapsed >= targetPressDuration) {
+        gpio_set_level((gpio_num_t)activePin, 1);
+        Serial.printf("[Speed Control] Released after %u ms at %.1f km/h\n", elapsed, current_kmh);
+        stabilizationStartTime = now_ms;
+        state = SC_STABILIZING;
+        activePin = 0;
+      }
       break;
     }
 
     case SC_STABILIZING: {
       uint32_t stabilizationTime = now_ms - stabilizationStartTime;
 
-      // Wait for inertia delay before checking result
       if (stabilizationTime >= storedGlobals.INERTIA_DELAY_MS) {
-        Serial.printf("[Speed Control] Stabilized at %.1f km/h (target %.1f km/h, diff %.2f km/h)\n",
-                      current_kmh, targetSpeed_kmh, fabsf(targetSpeed_kmh - current_kmh));
-        state = SC_IDLE;  // Next cycle will check if another press is needed
+        // Track if speed moved toward or away from target
+        float diffBefore = fabsf(targetSpeed_kmh - speedBeforePress);
+        float diffAfter = fabsf(targetSpeed_kmh - current_kmh);
+        if (diffAfter >= diffBefore) {
+          consecutiveFailures++;
+        } else {
+          consecutiveFailures = 0;
+        }
+
+        Serial.printf("[Speed Control] Stabilized at %.1f km/h (target %.1f, diff %.2f, failures=%d)\n",
+                      current_kmh, targetSpeed_kmh, diffAfter, consecutiveFailures);
+        state = SC_IDLE;
       }
       break;
     }
