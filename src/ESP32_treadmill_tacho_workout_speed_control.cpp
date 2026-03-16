@@ -22,39 +22,57 @@ float getCurrentSpeedRaw() {
   return speed;
 }
 
-  float getCurrentSpeedWithOutlierFilter() {
-  static float lastSpeed = 0;
+float getCurrentSpeedWithOutlierFilter() {
+  static float last_mps = 0;         // last accepted speed in m/s
+  static float prev_raw_mps = -1;    // previous raw reading to detect new sensor data
   static uint32_t lastTime = 0;
 
-  const float raw_kmh = getCurrentSpeedRaw();
+  const float raw_mps = (metrics.mps + metrics.mpsOffset);
   const uint32_t now = millis();
   const uint32_t dt = now - lastTime;
 
-  if (lastSpeed == 0 || dt > 2000) {
-    // First measurement or too long ago - accept as-is
-    lastSpeed = raw_kmh;
+  if (last_mps == 0 || dt > 2000) {
+    last_mps = raw_mps;
+    prev_raw_mps = raw_mps;
     lastTime = now;
-    return raw_kmh;
+    return raw_mps * 3.6f;
   }
 
-  // Maximum realistic change in dt milliseconds
-  // Treadmill can change max ~1.5 km/h per second
-  float maxChange = (dt / 1000.0f) * 1.5f;
-  float actualChange = fabsf(raw_kmh - lastSpeed);
+  // Only apply filter when sensor delivers a new reading (~every 200ms)
+  // Between updates raw_mps stays the same — just return last accepted
+  if (fabsf(raw_mps - prev_raw_mps) < 0.001f) {
+    return last_mps * 3.6f;
+  }
+  prev_raw_mps = raw_mps;
 
-  float validSpeed;
-  if (actualChange > maxChange) {
-    // Outlier detected - clamp to max realistic change
-    validSpeed = lastSpeed + ((raw_kmh > lastSpeed) ? maxChange : -maxChange);
-    Serial.printf("[Speed Filter] Outlier: %.1f -> %.1f km/h (clamped to %.1f)\n",
-                  lastSpeed, raw_kmh, validSpeed);
+  float dt_s = dt / 1000.0f;
+
+  // Physics-based prediction using acceleration (m/s²) and jerk (m/s³)
+  float predicted_mps = last_mps
+                      + metrics.acceleration * dt_s
+                      + 0.5f * metrics.jerk * dt_s * dt_s;
+
+  // Tolerance: sensor noise floor + scaled by acceleration magnitude
+  // 0.08 m/s ≈ 0.3 km/h sensor resolution
+  // During acceleration/deceleration, widen tolerance proportionally
+  float tolerance_mps = 0.08f + fabsf(metrics.acceleration) * dt_s * 2.0f;
+
+  float deviation = fabsf(raw_mps - predicted_mps);
+
+  float valid_mps;
+  if (deviation > tolerance_mps) {
+    // Outlier: clamp toward prediction
+    valid_mps = predicted_mps + ((raw_mps > predicted_mps) ? tolerance_mps : -tolerance_mps);
+    if (valid_mps < 0) valid_mps = 0;
+    Serial.printf("[Speed Filter] Outlier: %.2f -> %.2f m/s (predicted %.2f, tolerance %.3f, clamped to %.2f)\n",
+                  last_mps, raw_mps, predicted_mps, tolerance_mps, valid_mps);
   } else {
-    validSpeed = raw_kmh;
+    valid_mps = raw_mps;
   }
 
-  lastSpeed = validSpeed;
+  last_mps = valid_mps;
   lastTime = now;
-  return validSpeed;
+  return valid_mps * 3.6f;
 }
 
 // ===========================================================================
@@ -182,7 +200,7 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         state = SC_STABILIZING;
         activePin = 0;
       }
-       if (speedUp && metrics.acceleration > 0.1f ) { // Block up because the treadmill is accelerating by itself (speeding up)
+       if (speedUp && metrics.acceleration > 0.06f && metrics.jerk >= 0.0f) { // Block up because the treadmill is accelerating by itself (speeding up)
         gpio_set_level((gpio_num_t)activePin, 1);
         Serial.printf("[Speed Control] Blocking UP due to strong acceleration: %.4f m/s²\n", metrics.acceleration);
         stabilizationStartTime = now_ms;
