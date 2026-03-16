@@ -143,6 +143,14 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
           return;
         }
 
+        // Don't press if treadmill is already accelerating toward target on its own
+        if (diff > 0 && metrics.acceleration > 0.06f && metrics.jerk >= 0.0f) {
+          return;  // Already accelerating — let it coast
+        }
+        if (diff < 0 && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) {
+          return;  // Already decelerating — let it coast
+        }
+
         // Log new target
         if (lastTargetSpeed < 0.0f || fabsf(targetSpeed_kmh - lastTargetSpeed) > 0.05f) {
           lastTargetSpeed = targetSpeed_kmh;
@@ -193,21 +201,16 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
       const float OVERSHOOT_COMPENSATION_UP = 0.2f;    // km/h before target
       const float OVERSHOOT_COMPENSATION_DOWN = 0.8f;  // km/h before target
 
-      if (speedUp && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) { // Block UP if strong deceleration detected AND not recovering (jerk <= 0)
+      // Safety: abort press if treadmill decelerates against our direction (mechanical issue)
+      if (speedUp && metrics.acceleration < -0.06f && metrics.jerk <= 0.0f) {
         gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Blocking UP due to strong deceleration: %.4f m/s², jerk: %.4f m/s³\n", metrics.acceleration, metrics.jerk);
+        Serial.printf("[Speed Control] Blocking UP: decel %.4f m/s², jerk %.4f m/s³ after %u ms\n",
+                      metrics.acceleration, metrics.jerk, elapsed);
         stabilizationStartTime = now_ms;
         state = SC_STABILIZING;
         activePin = 0;
       }
-       if (speedUp && metrics.acceleration > 0.06f && metrics.jerk >= 0.0f) { // Block up because the treadmill is accelerating by itself (speeding up)
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Blocking UP due to strong acceleration: %.4f m/s²\n", metrics.acceleration);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMPENSATION_UP)) {
+      else if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMPENSATION_UP)) {
         gpio_set_level((gpio_num_t)activePin, 1);
         Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f, compensating %.1f km/h overshoot)\n",
                       current_kmh, elapsed, targetSpeed_kmh, OVERSHOOT_COMPENSATION_UP);
