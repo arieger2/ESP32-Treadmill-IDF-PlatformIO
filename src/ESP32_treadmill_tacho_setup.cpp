@@ -42,7 +42,6 @@ const char* NVSKeys::SPEED_DN_PIN  = "speedDownPin";      // 13 (OK)
 const char* NVSKeys::INCL_UP_PIN   = "inclUpPin";         // was "inclineUpPin"
 const char* NVSKeys::INCL_DN_PIN   = "inclDnPin";         // was "inclineDownPin"
 
-const char* NVSKeys::SPD_CTL_MS    = "spdCtlMs";          // was "speedIncDecFreqMs"
 const char* NVSKeys::TESTDATA_MS   = "testdataFreqMs";    // 14 (OK)
 
 const char* NVSKeys::BELT_MM       = "beltDistanceMM";    // 14 (OK)
@@ -59,10 +58,18 @@ const char* NVSKeys::SENSOR_MODE   = "sensorSrc";         // NEW  <= short key l
 const char* NVSKeys::BAND_FILTER   = "bandFlt";           // Band sensor filter type
 const char* NVSKeys::MOTOR_FILTER  = "motorFlt";          // Motor sensor filter type
 
-const char* NVSKeys::SPEED_UP_RATE = "spdUpRate";         // km/h per second button press
-const char* NVSKeys::SPEED_DN_RATE = "spdDnRate";         // km/h per second button press
 const char* NVSKeys::INERTIA_MS    = "inertiaMs";         // Stabilization delay after release
-const char* NVSKeys::OVERSHOOT     = "overshoot";         // Overshoot multiplier factor
+
+const char* NVSKeys::PID_KP        = "pidKp";
+const char* NVSKeys::PID_KI        = "pidKi";
+const char* NVSKeys::PID_KA        = "pidKa";
+const char* NVSKeys::PID_KJ        = "pidKj";
+const char* NVSKeys::PID_DEADZONE  = "pidDZ";
+const char* NVSKeys::PID_LP_THRESH = "pidLPTh";
+const char* NVSKeys::PID_I_CLAMP   = "pidIClamp";
+const char* NVSKeys::PID_PULSE_CD  = "pidPulseCD";
+const char* NVSKeys::PID_LP_MAX    = "pidLPMax";
+const char* NVSKeys::PID_COAST_TH  = "pidCoastTh";
 
 // Template function for putOrReplace - handles float, int, int32_t, uint32_t, int64_t, long
 template<typename T>
@@ -136,7 +143,6 @@ String saveSettings() {
     {NVSKeys::SPEED_DN_PIN,  putOrReplace(prefs, NVSKeys::SPEED_DN_PIN, storedGlobals.SPEED_DOWN_PIN)},
     {NVSKeys::INCL_UP_PIN,   putOrReplace(prefs, NVSKeys::INCL_UP_PIN,  storedGlobals.INCLINE_UP_PIN)},
     {NVSKeys::INCL_DN_PIN,   putOrReplace(prefs, NVSKeys::INCL_DN_PIN,  storedGlobals.INCLINE_DOWN_PIN)},
-    {NVSKeys::SPD_CTL_MS,    putOrReplace(prefs, NVSKeys::SPD_CTL_MS,   storedGlobals.SPEED_INC_DEC_FREQ_MS)},
     {NVSKeys::TESTDATA_MS,   putOrReplace(prefs, NVSKeys::TESTDATA_MS,  storedGlobals.TESTDATA_FREQ_MS)},
     {NVSKeys::BELT_MM,       putOrReplace(prefs, NVSKeys::BELT_MM,      storedGlobals.BELT_DISTANCE_MM)},
     {NVSKeys::DEBOUNCE_US,   putOrReplace(prefs, NVSKeys::DEBOUNCE_US,  storedGlobals.DEBOUNCE_THRESHOLD_US)},
@@ -149,10 +155,17 @@ String saveSettings() {
     {NVSKeys::SENSOR_MODE,   putOrReplace(prefs, NVSKeys::SENSOR_MODE,  (int32_t)storedGlobals.SENSOR_SOURCE_MODE)},
     {NVSKeys::BAND_FILTER,   putOrReplace(prefs, NVSKeys::BAND_FILTER,  (int32_t)storedGlobals.BAND_FILTER_TYPE)},
     {NVSKeys::MOTOR_FILTER,  putOrReplace(prefs, NVSKeys::MOTOR_FILTER, (int32_t)storedGlobals.MOTOR_FILTER_TYPE)},
-    {NVSKeys::SPEED_UP_RATE, putOrReplace(prefs, NVSKeys::SPEED_UP_RATE, storedGlobals.SPEED_UP_RATE)},
-    {NVSKeys::SPEED_DN_RATE, putOrReplace(prefs, NVSKeys::SPEED_DN_RATE, storedGlobals.SPEED_DOWN_RATE)},
     {NVSKeys::INERTIA_MS,    putOrReplace(prefs, NVSKeys::INERTIA_MS,    storedGlobals.INERTIA_DELAY_MS)},
-    {NVSKeys::OVERSHOOT,     putOrReplace(prefs, NVSKeys::OVERSHOOT,     storedGlobals.OVERSHOOT_FACTOR)},
+    {NVSKeys::PID_KP,        putOrReplace(prefs, NVSKeys::PID_KP,        storedGlobals.PID_Kp)},
+    {NVSKeys::PID_KI,        putOrReplace(prefs, NVSKeys::PID_KI,        storedGlobals.PID_Ki)},
+    {NVSKeys::PID_KA,        putOrReplace(prefs, NVSKeys::PID_KA,        storedGlobals.PID_Ka)},
+    {NVSKeys::PID_KJ,        putOrReplace(prefs, NVSKeys::PID_KJ,        storedGlobals.PID_Kj)},
+    {NVSKeys::PID_DEADZONE,  putOrReplace(prefs, NVSKeys::PID_DEADZONE,  storedGlobals.PID_DEAD_ZONE)},
+    {NVSKeys::PID_LP_THRESH, putOrReplace(prefs, NVSKeys::PID_LP_THRESH, storedGlobals.PID_LONG_PRESS_THRESH)},
+    {NVSKeys::PID_I_CLAMP,   putOrReplace(prefs, NVSKeys::PID_I_CLAMP,   storedGlobals.PID_I_CLAMP)},
+    {NVSKeys::PID_PULSE_CD,  putOrReplace(prefs, NVSKeys::PID_PULSE_CD,  storedGlobals.PID_PULSE_COOLDOWN_MS)},
+    {NVSKeys::PID_LP_MAX,    putOrReplace(prefs, NVSKeys::PID_LP_MAX,    storedGlobals.PID_LONG_PRESS_MAX_MS)},
+    {NVSKeys::PID_COAST_TH,  putOrReplace(prefs, NVSKeys::PID_COAST_TH,  storedGlobals.PID_COAST_THRESHOLD)},
   };
 
   String out = "Settings saved:\r\n";
@@ -182,7 +195,6 @@ void loadSettings() {
   storedGlobals.INCLINE_UP_PIN       = prefs.getInt (NVSKeys::INCL_UP_PIN,  12);
   storedGlobals.INCLINE_DOWN_PIN     = prefs.getInt (NVSKeys::INCL_DN_PIN,  13);
 
-  storedGlobals.SPEED_INC_DEC_FREQ_MS = prefs.getUInt (NVSKeys::SPD_CTL_MS, 100);
   storedGlobals.TESTDATA_FREQ_MS      = prefs.getUInt (NVSKeys::TESTDATA_MS, 10);
   storedGlobals.BELT_DISTANCE_MM      = prefs.getLong (NVSKeys::BELT_MM, 200);
   storedGlobals.DEBOUNCE_THRESHOLD_US = prefs.getLong (NVSKeys::DEBOUNCE_US, 13);
@@ -197,13 +209,22 @@ void loadSettings() {
   storedGlobals.BAND_FILTER_TYPE   = (uint8_t)prefs.getInt(NVSKeys::BAND_FILTER, 1);   // Default: EMA
   storedGlobals.MOTOR_FILTER_TYPE  = (uint8_t)prefs.getInt(NVSKeys::MOTOR_FILTER, 1);  // Default: EMA
 
-  storedGlobals.SPEED_UP_RATE      = prefs.getFloat(NVSKeys::SPEED_UP_RATE, 0.3f);
-  storedGlobals.SPEED_DOWN_RATE    = prefs.getFloat(NVSKeys::SPEED_DN_RATE, 0.3f);
   storedGlobals.INERTIA_DELAY_MS   = prefs.getUInt (NVSKeys::INERTIA_MS, 2000);
-  storedGlobals.OVERSHOOT_FACTOR   = prefs.getFloat(NVSKeys::OVERSHOOT, 1.1f);
 
-  logPrintf("[NVS] Loaded calibration: UP=%.3f, DOWN=%.3f\n", 
-                storedGlobals.SPEED_UP_RATE, storedGlobals.SPEED_DOWN_RATE);
+  storedGlobals.PID_Kp               = prefs.getFloat(NVSKeys::PID_KP,        1.0f);
+  storedGlobals.PID_Ki               = prefs.getFloat(NVSKeys::PID_KI,        0.1f);
+  storedGlobals.PID_Ka               = prefs.getFloat(NVSKeys::PID_KA,        2.0f);
+  storedGlobals.PID_Kj               = prefs.getFloat(NVSKeys::PID_KJ,        0.5f);
+  storedGlobals.PID_DEAD_ZONE        = prefs.getFloat(NVSKeys::PID_DEADZONE,  0.15f);
+  storedGlobals.PID_LONG_PRESS_THRESH= prefs.getFloat(NVSKeys::PID_LP_THRESH, 1.0f);
+  storedGlobals.PID_I_CLAMP          = prefs.getFloat(NVSKeys::PID_I_CLAMP,   3.0f);
+  storedGlobals.PID_PULSE_COOLDOWN_MS= prefs.getUInt (NVSKeys::PID_PULSE_CD,  500);
+  storedGlobals.PID_LONG_PRESS_MAX_MS= prefs.getUInt (NVSKeys::PID_LP_MAX,    15000);
+  storedGlobals.PID_COAST_THRESHOLD  = prefs.getFloat(NVSKeys::PID_COAST_TH,  0.03f);
+
+  logPrintf("[NVS] Loaded PID: Kp=%.2f Ki=%.2f Ka=%.2f Kj=%.2f DZ=%.2f\n",
+                storedGlobals.PID_Kp, storedGlobals.PID_Ki, storedGlobals.PID_Ka,
+                storedGlobals.PID_Kj, storedGlobals.PID_DEAD_ZONE);
 
   prefs.end();
 
@@ -236,7 +257,6 @@ void loadDefaultSettings() {
     storedGlobals.SPEED_DOWN_PIN = 11;
     storedGlobals.INCLINE_UP_PIN = 12;
     storedGlobals.INCLINE_DOWN_PIN = 13;
-    storedGlobals.SPEED_INC_DEC_FREQ_MS = 100;
     storedGlobals.TESTDATA_FREQ_MS = 10;
     storedGlobals.BELT_DISTANCE_MM = 200;
     storedGlobals.DEBOUNCE_THRESHOLD_US = 13;
@@ -266,8 +286,7 @@ void printSettings() {
   logPrintf("  Incline Down Pin    : %d\r\n", storedGlobals.INCLINE_DOWN_PIN);
   logPrint("\n");
 
-  logPrint("Timing:\r\n"); 
-  logPrintf("  Speed Ctl Freq (ms) : %u\r\n", storedGlobals.SPEED_INC_DEC_FREQ_MS); 
+  logPrint("Timing:\r\n");
   logPrintf("  Testdata Freq (ms)  : %u\r\n", storedGlobals.TESTDATA_FREQ_MS); 
   logPrint("\n");
 

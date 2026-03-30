@@ -36,7 +36,6 @@ String processTemplate(const String& var) {
   if (var == "SPEED_DOWN_PIN")     return String(storedGlobals.SPEED_DOWN_PIN);
   if (var == "INCLINE_UP_PIN")     return String(storedGlobals.INCLINE_UP_PIN);
   if (var == "INCLINE_DOWN_PIN")   return String(storedGlobals.INCLINE_DOWN_PIN);
-  if (var == "SPEED_INC_DEC_FREQ") return String(storedGlobals.SPEED_INC_DEC_FREQ_MS);
   if (var == "TESTDATA_FREQ")      return String(storedGlobals.TESTDATA_FREQ_MS);
   if (var == "BELT_DISTANCE")      return String(storedGlobals.BELT_DISTANCE_MM);
   if (var == "BELT_DISTANCE_MM")   return String(storedGlobals.BELT_DISTANCE_MM); // Legacy
@@ -53,15 +52,19 @@ String processTemplate(const String& var) {
   if (var == "BAND_FILTER_TYPE")   return String((int)storedGlobals.BAND_FILTER_TYPE);
   if (var == "MOTOR_FILTER_TYPE")  return String((int)storedGlobals.MOTOR_FILTER_TYPE);
 
-  // Calibration placeholders
-  if (var == "SPEED_UP_RATE") {
-    return String(storedGlobals.SPEED_UP_RATE, 3);
-  }
-  if (var == "SPEED_DOWN_RATE") {
-    return String(storedGlobals.SPEED_DOWN_RATE, 3);
-  }
   if (var == "INERTIA_DELAY")      return String(storedGlobals.INERTIA_DELAY_MS);
-  if (var == "OVERSHOOT_FACTOR")   return String(storedGlobals.OVERSHOOT_FACTOR, 2);
+
+  // PIDAJ controller parameters
+  if (var == "PID_KP")                return String(storedGlobals.PID_Kp, 2);
+  if (var == "PID_KI")                return String(storedGlobals.PID_Ki, 2);
+  if (var == "PID_KA")                return String(storedGlobals.PID_Ka, 2);
+  if (var == "PID_KJ")                return String(storedGlobals.PID_Kj, 2);
+  if (var == "PID_DEAD_ZONE")         return String(storedGlobals.PID_DEAD_ZONE, 2);
+  if (var == "PID_LONG_PRESS_THRESH") return String(storedGlobals.PID_LONG_PRESS_THRESH, 2);
+  if (var == "PID_I_CLAMP")           return String(storedGlobals.PID_I_CLAMP, 1);
+  if (var == "PID_PULSE_COOLDOWN")    return String(storedGlobals.PID_PULSE_COOLDOWN_MS);
+  if (var == "PID_LONG_PRESS_MAX")    return String(storedGlobals.PID_LONG_PRESS_MAX_MS);
+  if (var == "PID_COAST_THRESHOLD")   return String(storedGlobals.PID_COAST_THRESHOLD, 3);
 
   if (var == "TESTDATABUTTONCLASS") return testdata ? "button-red" : "button-green";
 

@@ -206,8 +206,6 @@ void setup() {
 
 void loop() {
     static uint32_t lastUpdate = 0;
-    static uint32_t speedIncDecElapsed = 0;
-    
     uint32_t now = millis();
     uint32_t delta = now - lastUpdate;
     lastUpdate = now;
@@ -258,11 +256,7 @@ void loop() {
 
     // Speed control - ONLY when workout is active
     if (workoutStatus != WORKOUT_INACTIVE) {
-        //if (speedIncDecElapsed > storedGlobals.SPEED_INC_DEC_FREQ_MS ) {
-            physicalSpeedControl(metrics.targetSpeed, metrics.mps);
-            speedIncDecElapsed = 0;
-        //}
-        //speedIncDecElapsed += delta;
+        physicalSpeedControl(metrics.targetSpeed, metrics.mps);
     } 
     /*else if ( !metrics.isRunning && workoutStatus != WORKOUT_INACTIVE ) {
         // If workout is active but speed is zero, set status to INACTIVE

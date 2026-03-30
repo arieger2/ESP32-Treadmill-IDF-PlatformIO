@@ -5,409 +5,559 @@
 
 extern TreadmillMetrics metrics;
 extern TreadmillStoredGlobals storedGlobals;
-
-// Forward declaration from setup module
 extern String saveSettings();
 
 // ============================================================================
-// MULTI-POINT CALIBRATION: Measure non-linear treadmill speed response
+// CALIBRATION: Measure treadmill motor response at different speed ranges
+//
+// Measures: continuous acceleration rate (UP/DOWN), response delay,
+// motor lag (overshoot after release), all at multiple speed ranges.
+//
+// The treadmill display counts up instantly on button press, but the motor
+// lags behind. We measure the ACTUAL motor speed via sensor, not the display.
 // ============================================================================
 
-#define MAX_CALIBRATION_SAMPLES 8
+// ----------------------------------------------------------------------------
+// Data structures
+// ----------------------------------------------------------------------------
 
-struct CalibrationSample {
-  float startSpeed_kmh;
-  float endSpeed_kmh;
-  float avgRate_kmh_per_s;
-  uint32_t pressDuration_ms;
+#define CAL_MAX_SEGMENTS 6
+
+struct CalSegment {
+    float startSpeed_kmh;
+    float endSpeed_kmh;
+    float rate_kmh_per_s;
+    uint32_t duration_ms;
 };
 
-struct CalibrationData {
-  bool isCalibrated;
-  uint8_t upSampleCount;
-  uint8_t downSampleCount;
-  CalibrationSample upSamples[MAX_CALIBRATION_SAMPLES];
-  CalibrationSample downSamples[MAX_CALIBRATION_SAMPLES];
+struct CalResult {
+    bool valid;
+
+    uint8_t upCount;
+    CalSegment up[CAL_MAX_SEGMENTS];
+
+    uint8_t downCount;
+    CalSegment down[CAL_MAX_SEGMENTS];
+
+    uint32_t responseDelay_ms;
+
+    float inertiaUp_kmh;
+    uint32_t inertiaUp_ms;
+    float inertiaDown_kmh;
+    uint32_t inertiaDown_ms;
 };
 
-// Global calibration data
-static CalibrationData calData = {false, 0, 0, {}, {}};
+static CalResult calResult = {};
 
-// Checkpoints for continuous calibration (km/h)
-static const float UP_CHECKPOINTS[] = {3.0f, 4.5f, 6.0f, 7.5f, 9.0f, 10.5f, 12.0f};
-static const uint8_t UP_CHECKPOINT_COUNT = sizeof(UP_CHECKPOINTS) / sizeof(UP_CHECKPOINTS[0]);
+// Checkpoints based on SENSOR speed (actual motor speed, not display)
+static const float UP_CP[] = {4.0f, 8.0f, 12.0f, 15.0f};
+static const uint8_t UP_CP_COUNT = sizeof(UP_CP) / sizeof(UP_CP[0]);
 
-static const float DOWN_CHECKPOINTS[] = {10.5f, 9.0f, 7.5f, 6.0f, 4.5f, 3.0f, 2.0f};
-static const uint8_t DOWN_CHECKPOINT_COUNT = sizeof(DOWN_CHECKPOINTS) / sizeof(DOWN_CHECKPOINTS[0]);
+static const float DOWN_CP[] = {12.0f, 8.0f, 4.0f, 1.5f};
+static const uint8_t DOWN_CP_COUNT = sizeof(DOWN_CP) / sizeof(DOWN_CP[0]);
 
-enum CalibrationState {
-  CAL_IDLE,
-  CAL_STARTING_UP,             // Initial delay before speed up test
-  CAL_PRESSING_UP_CONTINUOUS,  // Pressing UP continuously
-  CAL_UP_AT_CHECKPOINT,        // Paused at checkpoint to measure
-  CAL_UP_FINISHING,            // Reached end of UP checkpoints
-  CAL_STARTING_DOWN,           // Delay before speed down test
-  CAL_PRESSING_DOWN_CONTINUOUS,// Pressing DOWN continuously
-  CAL_DOWN_AT_CHECKPOINT,      // Paused at checkpoint to measure
-  CAL_DOWN_FINISHING,          // Reached end of DOWN checkpoints
-  CAL_DONE,
-  CAL_ERROR
+// ----------------------------------------------------------------------------
+// State machine
+// ----------------------------------------------------------------------------
+
+enum CalState : uint8_t {
+    CAL_IDLE,
+    CAL_WAIT_STABLE,
+    CAL_UP_PRESS,
+    CAL_UP_INERTIA,
+    CAL_WAIT_BEFORE_DOWN,
+    CAL_DOWN_PRESS,
+    CAL_DOWN_INERTIA,
+    CAL_FINALIZE,
+    CAL_DONE,
+    CAL_ERROR
 };
 
-static CalibrationState calState = CAL_IDLE;
-static uint32_t calStateChangeTime = 0;
+static CalState calState = CAL_IDLE;
+static uint32_t stateEntryTime = 0;
 static String calMessage = "";
 
-// Checkpoint tracking
-static uint8_t currentCheckpointIndex = 0;
-static float checkpointStartSpeed = 0;
-static uint32_t checkpointStartTime = 0;
-static uint32_t checkpointPauseStart = 0;
+// Press tracking
+static float pressStartSpeed = 0.0f;
+static uint32_t pressStartTime = 0;
+static float segStartSpeed = 0.0f;
+static uint32_t segStartTime = 0;
+static uint8_t cpIndex = 0;
+static bool responseDelayDone = false;
 
-// Overall calibration tracking
-static float calInitialSpeed = 0;
+// Inertia tracking
+static float releaseSpeed = 0.0f;
+static float inertiaPeak = 0.0f;
+static uint32_t releaseTime = 0;
+static float lastInertiaSpeed = 0.0f;
+static uint32_t lastSpeedChangeTime = 0;
+
+// Safety
+static const uint32_t SAFETY_TIMEOUT_MS = 20000;
+static const uint32_t INERTIA_SETTLE_MS = 3000;
+
+// ----------------------------------------------------------------------------
+// Helper: read current sensor speed in km/h
+// ----------------------------------------------------------------------------
+
+static float sensorSpeed_kmh() {
+    return (metrics.mps + metrics.mpsOffset) * 3.6f;
+}
+
+// ----------------------------------------------------------------------------
+// Helper: release all calibration pins (safety)
+// ----------------------------------------------------------------------------
+
+static void releaseAllPins() {
+    gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);
+    gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);
+}
+
+// ----------------------------------------------------------------------------
+// Helper: enter new state
+// ----------------------------------------------------------------------------
+
+static void enterState(CalState newState) {
+    calState = newState;
+    stateEntryTime = millis();
+}
+
+// ----------------------------------------------------------------------------
+// Helper: abort with error
+// ----------------------------------------------------------------------------
+
+static void calError(const char* msg) {
+    releaseAllPins();
+    calState = CAL_ERROR;
+    calMessage = msg;
+    Serial.printf("[CAL] ERROR: %s\n", msg);
+}
+
+// ============================================================================
+// startSpeedCalibration() — called from web API
+// ============================================================================
 
 void startSpeedCalibration() {
-  // Prevent starting calibration if one is already running
-  if (calState != CAL_IDLE && calState != CAL_DONE && calState != CAL_ERROR) {
-    calMessage = "Error: Calibration already in progress";
-    Serial.println("Calibration failed: Already running");
-    return;
-  }
-
-  if (!metrics.isRunning) {
-    calState = CAL_ERROR;
-    calMessage = "Error: Treadmill must be running";
-    Serial.println("Calibration failed: Treadmill not running");
-    return;
-  }
-
-  // Reset calibration data
-  calData.isCalibrated = false;
-  calData.upSampleCount = 0;
-  calData.downSampleCount = 0;
-
-  // Reset state for new calibration
-  calState = CAL_STARTING_UP;
-  calInitialSpeed = metrics.mps * 3.6f;  // Convert to km/h
-  currentCheckpointIndex = 0;
-  checkpointStartSpeed = 0;
-  checkpointStartTime = 0;
-  calStateChangeTime = millis();
-  calMessage = "Multi-point calibration started - continuous UP test";
-
-  Serial.printf("\n========================================\n");
-  Serial.printf("Multi-Point Calibration Started\n");
-  Serial.printf("Initial speed: %.2f km/h\n", calInitialSpeed);
-  Serial.printf("UP checkpoints: %d, DOWN checkpoints: %d\n", UP_CHECKPOINT_COUNT, DOWN_CHECKPOINT_COUNT);
-  Serial.printf("========================================\n");
-}
-
-// Helper function to get interpolated rate for a specific speed
-float getInterpolatedRateForSpeed(float currentSpeed_kmh, bool speedUp) {
-  const CalibrationSample* samples = speedUp ? calData.upSamples : calData.downSamples;
-  uint8_t count = speedUp ? calData.upSampleCount : calData.downSampleCount;
-
-  // If not calibrated, fall back to global average
-  if (!calData.isCalibrated || count == 0) {
-    return speedUp ? storedGlobals.SPEED_UP_RATE : storedGlobals.SPEED_DOWN_RATE;
-  }
-
-  // Find the appropriate segment
-  for (uint8_t i = 0; i < count; i++) {
-    float segStart = samples[i].startSpeed_kmh;
-    float segEnd = samples[i].endSpeed_kmh;
-
-    // Check if current speed is within this segment
-    if ((speedUp && currentSpeed_kmh >= segStart && currentSpeed_kmh <= segEnd) ||
-        (!speedUp && currentSpeed_kmh <= segStart && currentSpeed_kmh >= segEnd)) {
-      return samples[i].avgRate_kmh_per_s;
+    if (calState != CAL_IDLE && calState != CAL_DONE && calState != CAL_ERROR) {
+        calMessage = "Calibration already running";
+        return;
     }
-  }
 
-  // If speed is below first checkpoint, use first segment rate
-  if ((speedUp && currentSpeed_kmh < samples[0].startSpeed_kmh) ||
-      (!speedUp && currentSpeed_kmh > samples[0].startSpeed_kmh)) {
-    return samples[0].avgRate_kmh_per_s;
-  }
+    if (!metrics.isRunning) {
+        calError("Treadmill must be running");
+        return;
+    }
 
-  // If speed is above last checkpoint, use last segment rate
-  if ((speedUp && currentSpeed_kmh > samples[count-1].endSpeed_kmh) ||
-      (!speedUp && currentSpeed_kmh < samples[count-1].endSpeed_kmh)) {
-    return samples[count-1].avgRate_kmh_per_s;
-  }
+    // Reset all results
+    memset(&calResult, 0, sizeof(calResult));
 
-  // Fallback to average rate
-  float avgRate = 0;
-  for (uint8_t i = 0; i < count; i++) {
-    avgRate += samples[i].avgRate_kmh_per_s;
-  }
-  return avgRate / count;
+    calMessage = "Calibration starting - waiting for stable speed";
+    enterState(CAL_WAIT_STABLE);
+
+    Serial.printf("\n========================================\n");
+    Serial.printf("[CAL] Started at %.1f km/h (sensor)\n", sensorSpeed_kmh());
+    Serial.printf("[CAL] UP checkpoints: ");
+    for (uint8_t i = 0; i < UP_CP_COUNT; i++) Serial.printf("%.0f ", UP_CP[i]);
+    Serial.printf("\n[CAL] DOWN checkpoints: ");
+    for (uint8_t i = 0; i < DOWN_CP_COUNT; i++) Serial.printf("%.0f ", DOWN_CP[i]);
+    Serial.printf("\n========================================\n");
 }
 
-// Non-blocking calibration state machine - call from main loop
+// ============================================================================
+// updateCalibration() — called every ~1ms from main loop
+// ============================================================================
+
 void updateCalibration() {
-  if (calState == CAL_IDLE || calState == CAL_DONE || calState == CAL_ERROR) {
-    return;
-  }
-
-  // Abort if workout stops during calibration
-  if (!metrics.isRunning) {
-    // Cleanup: release pins if we were pressing
-    if (calState == CAL_PRESSING_UP_CONTINUOUS || calState == CAL_UP_AT_CHECKPOINT) {
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // Release relay
+    if (calState == CAL_IDLE || calState == CAL_DONE || calState == CAL_ERROR) {
+        return;
     }
-    if (calState == CAL_PRESSING_DOWN_CONTINUOUS || calState == CAL_DOWN_AT_CHECKPOINT) {
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);  // Release relay
+
+    // Abort if treadmill stops
+    if (!metrics.isRunning) {
+        calError("Treadmill stopped during calibration");
+        return;
     }
-    calState = CAL_ERROR;
-    calMessage = "Error: Workout stopped during calibration";
-    Serial.println("Calibration aborted: Workout stopped");
-    return;
-  }
 
-  uint32_t now = millis();
-  uint32_t elapsed = now - calStateChangeTime;
-  float currentSpeed = metrics.mps * 3.6f;
+    const uint32_t now = millis();
+    const uint32_t elapsed = now - stateEntryTime;
+    const float speed = sensorSpeed_kmh();
 
-  // ===== SPEED UP TEST (CONTINUOUS WITH CHECKPOINTS) =====
-  if (calState == CAL_STARTING_UP) {
-    // Wait 1 second for initial speed measurement to stabilize
-    if (elapsed > 1000) {
-      calState = CAL_PRESSING_UP_CONTINUOUS;
-      calStateChangeTime = now;
-      checkpointStartSpeed = currentSpeed;
-      checkpointStartTime = now;
-      currentCheckpointIndex = 0;
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 0);  // Start pressing (relay active)
-      Serial.printf("[CAL UP] Starting continuous press from %.1f km/h\n", currentSpeed);
-      Serial.printf("[CAL UP] Target checkpoint: %.1f km/h\n", UP_CHECKPOINTS[0]);
+    switch (calState) {
+
+    // ----------------------------------------------------------------
+    // Wait 2s for speed to stabilize before starting
+    // ----------------------------------------------------------------
+    case CAL_WAIT_STABLE: {
+        if (elapsed >= 2000) {
+            // Start UP press
+            pressStartSpeed = speed;
+            pressStartTime = now;
+            segStartSpeed = speed;
+            segStartTime = now;
+            cpIndex = 0;
+            responseDelayDone = false;
+
+            // Skip checkpoints below current speed
+            while (cpIndex < UP_CP_COUNT && UP_CP[cpIndex] <= speed + 0.5f) {
+                cpIndex++;
+            }
+            if (cpIndex >= UP_CP_COUNT) {
+                calError("Speed already above all UP checkpoints");
+                return;
+            }
+
+            gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 0);
+            enterState(CAL_UP_PRESS);
+            calMessage = "Pressing UP - measuring acceleration";
+
+            Serial.printf("[CAL UP] Long press started at %.1f km/h, first checkpoint: %.0f km/h\n",
+                          speed, UP_CP[cpIndex]);
+        }
+        break;
     }
-  }
-  else if (calState == CAL_PRESSING_UP_CONTINUOUS) {
-    // Check if we reached the next checkpoint
-    if (currentCheckpointIndex < UP_CHECKPOINT_COUNT &&
-        currentSpeed >= UP_CHECKPOINTS[currentCheckpointIndex]) {
 
-      // Release button and pause for 1 second at checkpoint
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // Stop pressing
+    // ----------------------------------------------------------------
+    // Long press UP — record segments at checkpoints
+    // ----------------------------------------------------------------
+    case CAL_UP_PRESS: {
+        // Measure response delay: time until speed changes > 0.15 km/h from start
+        if (!responseDelayDone && speed > pressStartSpeed + 0.15f) {
+            calResult.responseDelay_ms = now - pressStartTime;
+            responseDelayDone = true;
+            Serial.printf("[CAL UP] Response delay: %u ms (speed %.1f -> %.1f)\n",
+                          calResult.responseDelay_ms, pressStartSpeed, speed);
+        }
 
-      // Calculate rate for this segment
-      uint32_t pressDuration = now - checkpointStartTime;
-      float speedChange = currentSpeed - checkpointStartSpeed;
-      float rate = (pressDuration > 0) ? (speedChange / (pressDuration / 1000.0f)) : 0;
+        // Check if we reached the next checkpoint
+        if (cpIndex < UP_CP_COUNT && speed >= UP_CP[cpIndex]) {
+            // Record this segment
+            if (calResult.upCount < CAL_MAX_SEGMENTS) {
+                CalSegment& seg = calResult.up[calResult.upCount];
+                seg.startSpeed_kmh = segStartSpeed;
+                seg.endSpeed_kmh = speed;
+                seg.duration_ms = now - segStartTime;
+                seg.rate_kmh_per_s = (seg.duration_ms > 0)
+                    ? (speed - segStartSpeed) / (seg.duration_ms / 1000.0f)
+                    : 0.0f;
+                calResult.upCount++;
 
-      // Store sample
-      CalibrationSample& sample = calData.upSamples[calData.upSampleCount];
-      sample.startSpeed_kmh = checkpointStartSpeed;
-      sample.endSpeed_kmh = currentSpeed;
-      sample.avgRate_kmh_per_s = rate;
-      sample.pressDuration_ms = pressDuration;
-      calData.upSampleCount++;
+                Serial.printf("[CAL UP] Segment %d: %.1f -> %.1f km/h in %.1fs = %.2f km/h/s\n",
+                              calResult.upCount, seg.startSpeed_kmh, seg.endSpeed_kmh,
+                              seg.duration_ms / 1000.0f, seg.rate_kmh_per_s);
+            }
 
-      Serial.printf("[CAL UP] Checkpoint %d reached: %.1f -> %.1f km/h in %.1f s, rate = %.3f km/h/s\n",
-                    currentCheckpointIndex + 1,
-                    checkpointStartSpeed, currentSpeed,
-                    pressDuration / 1000.0f, rate);
+            // Prepare next segment
+            segStartSpeed = speed;
+            segStartTime = now;
+            cpIndex++;
 
-      // Move to checkpoint pause state
-      calState = CAL_UP_AT_CHECKPOINT;
-      calStateChangeTime = now;
-      checkpointPauseStart = now;
-      currentCheckpointIndex++;
+            // All checkpoints reached?
+            if (cpIndex >= UP_CP_COUNT) {
+                gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);
+                releaseSpeed = speed;
+                releaseTime = now;
+                inertiaPeak = speed;
+                lastInertiaSpeed = speed;
+                lastSpeedChangeTime = now;
+                enterState(CAL_UP_INERTIA);
+                calMessage = "UP done - measuring motor lag";
+                Serial.printf("[CAL UP] Released at %.1f km/h, measuring inertia\n", speed);
+            }
+        }
+
+        // Safety: MAX_SPEED or timeout
+        if (speed >= MAX_SPEED_KMH - 0.5f || elapsed >= SAFETY_TIMEOUT_MS) {
+            gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);
+
+            // Record partial segment if we moved
+            if (speed > segStartSpeed + 0.3f && calResult.upCount < CAL_MAX_SEGMENTS) {
+                CalSegment& seg = calResult.up[calResult.upCount];
+                seg.startSpeed_kmh = segStartSpeed;
+                seg.endSpeed_kmh = speed;
+                seg.duration_ms = now - segStartTime;
+                seg.rate_kmh_per_s = (seg.duration_ms > 0)
+                    ? (speed - segStartSpeed) / (seg.duration_ms / 1000.0f)
+                    : 0.0f;
+                calResult.upCount++;
+                Serial.printf("[CAL UP] Partial segment: %.1f -> %.1f km/h = %.2f km/h/s\n",
+                              seg.startSpeed_kmh, seg.endSpeed_kmh, seg.rate_kmh_per_s);
+            }
+
+            releaseSpeed = speed;
+            releaseTime = now;
+            inertiaPeak = speed;
+            lastInertiaSpeed = speed;
+            lastSpeedChangeTime = now;
+            enterState(CAL_UP_INERTIA);
+            calMessage = "UP safety stop - measuring motor lag";
+            Serial.printf("[CAL UP] Safety stop at %.1f km/h (elapsed %us), measuring inertia\n",
+                          speed, elapsed / 1000);
+        }
+        break;
     }
-    // Safety: stop at 12.5 km/h or after 15 seconds
-    else if (currentSpeed >= 12.5f || elapsed > 15000) {
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 1);  // Stop pressing
-      calState = CAL_UP_FINISHING;
-      calStateChangeTime = now;
-      Serial.printf("[CAL UP] Finished at %.1f km/h, captured %d samples\n",
-                    currentSpeed, calData.upSampleCount);
+
+    // ----------------------------------------------------------------
+    // After UP release: measure how much motor continues to accelerate
+    // ----------------------------------------------------------------
+    case CAL_UP_INERTIA: {
+        // Track peak speed after release
+        if (speed > inertiaPeak) {
+            inertiaPeak = speed;
+        }
+
+        // Detect stabilization: speed stopped changing significantly
+        if (fabsf(speed - lastInertiaSpeed) > 0.05f) {
+            lastInertiaSpeed = speed;
+            lastSpeedChangeTime = now;
+        }
+
+        // Stable for 2s OR acceleration near zero for 2s
+        bool stableBySpeed = (now - lastSpeedChangeTime) >= 2000;
+        bool stableByAccel = (fabsf(metrics.acceleration) < 0.02f) && (elapsed >= 2000);
+
+        if (stableBySpeed || stableByAccel || elapsed >= INERTIA_SETTLE_MS + 5000) {
+            calResult.inertiaUp_kmh = inertiaPeak - releaseSpeed;
+            calResult.inertiaUp_ms = now - releaseTime;
+
+            Serial.printf("[CAL UP] Inertia: +%.2f km/h over %u ms (release=%.1f, peak=%.1f, settled=%.1f)\n",
+                          calResult.inertiaUp_kmh, calResult.inertiaUp_ms,
+                          releaseSpeed, inertiaPeak, speed);
+
+            enterState(CAL_WAIT_BEFORE_DOWN);
+            calMessage = "Waiting before DOWN test";
+        }
+        break;
     }
-  }
-  else if (calState == CAL_UP_AT_CHECKPOINT) {
-    // Pause for 1 second at checkpoint
-    if (now - checkpointPauseStart >= 1000) {
-      // Check if we have more checkpoints
-      if (currentCheckpointIndex < UP_CHECKPOINT_COUNT) {
-        // Resume pressing for next checkpoint
-        checkpointStartSpeed = currentSpeed;
-        checkpointStartTime = now;
-        calState = CAL_PRESSING_UP_CONTINUOUS;
-        calStateChangeTime = now;
-        gpio_set_level((gpio_num_t)storedGlobals.SPEED_UP_PIN, 0);  // Resume pressing
-        Serial.printf("[CAL UP] Resuming press, target: %.1f km/h\n", UP_CHECKPOINTS[currentCheckpointIndex]);
-      } else {
-        // All checkpoints reached
-        calState = CAL_UP_FINISHING;
-        calStateChangeTime = now;
-        Serial.printf("[CAL UP] All checkpoints reached, captured %d samples\n", calData.upSampleCount);
-      }
+
+    // ----------------------------------------------------------------
+    // Pause 3s before starting DOWN test
+    // ----------------------------------------------------------------
+    case CAL_WAIT_BEFORE_DOWN: {
+        if (elapsed >= 3000) {
+            pressStartSpeed = speed;
+            pressStartTime = now;
+            segStartSpeed = speed;
+            segStartTime = now;
+            cpIndex = 0;
+
+            // Skip checkpoints above current speed
+            while (cpIndex < DOWN_CP_COUNT && DOWN_CP[cpIndex] >= speed - 0.5f) {
+                cpIndex++;
+            }
+            if (cpIndex >= DOWN_CP_COUNT) {
+                calError("Speed already below all DOWN checkpoints");
+                return;
+            }
+
+            gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 0);
+            enterState(CAL_DOWN_PRESS);
+            calMessage = "Pressing DOWN - measuring deceleration";
+
+            Serial.printf("[CAL DOWN] Long press started at %.1f km/h, first checkpoint: %.0f km/h\n",
+                          speed, DOWN_CP[cpIndex]);
+        }
+        break;
     }
-  }
-  else if (calState == CAL_UP_FINISHING) {
-    // Wait 2 seconds for stabilization, then start DOWN test
-    if (elapsed > 2000) {
-      // Calculate average UP rate for fallback
-      float avgUpRate = 0;
-      for (uint8_t i = 0; i < calData.upSampleCount; i++) {
-        avgUpRate += calData.upSamples[i].avgRate_kmh_per_s;
-      }
-      if (calData.upSampleCount > 0) {
-        avgUpRate /= calData.upSampleCount;
-        storedGlobals.SPEED_UP_RATE = avgUpRate;
-        Serial.printf("[CAL UP] Average rate: %.3f km/h/s\n", avgUpRate);
-      }
 
-      calState = CAL_STARTING_DOWN;
-      calStateChangeTime = now;
-      calMessage = "UP test done - starting DOWN test";
-      Serial.println("\n[CAL DOWN] Starting speed DOWN test...");
+    // ----------------------------------------------------------------
+    // Long press DOWN — record segments at checkpoints
+    // ----------------------------------------------------------------
+    case CAL_DOWN_PRESS: {
+        // Check if we reached the next checkpoint (speed falling)
+        if (cpIndex < DOWN_CP_COUNT && speed <= DOWN_CP[cpIndex]) {
+            // Record this segment
+            if (calResult.downCount < CAL_MAX_SEGMENTS) {
+                CalSegment& seg = calResult.down[calResult.downCount];
+                seg.startSpeed_kmh = segStartSpeed;
+                seg.endSpeed_kmh = speed;
+                seg.duration_ms = now - segStartTime;
+                seg.rate_kmh_per_s = (seg.duration_ms > 0)
+                    ? (segStartSpeed - speed) / (seg.duration_ms / 1000.0f)
+                    : 0.0f;
+                calResult.downCount++;
+
+                Serial.printf("[CAL DOWN] Segment %d: %.1f -> %.1f km/h in %.1fs = %.2f km/h/s\n",
+                              calResult.downCount, seg.startSpeed_kmh, seg.endSpeed_kmh,
+                              seg.duration_ms / 1000.0f, seg.rate_kmh_per_s);
+            }
+
+            // Prepare next segment
+            segStartSpeed = speed;
+            segStartTime = now;
+            cpIndex++;
+
+            // All checkpoints reached?
+            if (cpIndex >= DOWN_CP_COUNT) {
+                gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);
+                releaseSpeed = speed;
+                releaseTime = now;
+                inertiaPeak = speed;
+                lastInertiaSpeed = speed;
+                lastSpeedChangeTime = now;
+                enterState(CAL_DOWN_INERTIA);
+                calMessage = "DOWN done - measuring motor lag";
+                Serial.printf("[CAL DOWN] Released at %.1f km/h, measuring inertia\n", speed);
+            }
+        }
+
+        // Safety: MIN_SPEED or timeout
+        if (speed <= MIN_SPEED_KMH + 0.3f || elapsed >= SAFETY_TIMEOUT_MS) {
+            gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);
+
+            // Record partial segment
+            if (segStartSpeed > speed + 0.3f && calResult.downCount < CAL_MAX_SEGMENTS) {
+                CalSegment& seg = calResult.down[calResult.downCount];
+                seg.startSpeed_kmh = segStartSpeed;
+                seg.endSpeed_kmh = speed;
+                seg.duration_ms = now - segStartTime;
+                seg.rate_kmh_per_s = (seg.duration_ms > 0)
+                    ? (segStartSpeed - speed) / (seg.duration_ms / 1000.0f)
+                    : 0.0f;
+                calResult.downCount++;
+                Serial.printf("[CAL DOWN] Partial segment: %.1f -> %.1f km/h = %.2f km/h/s\n",
+                              seg.startSpeed_kmh, seg.endSpeed_kmh, seg.rate_kmh_per_s);
+            }
+
+            releaseSpeed = speed;
+            releaseTime = now;
+            inertiaPeak = speed;
+            lastInertiaSpeed = speed;
+            lastSpeedChangeTime = now;
+            enterState(CAL_DOWN_INERTIA);
+            calMessage = "DOWN safety stop - measuring motor lag";
+            Serial.printf("[CAL DOWN] Safety stop at %.1f km/h, measuring inertia\n", speed);
+        }
+        break;
     }
-  }
 
-  // ===== SPEED DOWN TEST (CONTINUOUS WITH CHECKPOINTS) =====
-  else if (calState == CAL_STARTING_DOWN) {
-    // Wait 1 second before pressing down
-    if (elapsed > 1000) {
-      calState = CAL_PRESSING_DOWN_CONTINUOUS;
-      calStateChangeTime = now;
-      checkpointStartSpeed = currentSpeed;
-      checkpointStartTime = now;
-      currentCheckpointIndex = 0;
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 0);  // Start pressing (relay active)
-      Serial.printf("[CAL DOWN] Starting continuous press from %.1f km/h\n", currentSpeed);
-      Serial.printf("[CAL DOWN] Target checkpoint: %.1f km/h\n", DOWN_CHECKPOINTS[0]);
+    // ----------------------------------------------------------------
+    // After DOWN release: measure how much motor continues to decelerate
+    // ----------------------------------------------------------------
+    case CAL_DOWN_INERTIA: {
+        // Track minimum speed after release (motor still decelerating)
+        if (speed < inertiaPeak) {
+            inertiaPeak = speed;
+        }
+
+        if (fabsf(speed - lastInertiaSpeed) > 0.05f) {
+            lastInertiaSpeed = speed;
+            lastSpeedChangeTime = now;
+        }
+
+        bool stableBySpeed = (now - lastSpeedChangeTime) >= 2000;
+        bool stableByAccel = (fabsf(metrics.acceleration) < 0.02f) && (elapsed >= 2000);
+
+        if (stableBySpeed || stableByAccel || elapsed >= INERTIA_SETTLE_MS + 5000) {
+            calResult.inertiaDown_kmh = releaseSpeed - inertiaPeak;
+            calResult.inertiaDown_ms = now - releaseTime;
+
+            Serial.printf("[CAL DOWN] Inertia: -%.2f km/h over %u ms (release=%.1f, min=%.1f, settled=%.1f)\n",
+                          calResult.inertiaDown_kmh, calResult.inertiaDown_ms,
+                          releaseSpeed, inertiaPeak, speed);
+
+            enterState(CAL_FINALIZE);
+        }
+        break;
     }
-  }
-  else if (calState == CAL_PRESSING_DOWN_CONTINUOUS) {
-    // Check if we reached the next checkpoint
-    if (currentCheckpointIndex < DOWN_CHECKPOINT_COUNT &&
-        currentSpeed <= DOWN_CHECKPOINTS[currentCheckpointIndex]) {
 
-      // Release button and pause for 1 second at checkpoint
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);  // Stop pressing
+    // ----------------------------------------------------------------
+    // Save results to storedGlobals and NVS
+    // ----------------------------------------------------------------
+    case CAL_FINALIZE: {
+        calResult.valid = true;
 
-      // Calculate rate for this segment
-      uint32_t pressDuration = now - checkpointStartTime;
-      float speedChange = checkpointStartSpeed - currentSpeed;  // DOWN: start > end
-      float rate = (pressDuration > 0) ? (speedChange / (pressDuration / 1000.0f)) : 0;
+        // Compute average UP rate
+        float avgUp = 0.0f;
+        for (uint8_t i = 0; i < calResult.upCount; i++) {
+            avgUp += calResult.up[i].rate_kmh_per_s;
+        }
+        if (calResult.upCount > 0) avgUp /= calResult.upCount;
 
-      // Store sample
-      CalibrationSample& sample = calData.downSamples[calData.downSampleCount];
-      sample.startSpeed_kmh = checkpointStartSpeed;
-      sample.endSpeed_kmh = currentSpeed;
-      sample.avgRate_kmh_per_s = rate;
-      sample.pressDuration_ms = pressDuration;
-      calData.downSampleCount++;
+        // Compute average DOWN rate
+        float avgDown = 0.0f;
+        for (uint8_t i = 0; i < calResult.downCount; i++) {
+            avgDown += calResult.down[i].rate_kmh_per_s;
+        }
+        if (calResult.downCount > 0) avgDown /= calResult.downCount;
 
-      Serial.printf("[CAL DOWN] Checkpoint %d reached: %.1f -> %.1f km/h in %.1f s, rate = %.3f km/h/s\n",
-                    currentCheckpointIndex + 1,
-                    checkpointStartSpeed, currentSpeed,
-                    pressDuration / 1000.0f, rate);
+        // Store to globals
+        storedGlobals.INERTIA_DELAY_MS = (calResult.inertiaUp_ms + calResult.inertiaDown_ms) / 2;
 
-      // Move to checkpoint pause state
-      calState = CAL_DOWN_AT_CHECKPOINT;
-      calStateChangeTime = now;
-      checkpointPauseStart = now;
-      currentCheckpointIndex++;
+        // Print summary
+        Serial.printf("\n========================================\n");
+        Serial.printf("[CAL] CALIBRATION COMPLETE\n");
+        Serial.printf("[CAL] Response delay: %u ms\n", calResult.responseDelay_ms);
+        Serial.printf("[CAL] UP segments: %d\n", calResult.upCount);
+        for (uint8_t i = 0; i < calResult.upCount; i++) {
+            Serial.printf("  [%d] %.1f -> %.1f km/h  %.2f km/h/s  (%u ms)\n",
+                          i, calResult.up[i].startSpeed_kmh, calResult.up[i].endSpeed_kmh,
+                          calResult.up[i].rate_kmh_per_s, calResult.up[i].duration_ms);
+        }
+        Serial.printf("[CAL] DOWN segments: %d\n", calResult.downCount);
+        for (uint8_t i = 0; i < calResult.downCount; i++) {
+            Serial.printf("  [%d] %.1f -> %.1f km/h  %.2f km/h/s  (%u ms)\n",
+                          i, calResult.down[i].startSpeed_kmh, calResult.down[i].endSpeed_kmh,
+                          calResult.down[i].rate_kmh_per_s, calResult.down[i].duration_ms);
+        }
+        Serial.printf("[CAL] Inertia UP: +%.2f km/h in %u ms\n",
+                      calResult.inertiaUp_kmh, calResult.inertiaUp_ms);
+        Serial.printf("[CAL] Inertia DOWN: -%.2f km/h in %u ms\n",
+                      calResult.inertiaDown_kmh, calResult.inertiaDown_ms);
+        Serial.printf("[CAL] Avg UP rate: %.3f km/h/s\n", avgUp);
+        Serial.printf("[CAL] Avg DOWN rate: %.3f km/h/s\n", avgDown);
+        Serial.printf("[CAL] Avg inertia: %u ms\n", storedGlobals.INERTIA_DELAY_MS);
+        Serial.printf("========================================\n");
+
+        String result = saveSettings();
+        if (result == "") {
+            calState = CAL_DONE;
+            calMessage = String("OK! UP=") + String(avgUp, 2)
+                       + " DOWN=" + String(avgDown, 2)
+                       + " delay=" + String(calResult.responseDelay_ms) + "ms"
+                       + " inertia=" + String(storedGlobals.INERTIA_DELAY_MS) + "ms";
+        } else {
+            calError(("NVS save failed: " + result).c_str());
+        }
+        break;
     }
-    // Safety: stop at 1.5 km/h or after 15 seconds
-    else if (currentSpeed <= 1.5f || elapsed > 15000) {
-      gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 1);  // Stop pressing
-      calState = CAL_DOWN_FINISHING;
-      calStateChangeTime = now;
-      Serial.printf("[CAL DOWN] Finished at %.1f km/h, captured %d samples\n",
-                    currentSpeed, calData.downSampleCount);
-    }
-  }
-  else if (calState == CAL_DOWN_AT_CHECKPOINT) {
-    // Pause for 1 second at checkpoint
-    if (now - checkpointPauseStart >= 1000) {
-      // Check if we have more checkpoints
-      if (currentCheckpointIndex < DOWN_CHECKPOINT_COUNT) {
-        // Resume pressing for next checkpoint
-        checkpointStartSpeed = currentSpeed;
-        checkpointStartTime = now;
-        calState = CAL_PRESSING_DOWN_CONTINUOUS;
-        calStateChangeTime = now;
-        gpio_set_level((gpio_num_t)storedGlobals.SPEED_DOWN_PIN, 0);  // Resume pressing
-        Serial.printf("[CAL DOWN] Resuming press, target: %.1f km/h\n", DOWN_CHECKPOINTS[currentCheckpointIndex]);
-      } else {
-        // All checkpoints reached
-        calState = CAL_DOWN_FINISHING;
-        calStateChangeTime = now;
-        Serial.printf("[CAL DOWN] All checkpoints reached, captured %d samples\n", calData.downSampleCount);
-      }
-    }
-  }
-  else if (calState == CAL_DOWN_FINISHING) {
-    // Wait 2 seconds for stabilization, then finalize
-    if (elapsed > 2000) {
-      // Calculate average DOWN rate for fallback
-      float avgDownRate = 0;
-      for (uint8_t i = 0; i < calData.downSampleCount; i++) {
-        avgDownRate += calData.downSamples[i].avgRate_kmh_per_s;
-      }
-      if (calData.downSampleCount > 0) {
-        avgDownRate /= calData.downSampleCount;
-        storedGlobals.SPEED_DOWN_RATE = avgDownRate;
-        Serial.printf("[CAL DOWN] Average rate: %.3f km/h/s\n", avgDownRate);
-      }
 
-      // Mark calibration as complete
-      calData.isCalibrated = true;
-
-      // Save to NVS
-      Serial.printf("\n========================================\n");
-      Serial.printf("Multi-Point Calibration Complete!\n");
-      Serial.printf("UP samples: %d, DOWN samples: %d\n", calData.upSampleCount, calData.downSampleCount);
-      Serial.printf("Average UP rate: %.3f km/h/s\n", storedGlobals.SPEED_UP_RATE);
-      Serial.printf("Average DOWN rate: %.3f km/h/s\n", storedGlobals.SPEED_DOWN_RATE);
-      Serial.printf("========================================\n");
-
-      String result = saveSettings();
-      if (result == "") {
-        calState = CAL_DONE;
-        calMessage = String("Success! UP: ") + String(storedGlobals.SPEED_UP_RATE, 3) +
-                    " km/h/s (" + String(calData.upSampleCount) + " samples), DOWN: " +
-                    String(storedGlobals.SPEED_DOWN_RATE, 3) + " km/h/s (" +
-                    String(calData.downSampleCount) + " samples)";
-        Serial.println("[CAL] Multi-point calibration saved successfully to NVS!");
-      } else {
-        calState = CAL_ERROR;
-        calMessage = String("Error saving: ") + result;
-      }
+    default:
+        break;
     }
-  }
 }
+
+// ============================================================================
+// getCalibrationStatus() — JSON for web UI
+// ============================================================================
 
 String getCalibrationStatus() {
-  String stateStr = "";
-  switch (calState) {
-    case CAL_IDLE:                      stateStr = "idle"; break;
-    case CAL_STARTING_UP:               stateStr = "starting_up"; break;
-    case CAL_PRESSING_UP_CONTINUOUS:    stateStr = "pressing_up"; break;
-    case CAL_UP_AT_CHECKPOINT:          stateStr = "up_checkpoint"; break;
-    case CAL_UP_FINISHING:              stateStr = "up_finishing"; break;
-    case CAL_STARTING_DOWN:             stateStr = "starting_down"; break;
-    case CAL_PRESSING_DOWN_CONTINUOUS:  stateStr = "pressing_down"; break;
-    case CAL_DOWN_AT_CHECKPOINT:        stateStr = "down_checkpoint"; break;
-    case CAL_DOWN_FINISHING:            stateStr = "down_finishing"; break;
-    case CAL_DONE:                      stateStr = "done"; break;
-    case CAL_ERROR:                     stateStr = "error"; break;
-    default:                            stateStr = "unknown"; break;
-  }
+    const char* stateStr;
+    switch (calState) {
+        case CAL_IDLE:             stateStr = "idle"; break;
+        case CAL_WAIT_STABLE:      stateStr = "stabilizing"; break;
+        case CAL_UP_PRESS:         stateStr = "pressing_up"; break;
+        case CAL_UP_INERTIA:       stateStr = "up_inertia"; break;
+        case CAL_WAIT_BEFORE_DOWN: stateStr = "wait_down"; break;
+        case CAL_DOWN_PRESS:       stateStr = "pressing_down"; break;
+        case CAL_DOWN_INERTIA:     stateStr = "down_inertia"; break;
+        case CAL_FINALIZE:         stateStr = "finalizing"; break;
+        case CAL_DONE:             stateStr = "done"; break;
+        case CAL_ERROR:            stateStr = "error"; break;
+        default:                   stateStr = "unknown"; break;
+    }
 
-  String json = "{";
-  json += "\"state\":\"" + stateStr + "\"";
-  json += ",\"message\":\"" + calMessage + "\"";
-  json += ",\"isCalibrated\":" + String(calData.isCalibrated ? "true" : "false");
-  json += ",\"upSamples\":" + String(calData.upSampleCount);
-  json += ",\"downSamples\":" + String(calData.downSampleCount);
-  json += ",\"speedUpRate\":" + String(storedGlobals.SPEED_UP_RATE, 3);
-  json += ",\"speedDownRate\":" + String(storedGlobals.SPEED_DOWN_RATE, 3);
-  json += ",\"checkpoint\":" + String(currentCheckpointIndex);
-  json += "}";
-  return json;
+    String json = "{";
+    json += "\"state\":\"" + String(stateStr) + "\"";
+    json += ",\"message\":\"" + calMessage + "\"";
+    json += ",\"isCalibrated\":" + String(calResult.valid ? "true" : "false");
+    json += ",\"upSamples\":" + String(calResult.upCount);
+    json += ",\"downSamples\":" + String(calResult.downCount);
+    json += ",\"responseDelay\":" + String(calResult.responseDelay_ms);
+    json += ",\"responseDelay\":" + String(calResult.responseDelay_ms);
+    json += ",\"inertiaUp\":" + String(calResult.inertiaUp_kmh, 2);
+    json += ",\"inertiaDown\":" + String(calResult.inertiaDown_kmh, 2);
+    json += ",\"currentSpeed\":" + String(sensorSpeed_kmh(), 1);
+    json += ",\"checkpoint\":" + String(cpIndex);
+    json += "}";
+    return json;
 }

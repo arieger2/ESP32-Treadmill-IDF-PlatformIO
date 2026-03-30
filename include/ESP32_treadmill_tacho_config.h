@@ -86,16 +86,11 @@ struct TreadmillStoredGlobals {
     int INCLINE_DOWN_PIN = 13;
     
     // Timing settings
-    uint32_t SPEED_INC_DEC_FREQ_MS = 100;  // in milliseconds
     uint32_t TESTDATA_FREQ_MS = 50;
     bool FORCE_USE_MOTOR = false;
     
-    // Speed control calibration (learned from treadmill behavior)
-    float SPEED_UP_RATE = 0.3f;      // km/h increase per second of button press
-    float SPEED_DOWN_RATE = 0.3f;    // km/h decrease per second of button press
     uint32_t INERTIA_DELAY_MS = 2000; // Time for treadmill to stabilize after button release
-    float OVERSHOOT_FACTOR = 1.1f;   // Typical overshoot multiplier (1.0 = no overshoot)
-    
+
     // Treadmill mechanics
     uint32_t BELT_DISTANCE_MM = 200;         // Belt distance per revolution in mm
     uint32_t DEBOUNCE_THRESHOLD_US = 13;     // Minimum time between valid interrupts (adjustable via web UI)
@@ -108,6 +103,18 @@ struct TreadmillStoredGlobals {
     uint8_t SENSOR_SOURCE_MODE = SENSOR_AUTO;  // persisted
     uint8_t BAND_FILTER_TYPE = 1;     // Filter for band sensor: 0=None, 1=EMA, 2=Kalman, 3=Median
     uint8_t MOTOR_FILTER_TYPE = 1;    // Filter for motor sensor: 0=None, 1=EMA, 2=Kalman, 3=Median
+
+    // PIDAJ controller gains
+    float PID_Kp = 1.0f;                // Proportional gain
+    float PID_Ki = 0.1f;                // Integral gain (drift correction)
+    float PID_Ka = 2.0f;                // Acceleration damping
+    float PID_Kj = 0.5f;                // Jerk prediction
+    float PID_DEAD_ZONE = 0.15f;        // Dead zone in km/h
+    float PID_LONG_PRESS_THRESH = 1.0f; // Long press threshold in km/h
+    float PID_I_CLAMP = 3.0f;           // Anti-windup limit
+    uint32_t PID_PULSE_COOLDOWN_MS = 500;   // Cooldown between single pulses
+    uint32_t PID_LONG_PRESS_MAX_MS = 15000; // Safety timeout for long press
+    float PID_COAST_THRESHOLD = 0.03f;  // Acceleration threshold for motor settled (m/s²)
 }; 
 
 struct TreadmillMetrics {
@@ -183,7 +190,6 @@ namespace NVSKeys {
     extern const char* INCL_UP_PIN;
     extern const char* INCL_DN_PIN;
 
-    extern const char* SPD_CTL_MS;
     extern const char* TESTDATA_MS;
 
     extern const char* BELT_MM;
@@ -199,10 +205,18 @@ namespace NVSKeys {
     extern const char* BAND_FILTER;
     extern const char* MOTOR_FILTER;
     
-    extern const char* SPEED_UP_RATE;
-    extern const char* SPEED_DN_RATE;
     extern const char* INERTIA_MS;
-    extern const char* OVERSHOOT;
+
+    extern const char* PID_KP;
+    extern const char* PID_KI;
+    extern const char* PID_KA;
+    extern const char* PID_KJ;
+    extern const char* PID_DEADZONE;
+    extern const char* PID_LP_THRESH;
+    extern const char* PID_I_CLAMP;
+    extern const char* PID_PULSE_CD;
+    extern const char* PID_LP_MAX;
+    extern const char* PID_COAST_TH;
 };
 
 // ============================================================================

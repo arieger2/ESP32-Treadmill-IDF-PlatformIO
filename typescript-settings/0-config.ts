@@ -5,15 +5,13 @@
 
 namespace SettingsApp {
   export interface CalibrationStatusResponse {
-    state: 'idle' | 'starting_up' | 'pressing_up' | 'waiting_up' | 
-           'starting_down' | 'pressing_down' | 'waiting_down' | 
-           'done' | 'error' | string;
+    state: 'idle' | 'stabilizing' | 'pressing_up' | 'up_inertia' |
+           'wait_down' | 'pressing_down' | 'down_inertia' |
+           'finalizing' | 'done' | 'error' | string;
     message?: string;
-    speedUpRate?: number;
-    speedDownRate?: number;
-    startSpeed?: number;
-    midSpeed?: number;
-    endSpeed?: number;
+    responseDelay?: number;
+    currentSpeed?: number;
+    checkpoint?: number;
   }
 
   export const CONFIG = {

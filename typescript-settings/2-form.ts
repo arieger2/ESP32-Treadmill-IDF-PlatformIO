@@ -58,11 +58,6 @@ namespace SettingsApp {
     }
 
     // Frequency validation
-    const speedFreq = parseInt(data['speedIncDecFreq']);
-    if (isNaN(speedFreq) || speedFreq < 10 || speedFreq > 1000) {
-      return { valid: false, error: 'Speed Inc/Dec frequency must be 10-1000 ms', fieldId: 'speedIncDecFreq' };
-    }
-
     const testFreq = parseInt(data['testdataFreq']);
     if (isNaN(testFreq) || testFreq < 1 || testFreq > 1000) {
       return { valid: false, error: 'Test data frequency must be 1-1000 ms', fieldId: 'testdataFreq' };
@@ -107,6 +102,48 @@ namespace SettingsApp {
     const ratio = parseFloat(data['motorToBeltRatio']);
     if (isNaN(ratio) || ratio <= 0.01 || ratio >= 10.0) {
       return { valid: false, error: 'Motor to belt ratio must be 0.01-10.0', fieldId: 'motorToBeltRatio' };
+    }
+
+    // PIDAJ controller validation
+    const pidKp = parseFloat(data['pidKp']);
+    if (isNaN(pidKp) || pidKp < 0.1 || pidKp > 10.0) {
+      return { valid: false, error: 'PID Kp must be 0.1-10.0', fieldId: 'pidKp' };
+    }
+    const pidKi = parseFloat(data['pidKi']);
+    if (isNaN(pidKi) || pidKi < 0.0 || pidKi > 2.0) {
+      return { valid: false, error: 'PID Ki must be 0.0-2.0', fieldId: 'pidKi' };
+    }
+    const pidKa = parseFloat(data['pidKa']);
+    if (isNaN(pidKa) || pidKa < 0.0 || pidKa > 10.0) {
+      return { valid: false, error: 'PID Ka must be 0.0-10.0', fieldId: 'pidKa' };
+    }
+    const pidKj = parseFloat(data['pidKj']);
+    if (isNaN(pidKj) || pidKj < 0.0 || pidKj > 5.0) {
+      return { valid: false, error: 'PID Kj must be 0.0-5.0', fieldId: 'pidKj' };
+    }
+    const pidDZ = parseFloat(data['pidDeadZone']);
+    if (isNaN(pidDZ) || pidDZ < 0.05 || pidDZ > 1.0) {
+      return { valid: false, error: 'Dead zone must be 0.05-1.0 km/h', fieldId: 'pidDeadZone' };
+    }
+    const pidLP = parseFloat(data['pidLongPressThresh']);
+    if (isNaN(pidLP) || pidLP < 0.3 || pidLP > 5.0) {
+      return { valid: false, error: 'Long press threshold must be 0.3-5.0 km/h', fieldId: 'pidLongPressThresh' };
+    }
+    const pidIC = parseFloat(data['pidIClamp']);
+    if (isNaN(pidIC) || pidIC < 0.5 || pidIC > 20.0) {
+      return { valid: false, error: 'Integral clamp must be 0.5-20.0', fieldId: 'pidIClamp' };
+    }
+    const pidPC = parseInt(data['pidPulseCooldown']);
+    if (isNaN(pidPC) || pidPC < 100 || pidPC > 2000) {
+      return { valid: false, error: 'Pulse cooldown must be 100-2000 ms', fieldId: 'pidPulseCooldown' };
+    }
+    const pidLPM = parseInt(data['pidLongPressMax']);
+    if (isNaN(pidLPM) || pidLPM < 3000 || pidLPM > 30000) {
+      return { valid: false, error: 'Long press max must be 3000-30000 ms', fieldId: 'pidLongPressMax' };
+    }
+    const pidCT = parseFloat(data['pidCoastThreshold']);
+    if (isNaN(pidCT) || pidCT < 0.01 || pidCT > 0.2) {
+      return { valid: false, error: 'Coast threshold must be 0.01-0.2 m/s²', fieldId: 'pidCoastThreshold' };
     }
 
     return { valid: true }; // All validation passed

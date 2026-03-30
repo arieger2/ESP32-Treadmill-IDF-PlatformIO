@@ -141,9 +141,3 @@ void updateCalibration();
 // Returns: JSON object with state, message, speeds, and rates
 String getCalibrationStatus();
 
-// Get interpolated rate for a specific speed based on calibration data
-// Parameters:
-//   currentSpeed_kmh - Current treadmill speed in km/h
-//   speedUp - true for speed up, false for speed down
-// Returns: Appropriate rate (km/h per second) for this speed range
-float getInterpolatedRateForSpeed(float currentSpeed_kmh, bool speedUp);

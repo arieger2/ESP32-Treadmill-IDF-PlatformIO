@@ -120,11 +120,6 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div class="section">
           <h3><i class="fas fa-clock"></i> Timing Configuration</h3>
           <div class="form-group">
-            <label>Speed Inc/Dec Frequency:</label>
-            <input type="number" id="speedIncDecFreq" name="speedIncDecFreq" value="%SPEED_INC_DEC_FREQ%" min="10" max="1000">
-            <span class="unit">milliseconds</span>
-          </div>
-          <div class="form-group">
             <label>Test Data Frequency:</label>
             <input type="number" id="testdataFreq" name="testdataFreq" value="%TESTDATA_FREQ%" min="1" max="1000">
             <span class="unit">milliseconds</span>
@@ -208,33 +203,72 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
         <div class="section">
           <h3><i class="fas fa-tachometer-alt"></i> Speed Control Calibration</h3>
           <div class="form-group">
-            <label>Speed Up Rate:</label>
-            <input type="number" id="speedUpRate" name="speedUpRate" step="0.001" min="0.05" max="2.0" value="%SPEED_UP_RATE%">
-            <span class="unit">km/h per second</span>
-          </div>
-          <div class="form-group">
-            <label>Speed Down Rate:</label>
-            <input type="number" id="speedDownRate" name="speedDownRate" step="0.001" min="0.05" max="2.0" value="%SPEED_DOWN_RATE%">
-            <span class="unit">km/h per second</span>
-          </div>
-          <div class="form-group">
             <label>Inertia Delay:</label>
             <input type="number" id="inertiaDelay" name="inertiaDelay" step="50" min="100" max="5000" value="%INERTIA_DELAY%">
             <span class="unit">milliseconds</span>
           </div>
-          <div class="form-group">
-            <label>Overshoot Factor:</label>
-            <input type="number" id="overshootFactor" name="overshootFactor" step="0.05" min="1.0" max="1.5" value="%OVERSHOOT_FACTOR%">
-            <span class="unit">multiplier (1.0 = none)</span>
-          </div>
           <div class="help-text">
-            <i class="fas fa-info-circle"></i> Auto-calibration: Start treadmill at low speed, then click "Start Calibration". 
-            System will press speed-up for 5s, wait 10s for stabilization, and calculate the rate automatically.
+            <i class="fas fa-info-circle"></i> Auto-calibration: Start treadmill at low speed, then click "Start Calibration".
+            System will ramp up to 15 km/h measuring acceleration rates at different speed ranges.
           </div>
           <button type="button" class="button button-secondary" onclick="SettingsApp.startCalibration()">
             <i class="fas fa-play-circle"></i> Start Calibration
           </button>
           <div id="calibrationStatus" class="status"></div>
+        </div>
+
+        <!-- PIDAJ Controller Tuning -->
+        <div class="section">
+          <h3><i class="fas fa-sliders-h"></i> PIDAJ Controller Tuning</h3>
+          <div class="form-group">
+            <label>Kp (Proportional):</label>
+            <input type="number" id="pidKp" name="pidKp" step="0.1" min="0.1" max="10.0" value="%PID_KP%">
+          </div>
+          <div class="form-group">
+            <label>Ki (Integral):</label>
+            <input type="number" id="pidKi" name="pidKi" step="0.01" min="0.0" max="2.0" value="%PID_KI%">
+          </div>
+          <div class="form-group">
+            <label>Ka (Acceleration damping):</label>
+            <input type="number" id="pidKa" name="pidKa" step="0.1" min="0.0" max="10.0" value="%PID_KA%">
+          </div>
+          <div class="form-group">
+            <label>Kj (Jerk prediction):</label>
+            <input type="number" id="pidKj" name="pidKj" step="0.1" min="0.0" max="5.0" value="%PID_KJ%">
+          </div>
+          <div class="form-group">
+            <label>Dead Zone:</label>
+            <input type="number" id="pidDeadZone" name="pidDeadZone" step="0.01" min="0.05" max="1.0" value="%PID_DEAD_ZONE%">
+            <span class="unit">km/h</span>
+          </div>
+          <div class="form-group">
+            <label>Long Press Threshold:</label>
+            <input type="number" id="pidLongPressThresh" name="pidLongPressThresh" step="0.1" min="0.3" max="5.0" value="%PID_LONG_PRESS_THRESH%">
+            <span class="unit">km/h</span>
+          </div>
+          <div class="form-group">
+            <label>Integral Clamp:</label>
+            <input type="number" id="pidIClamp" name="pidIClamp" step="0.5" min="0.5" max="20.0" value="%PID_I_CLAMP%">
+          </div>
+          <div class="form-group">
+            <label>Pulse Cooldown:</label>
+            <input type="number" id="pidPulseCooldown" name="pidPulseCooldown" step="50" min="100" max="2000" value="%PID_PULSE_COOLDOWN%">
+            <span class="unit">ms</span>
+          </div>
+          <div class="form-group">
+            <label>Long Press Max:</label>
+            <input type="number" id="pidLongPressMax" name="pidLongPressMax" step="1000" min="3000" max="30000" value="%PID_LONG_PRESS_MAX%">
+            <span class="unit">ms</span>
+          </div>
+          <div class="form-group">
+            <label>Coast Threshold:</label>
+            <input type="number" id="pidCoastThreshold" name="pidCoastThreshold" step="0.005" min="0.01" max="0.2" value="%PID_COAST_THRESHOLD%">
+            <span class="unit">m/s²</span>
+          </div>
+          <div class="help-text">
+            <i class="fas fa-info-circle"></i> P=error, I=drift correction, A=acceleration damping, J=jerk prediction.
+            Large error (&gt;Long Press Threshold) uses long press, small error uses single pulses with cooldown.
+          </div>
         </div>
 
         <!-- Actions -->

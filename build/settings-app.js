@@ -100,10 +100,6 @@ var SettingsApp;
             }
         }
         // Frequency validation
-        var speedFreq = parseInt(data['speedIncDecFreq']);
-        if (isNaN(speedFreq) || speedFreq < 10 || speedFreq > 1000) {
-            return { valid: false, error: 'Speed Inc/Dec frequency must be 10-1000 ms', fieldId: 'speedIncDecFreq' };
-        }
         var testFreq = parseInt(data['testdataFreq']);
         if (isNaN(testFreq) || testFreq < 1 || testFreq > 1000) {
             return { valid: false, error: 'Test data frequency must be 1-1000 ms', fieldId: 'testdataFreq' };
@@ -140,6 +136,47 @@ var SettingsApp;
         var ratio = parseFloat(data['motorToBeltRatio']);
         if (isNaN(ratio) || ratio <= 0.01 || ratio >= 10.0) {
             return { valid: false, error: 'Motor to belt ratio must be 0.01-10.0', fieldId: 'motorToBeltRatio' };
+        }
+        // PIDAJ controller validation
+        var pidKp = parseFloat(data['pidKp']);
+        if (isNaN(pidKp) || pidKp < 0.1 || pidKp > 10.0) {
+            return { valid: false, error: 'PID Kp must be 0.1-10.0', fieldId: 'pidKp' };
+        }
+        var pidKi = parseFloat(data['pidKi']);
+        if (isNaN(pidKi) || pidKi < 0.0 || pidKi > 2.0) {
+            return { valid: false, error: 'PID Ki must be 0.0-2.0', fieldId: 'pidKi' };
+        }
+        var pidKa = parseFloat(data['pidKa']);
+        if (isNaN(pidKa) || pidKa < 0.0 || pidKa > 10.0) {
+            return { valid: false, error: 'PID Ka must be 0.0-10.0', fieldId: 'pidKa' };
+        }
+        var pidKj = parseFloat(data['pidKj']);
+        if (isNaN(pidKj) || pidKj < 0.0 || pidKj > 5.0) {
+            return { valid: false, error: 'PID Kj must be 0.0-5.0', fieldId: 'pidKj' };
+        }
+        var pidDZ = parseFloat(data['pidDeadZone']);
+        if (isNaN(pidDZ) || pidDZ < 0.05 || pidDZ > 1.0) {
+            return { valid: false, error: 'Dead zone must be 0.05-1.0 km/h', fieldId: 'pidDeadZone' };
+        }
+        var pidLP = parseFloat(data['pidLongPressThresh']);
+        if (isNaN(pidLP) || pidLP < 0.3 || pidLP > 5.0) {
+            return { valid: false, error: 'Long press threshold must be 0.3-5.0 km/h', fieldId: 'pidLongPressThresh' };
+        }
+        var pidIC = parseFloat(data['pidIClamp']);
+        if (isNaN(pidIC) || pidIC < 0.5 || pidIC > 20.0) {
+            return { valid: false, error: 'Integral clamp must be 0.5-20.0', fieldId: 'pidIClamp' };
+        }
+        var pidPC = parseInt(data['pidPulseCooldown']);
+        if (isNaN(pidPC) || pidPC < 100 || pidPC > 2000) {
+            return { valid: false, error: 'Pulse cooldown must be 100-2000 ms', fieldId: 'pidPulseCooldown' };
+        }
+        var pidLPM = parseInt(data['pidLongPressMax']);
+        if (isNaN(pidLPM) || pidLPM < 3000 || pidLPM > 30000) {
+            return { valid: false, error: 'Long press max must be 3000-30000 ms', fieldId: 'pidLongPressMax' };
+        }
+        var pidCT = parseFloat(data['pidCoastThreshold']);
+        if (isNaN(pidCT) || pidCT < 0.01 || pidCT > 0.2) {
+            return { valid: false, error: 'Coast threshold must be 0.01-0.2 m/s²', fieldId: 'pidCoastThreshold' };
         }
         return { valid: true }; // All validation passed
     }
@@ -334,25 +371,16 @@ var SettingsApp;
         fetch('/api/calibrate/status')
             .then(function (r) { return r.json(); })
             .then(function (j) {
-            var _a, _b, _c, _d;
+            var _a, _b;
             var statusEl = document.getElementById('calibrationStatus');
             if (!statusEl)
                 return;
             if (j.state === 'done') {
-                statusEl.textContent = "\u2713 Calibration complete! UP: ".concat((_a = j.speedUpRate) === null || _a === void 0 ? void 0 : _a.toFixed(3), " km/h/s, DOWN: ").concat((_b = j.speedDownRate) === null || _b === void 0 ? void 0 : _b.toFixed(3), " km/h/s");
+                statusEl.textContent = "Calibration complete! Inertia: ".concat(j.responseDelay || '?', " ms");
                 statusEl.className = 'status success';
                 if (calibrationInterval) {
                     clearInterval(calibrationInterval);
                     calibrationInterval = null;
-                }
-                // Update input fields with new values
-                var speedUpInput = document.getElementById('speedUpRate');
-                var speedDownInput = document.getElementById('speedDownRate');
-                if (speedUpInput && j.speedUpRate !== undefined) {
-                    speedUpInput.value = j.speedUpRate.toFixed(3);
-                }
-                if (speedDownInput && j.speedDownRate !== undefined) {
-                    speedDownInput.value = j.speedDownRate.toFixed(3);
                 }
             }
             else if (j.state === 'error') {
@@ -367,23 +395,26 @@ var SettingsApp;
                 // Show detailed progress with speeds
                 var progress = '';
                 switch (j.state) {
-                    case 'starting_up':
-                        progress = '⏳ Preparing UP calibration...';
+                    case 'stabilizing':
+                        progress = 'Waiting for stable speed...';
                         break;
                     case 'pressing_up':
-                        progress = '⬆️ Pressing UP button...';
+                        progress = "Pressing UP... (".concat(((_a = j.currentSpeed) === null || _a === void 0 ? void 0 : _a.toFixed(1)) || '?', " km/h)");
                         break;
-                    case 'waiting_up':
-                        progress = "\u23F1\uFE0F Waiting for UP stabilization (".concat(((_c = j.midSpeed) === null || _c === void 0 ? void 0 : _c.toFixed(1)) || '?', " km/h)...");
+                    case 'up_inertia':
+                        progress = 'Measuring UP motor lag...';
                         break;
-                    case 'starting_down':
-                        progress = '⏳ Preparing DOWN calibration...';
+                    case 'wait_down':
+                        progress = 'Preparing DOWN test...';
                         break;
                     case 'pressing_down':
-                        progress = '⬇️ Pressing DOWN button...';
+                        progress = "Pressing DOWN... (".concat(((_b = j.currentSpeed) === null || _b === void 0 ? void 0 : _b.toFixed(1)) || '?', " km/h)");
                         break;
-                    case 'waiting_down':
-                        progress = "\u23F1\uFE0F Waiting for DOWN stabilization (".concat(((_d = j.endSpeed) === null || _d === void 0 ? void 0 : _d.toFixed(1)) || '?', " km/h)...");
+                    case 'down_inertia':
+                        progress = 'Measuring DOWN motor lag...';
+                        break;
+                    case 'finalizing':
+                        progress = 'Computing results...';
                         break;
                     default: progress = 'Status: ' + j.state;
                 }

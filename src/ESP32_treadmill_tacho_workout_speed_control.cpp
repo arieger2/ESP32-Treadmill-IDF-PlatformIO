@@ -22,220 +22,222 @@ float getCurrentSpeedRaw() {
 }
 
 // ===========================================================================
-// ADAPTIVE SPEED CONTROL - State machine with simplified button press
+// PIDAJ SPEED CONTROLLER
+//
+// Two modes depending on distance to target:
+//   LONG PRESS  (|error| > threshold): hold GPIO directly, release based on
+//               acceleration + jerk prediction of where motor will settle
+//   PULSE       (|error| <= threshold): single writePress pulses with cooldown
+//
+// PIDAJ terms:
+//   P  = error (target - current)
+//   I  = integral of error (corrects steady-state offset)
+//   D  = implicit in 200ms speed measurement window (no separate computation)
+//   A  = -Ka * acceleration  (damping: reduce action when motor already moving)
+//   J  = -Kj * jerk          (predictive: anticipate acceleration trend)
+//
+// The D-term is not computed explicitly because the speed sensor measures
+// average speed over a 200ms window — the measurement itself is a derivative.
 // ===========================================================================
-enum SpeedControlState {
-  SC_IDLE,
-  SC_PRESSING,
-  SC_STABILIZING
+
+// Controller gains and thresholds are stored in storedGlobals (NVS-backed)
+// and can be tuned via the web settings dialog:
+//   PID_Kp, PID_Ki, PID_Ka, PID_Kj          — PIDAJ gains
+//   PID_DEAD_ZONE, PID_LONG_PRESS_THRESH     — action thresholds (km/h)
+//   PID_I_CLAMP                               — anti-windup limit
+//   PID_PULSE_COOLDOWN_MS, PID_LONG_PRESS_MAX_MS — timing (ms)
+//   PID_COAST_THRESHOLD                       — motor settled threshold (m/s²)
+
+enum PidajState : uint8_t {
+    PIDAJ_IDLE,
+    PIDAJ_LONG_PRESS,
+    PIDAJ_COAST,
+    PIDAJ_PULSE_COOLDOWN
 };
 
 void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
-  static SpeedControlState state = SC_IDLE;
-  static float lastTargetSpeed = -1.0f;
-  static bool wasRunning = false;
-  static uint32_t pressStartTime = 0;
-  static uint32_t targetPressDuration = 0;
-  static uint32_t stabilizationStartTime = 0;
-  static uint8_t activePin = 0;
-  static bool speedUp = false;
-  static float speedBeforePress = 0.0f;
-  static uint8_t consecutiveFailures = 0;
+    static PidajState state = PIDAJ_IDLE;
+    static bool wasRunning = false;
+    static float integral = 0.0f;
+    static float lastTarget = -1.0f;
+    static uint32_t lastTime_ms = 0;
+    static uint32_t stateTime = 0;
+    static uint32_t pressStartTime = 0;
+    static uint8_t activePin = 0;
+    static bool goingUp = false;
+    static uint32_t logTimer = 0;
 
-  const uint32_t now_ms = millis();
-  const float HYSTERESIS = 0.35f;
+    const uint32_t now = millis();
 
-  // Acceleration thresholds derived from treadmill physics:
-  // - Nominal button-press acceleration: ~0.11 m/s² (from calibration rate 0.398 km/h/s)
-  // - Natural belt deceleration after release: ~0.08 m/s²
-  // - Shutdown deceleration: 0.24-0.42 m/s²
-  // Coast threshold: high enough to avoid triggering on sensor noise
-  const float ACCEL_COAST_THRESHOLD = 0.10f;  // m/s² — skip press if already moving toward target this fast
-  // Decel guard threshold: clearly fighting our press direction (only checked after minimum elapsed)
-  const float ACCEL_GUARD_THRESHOLD = 0.10f;  // m/s² — abort press if decelerating this hard after 1s
-  const uint32_t GUARD_MIN_ELAPSED_MS = 1000; // Treadmill needs time to respond to relay press
-
-  // Reset on treadmill start
-  if (!wasRunning && metrics.isRunning && !metrics.isPaused) {
-    state = SC_IDLE;
-    lastTargetSpeed = -1.0f;
-    activePin = 0;
-    consecutiveFailures = 0;
-  }
-
-  wasRunning = metrics.isRunning && !metrics.isPaused;
-
-  // Abort and cleanup if workout stops
-  if (!metrics.isRunning || metrics.isPaused) {
-    if (state == SC_PRESSING && activePin != 0) {
-      gpio_set_level((gpio_num_t)activePin, 1);
-      Serial.println("[Speed Control] Workout stopped - releasing button");
+    // ---- Reset on treadmill start ----
+    if (!wasRunning && metrics.isRunning && !metrics.isPaused) {
+        state = PIDAJ_IDLE;
+        integral = 0.0f;
+        lastTarget = -1.0f;
+        lastTime_ms = now;
+        activePin = 0;
     }
-    state = SC_IDLE;
-    lastTargetSpeed = -1.0f;
-    activePin = 0;
-    consecutiveFailures = 0;
-    return;
-  }
+    wasRunning = metrics.isRunning && !metrics.isPaused;
 
-  if (targetSpeed_kmh < MIN_SPEED_KMH) {
-    return;
-  }
-
-  const float current_kmh = getCurrentSpeedRaw();
-  const float diff = targetSpeed_kmh - current_kmh;
-
-  switch (state) {
-    case SC_IDLE: {
-      if (fabsf(diff) > HYSTERESIS) {
-        // Don't press if already at limits
-        if (diff > 0 && current_kmh >= MAX_SPEED_KMH) return;
-        if (diff < 0 && current_kmh <= MIN_SPEED_KMH) return;
-
-        // Don't press if treadmill is already moving toward target on its own
-        if (diff > 0 && metrics.acceleration > ACCEL_COAST_THRESHOLD && metrics.jerk >= 0.0f) {
-          return;
+    // ---- Guard: not running or paused ----
+    if (!metrics.isRunning || metrics.isPaused) {
+        if (state == PIDAJ_LONG_PRESS && activePin != 0) {
+            gpio_set_level((gpio_num_t)activePin, 1);
+            Serial.println("[PIDAJ] Stopped - releasing button");
         }
-        if (diff < 0 && metrics.acceleration < -ACCEL_COAST_THRESHOLD && metrics.jerk <= 0.0f) {
-          return;
-        }
-
-        // Persistent failure: stop trying if consecutive presses all fail
-        if (consecutiveFailures >= 5) {
-          Serial.printf("[Speed Control] Giving up after %d consecutive failures (speed %.1f, target %.1f)\n",
-                        consecutiveFailures, current_kmh, targetSpeed_kmh);
-          return;
-        }
-
-        // Log new target
-        if (lastTargetSpeed < 0.0f || fabsf(targetSpeed_kmh - lastTargetSpeed) > 0.05f) {
-          lastTargetSpeed = targetSpeed_kmh;
-          consecutiveFailures = 0;  // New target resets failure counter
-          Serial.printf("[Speed Control] New target: %.1f km/h, Current: %.1f km/h, Diff: %.2f km/h\n",
-                        targetSpeed_kmh, current_kmh, diff);
-        }
-
-        speedUp = (diff > 0);
-        activePin = speedUp ? storedGlobals.SPEED_UP_PIN : storedGlobals.SPEED_DOWN_PIN;
-
-        if (activePin == 0) {
-          Serial.println("[Speed Control] ERROR: PIN not configured");
-          return;
-        }
-
-        float rate = getInterpolatedRateForSpeed(current_kmh, speedUp);
-        if (rate < 0.1f) rate = 0.5f;
-
-        uint32_t calcPress_ms = (uint32_t)((fabsf(diff) / rate) * 1000.0f);
-        uint32_t inertiaComp_ms = storedGlobals.INERTIA_DELAY_MS;
-        targetPressDuration = (calcPress_ms > inertiaComp_ms) ? (calcPress_ms - inertiaComp_ms) : 50;
-
-        if (targetPressDuration < 50) targetPressDuration = 50;
-        if (targetPressDuration > 30000) targetPressDuration = 30000;
-
-        Serial.printf("[Speed Control] %s: %.1f -> %.1f km/h (rate=%.3f, press=%u ms, failures=%d)\n",
-                      speedUp ? "UP" : "DOWN", current_kmh, targetSpeed_kmh,
-                      rate, targetPressDuration, consecutiveFailures);
-
-        speedBeforePress = current_kmh;
-        gpio_set_level((gpio_num_t)activePin, 0);  // LOW = relay active
-        pressStartTime = now_ms;
-        state = SC_PRESSING;
-      }
-      break;
+        state = PIDAJ_IDLE;
+        integral = 0.0f;
+        lastTarget = -1.0f;
+        lastTime_ms = 0;
+        activePin = 0;
+        return;
     }
 
-    case SC_PRESSING: {
-      uint32_t elapsed = now_ms - pressStartTime;
+    if (targetSpeed_kmh < MIN_SPEED_KMH) return;
 
-      // Overshoot compensation using configurable factor
-      const float OVERSHOOT_COMP_UP = 0.2f * storedGlobals.OVERSHOOT_FACTOR;
-      const float OVERSHOOT_COMP_DOWN = 0.8f * storedGlobals.OVERSHOOT_FACTOR;
-
-      // --- SAFETY FIRST: hard speed limits ---
-      if (speedUp && current_kmh >= MAX_SPEED_KMH) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Safety stop at max: %.1f km/h after %u ms\n", current_kmh, elapsed);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      else if (!speedUp && current_kmh <= MIN_SPEED_KMH) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Safety stop at min: %.1f km/h after %u ms\n", current_kmh, elapsed);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      // --- Early release: approaching target speed ---
-      else if (speedUp && current_kmh >= (targetSpeed_kmh - OVERSHOOT_COMP_UP)) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f)\n",
-                      current_kmh, elapsed, targetSpeed_kmh);
-        consecutiveFailures = 0;  // Reached target
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      else if (!speedUp && current_kmh <= (targetSpeed_kmh + OVERSHOOT_COMP_DOWN)) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Early release at %.1f km/h after %u ms (target %.1f)\n",
-                      current_kmh, elapsed, targetSpeed_kmh);
-        consecutiveFailures = 0;  // Reached target
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      // --- Decel guard: abort if treadmill fights press AFTER it had time to respond ---
-      else if (speedUp && elapsed >= GUARD_MIN_ELAPSED_MS
-               && metrics.acceleration < -ACCEL_GUARD_THRESHOLD && metrics.jerk <= 0.0f) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Abort UP: decel %.4f m/s², jerk %.4f after %u ms\n",
-                      metrics.acceleration, metrics.jerk, elapsed);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      else if (!speedUp && elapsed >= GUARD_MIN_ELAPSED_MS
-               && metrics.acceleration > ACCEL_GUARD_THRESHOLD && metrics.jerk >= 0.0f) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Abort DOWN: accel %.4f m/s², jerk %.4f after %u ms\n",
-                      metrics.acceleration, metrics.jerk, elapsed);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      // --- Duration reached ---
-      else if (elapsed >= targetPressDuration) {
-        gpio_set_level((gpio_num_t)activePin, 1);
-        Serial.printf("[Speed Control] Released after %u ms at %.1f km/h\n", elapsed, current_kmh);
-        stabilizationStartTime = now_ms;
-        state = SC_STABILIZING;
-        activePin = 0;
-      }
-      break;
+    // ---- Target change: reset integral, abort long press ----
+    if (lastTarget < 0.0f || fabsf(targetSpeed_kmh - lastTarget) > 0.05f) {
+        if (state == PIDAJ_LONG_PRESS && activePin != 0) {
+            gpio_set_level((gpio_num_t)activePin, 1);
+            state = PIDAJ_COAST;
+            stateTime = now;
+        }
+        integral = 0.0f;
+        lastTarget = targetSpeed_kmh;
+        Serial.printf("[PIDAJ] New target: %.1f km/h\n", targetSpeed_kmh);
     }
 
-    case SC_STABILIZING: {
-      uint32_t stabilizationTime = now_ms - stabilizationStartTime;
+    // ---- Compute dt ----
+    if (lastTime_ms == 0) { lastTime_ms = now; return; }
+    const float dt = (now - lastTime_ms) / 1000.0f;
+    lastTime_ms = now;
+    if (dt <= 0.0f || dt > 2.0f) return;
 
-      if (stabilizationTime >= storedGlobals.INERTIA_DELAY_MS) {
-        // Track if speed moved toward or away from target
-        float diffBefore = fabsf(targetSpeed_kmh - speedBeforePress);
-        float diffAfter = fabsf(targetSpeed_kmh - current_kmh);
-        if (diffAfter >= diffBefore) {
-          consecutiveFailures++;
+    // ---- Sensor readings ----
+    const float speed = getCurrentSpeedRaw();
+    const float error = targetSpeed_kmh - speed;  // positive = too slow
+    const float accel = metrics.acceleration * 3.6f;  // km/h per second
+    const float jrk = metrics.jerk * 3.6f;            // km/h per second²
+
+    // ---- Read gains from storedGlobals (live-tunable via web UI) ----
+    const float Kp = storedGlobals.PID_Kp;
+    const float Ki = storedGlobals.PID_Ki;
+    const float Ka = storedGlobals.PID_Ka;
+    const float Kj = storedGlobals.PID_Kj;
+
+    // ---- PIDAJ output ----
+    const float output = Kp * error + Ki * integral - Ka * accel - Kj * jrk;
+
+    // ---- Periodic log ----
+    if (now - logTimer > 2000) {
+        logTimer = now;
+        Serial.printf("[PIDAJ] s=%d spd=%.1f tgt=%.1f err=%.2f I=%.2f A=%.2f J=%.2f out=%.2f\n",
+                      (int)state, speed, targetSpeed_kmh, error,
+                      Ki * integral, -Ka * accel, -Kj * jrk, output);
+    }
+
+    // ---- State machine ----
+    switch (state) {
+
+    case PIDAJ_IDLE: {
+        // Accumulate integral only while idle
+        integral += error * dt;
+        if (integral > storedGlobals.PID_I_CLAMP) integral = storedGlobals.PID_I_CLAMP;
+        if (integral < -storedGlobals.PID_I_CLAMP) integral = -storedGlobals.PID_I_CLAMP;
+        // Zero-crossing reset prevents integral from fighting direction change
+        if ((error > 0.0f && integral < 0.0f) || (error < 0.0f && integral > 0.0f)) {
+            integral = 0.0f;
+        }
+
+        // Dead zone
+        if (fabsf(output) < storedGlobals.PID_DEAD_ZONE) return;
+
+        // Speed limits
+        if (output > 0.0f && speed >= MAX_SPEED_KMH) return;
+        if (output < 0.0f && speed <= MIN_SPEED_KMH) return;
+
+        goingUp = (output > 0.0f);
+        activePin = goingUp ? storedGlobals.SPEED_UP_PIN : storedGlobals.SPEED_DOWN_PIN;
+        if (activePin == 0) return;
+
+        if (fabsf(output) >= storedGlobals.PID_LONG_PRESS_THRESH) {
+            // ---- Large error: long press (hold GPIO) ----
+            gpio_set_level((gpio_num_t)activePin, 0);
+            state = PIDAJ_LONG_PRESS;
+            stateTime = now;
+            pressStartTime = now;
+            Serial.printf("[PIDAJ] LONG %s: spd=%.1f tgt=%.1f out=%.2f\n",
+                          goingUp ? "UP" : "DOWN", speed, targetSpeed_kmh, output);
         } else {
-          consecutiveFailures = 0;
+            // ---- Small error: single pulse via writePress ----
+            writePress(activePin, true);
+            state = PIDAJ_PULSE_COOLDOWN;
+            stateTime = now;
+        }
+        break;
+    }
+
+    case PIDAJ_LONG_PRESS: {
+        const uint32_t pressElapsed = now - pressStartTime;
+
+        // Predict where motor will settle after release using A + J
+        // inertia_s = how long the motor continues after we let go
+        float inertia_s = storedGlobals.INERTIA_DELAY_MS / 1000.0f;
+        if (inertia_s < 0.2f) inertia_s = 0.5f;
+
+        // Second-order prediction: speed + velocity_trend * t + 0.5 * accel_trend * t²
+        float predicted = speed + accel * inertia_s + 0.5f * jrk * inertia_s * inertia_s;
+
+        bool release = false;
+        if (goingUp) {
+            release = (predicted >= targetSpeed_kmh) || (speed >= MAX_SPEED_KMH);
+        } else {
+            release = (predicted <= targetSpeed_kmh) || (speed <= MIN_SPEED_KMH);
         }
 
-        Serial.printf("[Speed Control] Stabilized at %.1f km/h (target %.1f, diff %.2f, failures=%d)\n",
-                      current_kmh, targetSpeed_kmh, diffAfter, consecutiveFailures);
-        state = SC_IDLE;
-      }
-      break;
+        // Safety timeout
+        if (pressElapsed >= storedGlobals.PID_LONG_PRESS_MAX_MS) {
+            release = true;
+            Serial.printf("[PIDAJ] Safety timeout after %us\n", pressElapsed / 1000);
+        }
+
+        if (release) {
+            gpio_set_level((gpio_num_t)activePin, 1);
+            Serial.printf("[PIDAJ] Released %s after %ums: spd=%.1f pred=%.1f tgt=%.1f a=%.2f j=%.2f\n",
+                          goingUp ? "UP" : "DOWN", pressElapsed,
+                          speed, predicted, targetSpeed_kmh, accel, jrk);
+            state = PIDAJ_COAST;
+            stateTime = now;
+            activePin = 0;
+        }
+        break;
     }
-  }
+
+    case PIDAJ_COAST: {
+        // Wait for motor to settle: acceleration near zero for at least 1.5s
+        const uint32_t coastElapsed = now - stateTime;
+        const bool settled = (fabsf(metrics.acceleration) < storedGlobals.PID_COAST_THRESHOLD)
+                           && (coastElapsed >= 1500);
+        const bool timeout = (coastElapsed >= storedGlobals.INERTIA_DELAY_MS + 3000);
+
+        if (settled || timeout) {
+            integral = 0.0f;  // fresh start after coast
+            state = PIDAJ_IDLE;
+            Serial.printf("[PIDAJ] Settled at %.1f km/h after %ums (target %.1f, err=%.2f)\n",
+                          speed, coastElapsed, targetSpeed_kmh, error);
+        }
+        break;
+    }
+
+    case PIDAJ_PULSE_COOLDOWN: {
+        // Wait for pulse effect to become visible in sensor
+        if (now - stateTime >= storedGlobals.PID_PULSE_COOLDOWN_MS) {
+            state = PIDAJ_IDLE;
+        }
+        break;
+    }
+
+    } // switch
 }
 
 // ============================================================================

@@ -159,7 +159,6 @@ void initWebServer() {
       int    inclineUpPin     = extractJsonValue(jsonString, "inclineUpPin").toInt();
       int    inclineDownPin   = extractJsonValue(jsonString, "inclineDownPin").toInt();
 
-      uint32_t speedIncDecFreq= extractJsonValue(jsonString, "speedIncDecFreq").toInt();
       uint32_t testdataFreq   = extractJsonValue(jsonString, "testdataFreq").toInt();
 
       long   beltDistance     = extractJsonValue(jsonString, "beltDistance").toInt();
@@ -175,14 +174,23 @@ void initWebServer() {
       int    bandFilterType   = extractJsonValue(jsonString, "bandFilterType").toInt();
       int    motorFilterType  = extractJsonValue(jsonString, "motorFilterType").toInt();
 
-      float  speedUpRate      = extractJsonValue(jsonString, "speedUpRate").toFloat();
-      float  speedDownRate    = extractJsonValue(jsonString, "speedDownRate").toFloat();
       uint32_t inertiaDelay   = extractJsonValue(jsonString, "inertiaDelay").toInt();
-      float  overshootFactor  = extractJsonValue(jsonString, "overshootFactor").toFloat();
+
+      // PIDAJ controller parameters
+      float  pidKp            = extractJsonValue(jsonString, "pidKp").toFloat();
+      float  pidKi            = extractJsonValue(jsonString, "pidKi").toFloat();
+      float  pidKa            = extractJsonValue(jsonString, "pidKa").toFloat();
+      float  pidKj            = extractJsonValue(jsonString, "pidKj").toFloat();
+      float  pidDeadZone      = extractJsonValue(jsonString, "pidDeadZone").toFloat();
+      float  pidLPThresh      = extractJsonValue(jsonString, "pidLongPressThresh").toFloat();
+      float  pidIClamp        = extractJsonValue(jsonString, "pidIClamp").toFloat();
+      uint32_t pidPulseCooldown = extractJsonValue(jsonString, "pidPulseCooldown").toInt();
+      uint32_t pidLPMax       = extractJsonValue(jsonString, "pidLongPressMax").toInt();
+      float  pidCoastTh       = extractJsonValue(jsonString, "pidCoastThreshold").toFloat();
 
       if (!validateSettings(wifiSSID, wifiPassword, bleDeviceName, interruptPin, motorInterruptPin,
                             speedUpPin, speedDownPin, inclineUpPin, inclineDownPin,
-                            speedIncDecFreq, testdataFreq, beltDistance, debounceThreshold,
+                            testdataFreq, beltDistance, debounceThreshold,
                             maxRevolutionTime, pulsesPerRev, motorPulsesPerRev, motorToBeltRatio)) {
         delete acc;
         request->send(200, "application/json", "{\"success\":false,\"message\":\"Invalid settings\"}");
@@ -198,7 +206,6 @@ void initWebServer() {
       storedGlobals.SPEED_DOWN_PIN           = speedDownPin;
       storedGlobals.INCLINE_UP_PIN           = inclineUpPin;
       storedGlobals.INCLINE_DOWN_PIN         = inclineDownPin;
-      storedGlobals.SPEED_INC_DEC_FREQ_MS    = speedIncDecFreq;
       storedGlobals.TESTDATA_FREQ_MS         = testdataFreq;
       storedGlobals.BELT_DISTANCE_MM         = beltDistance;
       // Clamp debounce to hardware limits (1-13 µs)
@@ -228,27 +235,31 @@ void initWebServer() {
       storedGlobals.BAND_FILTER_TYPE  = (uint8_t)bandFilterType;
       storedGlobals.MOTOR_FILTER_TYPE = (uint8_t)motorFilterType;
       
-      // Calibration parameters with validation
-      Serial.printf("[WEB] Received calibration values: UP=%.3f, DOWN=%.3f\n", speedUpRate, speedDownRate);
-      if (speedUpRate > 0.0f && speedUpRate < 3.0f) {
-        storedGlobals.SPEED_UP_RATE = speedUpRate;
-        Serial.printf("[WEB] SPEED_UP_RATE set to: %.3f\n", storedGlobals.SPEED_UP_RATE);
-      } else {
-        Serial.printf("[WEB] WARNING: speedUpRate %.3f out of range, keeping %.3f\n", 
-                      speedUpRate, storedGlobals.SPEED_UP_RATE);
-      }
-      if (speedDownRate > 0.0f && speedDownRate < 3.0f) {
-        storedGlobals.SPEED_DOWN_RATE = speedDownRate;
-        Serial.printf("[WEB] SPEED_DOWN_RATE set to: %.3f\n", storedGlobals.SPEED_DOWN_RATE);
-      } else {
-        Serial.printf("[WEB] WARNING: speedDownRate %.3f out of range, keeping %.3f\n", 
-                      speedDownRate, storedGlobals.SPEED_DOWN_RATE);
-      }
-      if (inertiaDelay >= 100 && inertiaDelay <= 10000) 
+      if (inertiaDelay >= 100 && inertiaDelay <= 10000)
         storedGlobals.INERTIA_DELAY_MS = inertiaDelay;
-      if (overshootFactor >= 1.0f && overshootFactor <= 2.0f) 
-        storedGlobals.OVERSHOOT_FACTOR = overshootFactor;
-      
+
+      // PIDAJ controller parameters with validation
+      if (pidKp >= 0.1f && pidKp <= 10.0f)
+        storedGlobals.PID_Kp = pidKp;
+      if (pidKi >= 0.0f && pidKi <= 2.0f)
+        storedGlobals.PID_Ki = pidKi;
+      if (pidKa >= 0.0f && pidKa <= 10.0f)
+        storedGlobals.PID_Ka = pidKa;
+      if (pidKj >= 0.0f && pidKj <= 5.0f)
+        storedGlobals.PID_Kj = pidKj;
+      if (pidDeadZone >= 0.05f && pidDeadZone <= 1.0f)
+        storedGlobals.PID_DEAD_ZONE = pidDeadZone;
+      if (pidLPThresh >= 0.3f && pidLPThresh <= 5.0f)
+        storedGlobals.PID_LONG_PRESS_THRESH = pidLPThresh;
+      if (pidIClamp >= 0.5f && pidIClamp <= 20.0f)
+        storedGlobals.PID_I_CLAMP = pidIClamp;
+      if (pidPulseCooldown >= 100 && pidPulseCooldown <= 2000)
+        storedGlobals.PID_PULSE_COOLDOWN_MS = pidPulseCooldown;
+      if (pidLPMax >= 3000 && pidLPMax <= 30000)
+        storedGlobals.PID_LONG_PRESS_MAX_MS = pidLPMax;
+      if (pidCoastTh >= 0.01f && pidCoastTh <= 0.2f)
+        storedGlobals.PID_COAST_THRESHOLD = pidCoastTh;
+
       // Update filter settings immediately
       // OLD SYSTEM REMOVED: Filter configuration no longer used
       // bandFilter.setFilterType((SpeedFilterType)bandFilterType);

@@ -8,7 +8,7 @@
 
 bool validateSettings(const String& wifiSSID, const String& wifiPassword, const String& bleDeviceName,
     int interruptPin, int motorInterruptPin, int speedUpPin, int speedDownPin,
-    int inclineUpPin, int inclineDownPin, uint32_t speedIncDecFreq,
+    int inclineUpPin, int inclineDownPin,
     uint32_t testdataFreq, long beltDistance, long debounceThreshold,
     long maxRevolutionTime, long pulsesPerRev, long motorPulsesPerRev, float motorToBeltRatio)
 {
@@ -24,7 +24,6 @@ bool validateSettings(const String& wifiSSID, const String& wifiPassword, const 
   std::set<int> pinSet = {interruptPin, motorInterruptPin, speedUpPin, speedDownPin, inclineUpPin, inclineDownPin};
   if (pinSet.size() != 6) return false; // Duplicates found
 
-  if (speedIncDecFreq < 10 || speedIncDecFreq > 1000) return false;
   if (testdataFreq   < 1  || testdataFreq   > 1000) return false;
 
   if (beltDistance < 100 || beltDistance > 500) return false;

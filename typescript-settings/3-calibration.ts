@@ -47,21 +47,11 @@ namespace SettingsApp {
       if (!statusEl) return;
       
       if (j.state === 'done') {
-        statusEl.textContent = `✓ Calibration complete! UP: ${j.speedUpRate?.toFixed(3)} km/h/s, DOWN: ${j.speedDownRate?.toFixed(3)} km/h/s`;
+        statusEl.textContent = `Calibration complete! Inertia: ${j.responseDelay || '?'} ms`;
         statusEl.className = 'status success';
         if (calibrationInterval) {
           clearInterval(calibrationInterval);
           calibrationInterval = null;
-        }
-        
-        // Update input fields with new values
-        const speedUpInput = document.getElementById('speedUpRate') as HTMLInputElement | null;
-        const speedDownInput = document.getElementById('speedDownRate') as HTMLInputElement | null;
-        if (speedUpInput && j.speedUpRate !== undefined) {
-          speedUpInput.value = j.speedUpRate.toFixed(3);
-        }
-        if (speedDownInput && j.speedDownRate !== undefined) {
-          speedDownInput.value = j.speedDownRate.toFixed(3);
         }
       } else if (j.state === 'error') {
         statusEl.textContent = '✗ Calibration failed: ' + (j.message || 'Unknown error');
@@ -74,12 +64,13 @@ namespace SettingsApp {
         // Show detailed progress with speeds
         let progress = '';
         switch (j.state) {
-          case 'starting_up':   progress = '⏳ Preparing UP calibration...'; break;
-          case 'pressing_up':   progress = '⬆️ Pressing UP button...'; break;
-          case 'waiting_up':    progress = `⏱️ Waiting for UP stabilization (${j.midSpeed?.toFixed(1) || '?'} km/h)...`; break;
-          case 'starting_down': progress = '⏳ Preparing DOWN calibration...'; break;
-          case 'pressing_down': progress = '⬇️ Pressing DOWN button...'; break;
-          case 'waiting_down':  progress = `⏱️ Waiting for DOWN stabilization (${j.endSpeed?.toFixed(1) || '?'} km/h)...`; break;
+          case 'stabilizing':   progress = 'Waiting for stable speed...'; break;
+          case 'pressing_up':   progress = `Pressing UP... (${j.currentSpeed?.toFixed(1) || '?'} km/h)`; break;
+          case 'up_inertia':    progress = 'Measuring UP motor lag...'; break;
+          case 'wait_down':     progress = 'Preparing DOWN test...'; break;
+          case 'pressing_down': progress = `Pressing DOWN... (${j.currentSpeed?.toFixed(1) || '?'} km/h)`; break;
+          case 'down_inertia':  progress = 'Measuring DOWN motor lag...'; break;
+          case 'finalizing':    progress = 'Computing results...'; break;
           default:              progress = 'Status: ' + j.state;
         }
         if (j.message) progress += ' - ' + j.message;
