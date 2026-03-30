@@ -93,8 +93,6 @@ void initFTMS_BLE() {
     uint8_t status = 0x00;
     pFTMSStatus->setValue(&status, 1);
 
-    pFTMSService->start();
-
     // Sanity check CCCD presence
     NimBLEDescriptor* cccdNow =
       pFTMSControlPoint->getDescriptorByUUID(NimBLEUUID((uint16_t)0x2902));
@@ -133,8 +131,7 @@ void initBLE_RSC() {
       RSC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY
     );
 
-    pRSCService->start();
-    Serial.println("✅ RSC Service started - Cadence transmission enabled");
+    Serial.println("✅ RSC Service created - Cadence transmission enabled");
   } catch (...) {
     Serial.println("❌ RSC initialization failed");
   }
@@ -180,8 +177,7 @@ void initHR_BLE_Server() {
       pBodySensorLocation->setValue(&location, 1);
     }
 
-    pHRService->start();
-    Serial.println("✅ Heart Rate Server started - Ready to broadcast HR data");
+    Serial.println("✅ Heart Rate Server created - Ready to broadcast HR data");
   } catch (...) {
     Serial.println("❌ HR Server initialization failed");
   }
