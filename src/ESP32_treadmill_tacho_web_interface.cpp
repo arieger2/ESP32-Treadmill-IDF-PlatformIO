@@ -176,17 +176,17 @@ void initWebServer() {
 
       uint32_t inertiaDelay   = extractJsonValue(jsonString, "inertiaDelay").toInt();
 
-      // PIDAJ controller parameters
-      float  pidKp            = extractJsonValue(jsonString, "pidKp").toFloat();
-      float  pidKi            = extractJsonValue(jsonString, "pidKi").toFloat();
-      float  pidKa            = extractJsonValue(jsonString, "pidKa").toFloat();
-      float  pidKj            = extractJsonValue(jsonString, "pidKj").toFloat();
-      float  pidDeadZone      = extractJsonValue(jsonString, "pidDeadZone").toFloat();
-      float  pidLPThresh      = extractJsonValue(jsonString, "pidLongPressThresh").toFloat();
-      float  pidIClamp        = extractJsonValue(jsonString, "pidIClamp").toFloat();
-      uint32_t pidPulseCooldown = extractJsonValue(jsonString, "pidPulseCooldown").toInt();
-      uint32_t pidLPMax       = extractJsonValue(jsonString, "pidLongPressMax").toInt();
-      float  pidCoastTh       = extractJsonValue(jsonString, "pidCoastThreshold").toFloat();
+      // Active speed-control parameters (raw strings, so missing keys do not overwrite values)
+      String pidPulseCooldownRaw = extractJsonValue(jsonString, "pidPulseCooldown");
+      String pidLPMaxRaw         = extractJsonValue(jsonString, "pidLongPressMax");
+      String pidCoastThRaw       = extractJsonValue(jsonString, "pidCoastThreshold");
+      String pidBandEnterRaw     = extractJsonValue(jsonString, "pidErrorBandEnter");
+      String pidBandExitRaw      = extractJsonValue(jsonString, "pidErrorBandExit");
+      String ctrlResponseDelayRaw= extractJsonValue(jsonString, "ctrlResponseDelay");
+      String ctrlBeltRateUpRaw   = extractJsonValue(jsonString, "ctrlBeltRateUp");
+      String ctrlBeltRateDownRaw = extractJsonValue(jsonString, "ctrlBeltRateDown");
+      String ctrlInertiaUpRaw    = extractJsonValue(jsonString, "ctrlInertiaUp");
+      String ctrlInertiaDownRaw  = extractJsonValue(jsonString, "ctrlInertiaDown");
 
       if (!validateSettings(wifiSSID, wifiPassword, bleDeviceName, interruptPin, motorInterruptPin,
                             speedUpPin, speedDownPin, inclineUpPin, inclineDownPin,
@@ -238,27 +238,69 @@ void initWebServer() {
       if (inertiaDelay >= 100 && inertiaDelay <= 10000)
         storedGlobals.INERTIA_DELAY_MS = inertiaDelay;
 
-      // PIDAJ controller parameters with validation
-      if (pidKp >= 0.1f && pidKp <= 10.0f)
-        storedGlobals.PID_Kp = pidKp;
-      if (pidKi >= 0.0f && pidKi <= 2.0f)
-        storedGlobals.PID_Ki = pidKi;
-      if (pidKa >= 0.0f && pidKa <= 10.0f)
-        storedGlobals.PID_Ka = pidKa;
-      if (pidKj >= 0.0f && pidKj <= 5.0f)
-        storedGlobals.PID_Kj = pidKj;
-      if (pidDeadZone >= 0.05f && pidDeadZone <= 1.0f)
-        storedGlobals.PID_DEAD_ZONE = pidDeadZone;
-      if (pidLPThresh >= 0.3f && pidLPThresh <= 5.0f)
-        storedGlobals.PID_LONG_PRESS_THRESH = pidLPThresh;
-      if (pidIClamp >= 0.5f && pidIClamp <= 20.0f)
-        storedGlobals.PID_I_CLAMP = pidIClamp;
-      if (pidPulseCooldown >= 100 && pidPulseCooldown <= 2000)
-        storedGlobals.PID_PULSE_COOLDOWN_MS = pidPulseCooldown;
-      if (pidLPMax >= 3000 && pidLPMax <= 30000)
-        storedGlobals.PID_LONG_PRESS_MAX_MS = pidLPMax;
-      if (pidCoastTh >= 0.01f && pidCoastTh <= 0.2f)
-        storedGlobals.PID_COAST_THRESHOLD = pidCoastTh;
+      // Active speed-control parameters with validation
+      if (pidPulseCooldownRaw.length() > 0) {
+        uint32_t pidPulseCooldown = pidPulseCooldownRaw.toInt();
+        if (pidPulseCooldown >= 100 && pidPulseCooldown <= 2000) {
+          storedGlobals.PID_PULSE_COOLDOWN_MS = pidPulseCooldown;
+        }
+      }
+      if (pidLPMaxRaw.length() > 0) {
+        uint32_t pidLPMax = pidLPMaxRaw.toInt();
+        if (pidLPMax >= 3000 && pidLPMax <= 30000) {
+          storedGlobals.PID_LONG_PRESS_MAX_MS = pidLPMax;
+        }
+      }
+      if (pidCoastThRaw.length() > 0) {
+        float pidCoastTh = pidCoastThRaw.toFloat();
+        if (pidCoastTh >= 0.01f && pidCoastTh <= 0.2f) {
+          storedGlobals.PID_COAST_THRESHOLD = pidCoastTh;
+        }
+      }
+      if (pidBandEnterRaw.length() > 0) {
+        float pidBandEnter = pidBandEnterRaw.toFloat();
+        if (pidBandEnter >= 0.10f && pidBandEnter <= 1.00f) {
+          storedGlobals.PID_ERROR_BAND_ENTER_KMH = pidBandEnter;
+        }
+      }
+      if (pidBandExitRaw.length() > 0) {
+        float pidBandExit = pidBandExitRaw.toFloat();
+        if (pidBandExit >= 0.05f && pidBandExit <= 0.95f) {
+          storedGlobals.PID_ERROR_BAND_EXIT_KMH = pidBandExit;
+        }
+      }
+      if (storedGlobals.PID_ERROR_BAND_EXIT_KMH >= storedGlobals.PID_ERROR_BAND_ENTER_KMH)
+        storedGlobals.PID_ERROR_BAND_EXIT_KMH = storedGlobals.PID_ERROR_BAND_ENTER_KMH * 0.70f;
+      if (ctrlResponseDelayRaw.length() > 0) {
+        uint32_t ctrlResponseDelay = ctrlResponseDelayRaw.toInt();
+        if (ctrlResponseDelay >= 50 && ctrlResponseDelay <= 5000) {
+          storedGlobals.CTRL_RESPONSE_DELAY_MS = ctrlResponseDelay;
+        }
+      }
+      if (ctrlBeltRateUpRaw.length() > 0) {
+        float ctrlBeltRateUp = ctrlBeltRateUpRaw.toFloat();
+        if (ctrlBeltRateUp >= 0.05f && ctrlBeltRateUp <= 5.0f) {
+          storedGlobals.CTRL_BELT_RATE_UP_KMHPS = ctrlBeltRateUp;
+        }
+      }
+      if (ctrlBeltRateDownRaw.length() > 0) {
+        float ctrlBeltRateDown = ctrlBeltRateDownRaw.toFloat();
+        if (ctrlBeltRateDown >= 0.05f && ctrlBeltRateDown <= 5.0f) {
+          storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS = ctrlBeltRateDown;
+        }
+      }
+      if (ctrlInertiaUpRaw.length() > 0) {
+        float ctrlInertiaUp = ctrlInertiaUpRaw.toFloat();
+        if (ctrlInertiaUp >= 0.0f && ctrlInertiaUp <= 5.0f) {
+          storedGlobals.CTRL_INERTIA_UP_KMH = ctrlInertiaUp;
+        }
+      }
+      if (ctrlInertiaDownRaw.length() > 0) {
+        float ctrlInertiaDown = ctrlInertiaDownRaw.toFloat();
+        if (ctrlInertiaDown >= 0.0f && ctrlInertiaDown <= 5.0f) {
+          storedGlobals.CTRL_INERTIA_DOWN_KMH = ctrlInertiaDown;
+        }
+      }
 
       // Update filter settings immediately
       // OLD SYSTEM REMOVED: Filter configuration no longer used

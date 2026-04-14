@@ -65,6 +65,13 @@ String processTemplate(const String& var) {
   if (var == "PID_PULSE_COOLDOWN")    return String(storedGlobals.PID_PULSE_COOLDOWN_MS);
   if (var == "PID_LONG_PRESS_MAX")    return String(storedGlobals.PID_LONG_PRESS_MAX_MS);
   if (var == "PID_COAST_THRESHOLD")   return String(storedGlobals.PID_COAST_THRESHOLD, 3);
+  if (var == "PID_ERROR_BAND_ENTER")  return String(storedGlobals.PID_ERROR_BAND_ENTER_KMH, 2);
+  if (var == "PID_ERROR_BAND_EXIT")   return String(storedGlobals.PID_ERROR_BAND_EXIT_KMH, 2);
+  if (var == "CTRL_RESPONSE_DELAY")   return String(storedGlobals.CTRL_RESPONSE_DELAY_MS);
+  if (var == "CTRL_BELT_RATE_UP")     return String(storedGlobals.CTRL_BELT_RATE_UP_KMHPS, 3);
+  if (var == "CTRL_BELT_RATE_DOWN")   return String(storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS, 3);
+  if (var == "CTRL_INERTIA_UP")       return String(storedGlobals.CTRL_INERTIA_UP_KMH, 2);
+  if (var == "CTRL_INERTIA_DOWN")     return String(storedGlobals.CTRL_INERTIA_DOWN_KMH, 2);
 
   if (var == "TESTDATABUTTONCLASS") return testdata ? "button-red" : "button-green";
 

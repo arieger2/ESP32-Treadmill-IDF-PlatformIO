@@ -115,6 +115,20 @@ struct TreadmillStoredGlobals {
     uint32_t PID_PULSE_COOLDOWN_MS = 500;   // Cooldown between single pulses
     uint32_t PID_LONG_PRESS_MAX_MS = 15000; // Safety timeout for long press
     float PID_COAST_THRESHOLD = 0.03f;  // Acceleration threshold for motor settled (m/s²)
+    float PID_ERROR_BAND_ENTER_KMH = 0.35f; // Enter control outside this error band
+    float PID_ERROR_BAND_EXIT_KMH = 0.25f;  // Stop control inside this error band (hysteresis)
+
+    // Feedforward model (defaults from measured treadmill behavior)
+    // Command/display slope: ~1 km/h per 1.39s
+    float CTRL_CMD_RATE_KMHPS = 1.0f / 1.39f;
+    // Real belt slope: ~1 km/h per 2.04s
+    float CTRL_BELT_RATE_UP_KMHPS = 1.0f / 2.04f;
+    float CTRL_BELT_RATE_DOWN_KMHPS = 1.0f / 2.04f;
+    // Delay until belt reacts to a new command
+    uint32_t CTRL_RESPONSE_DELAY_MS = 400;
+    // Typical post-release overshoot/undershoot measured by calibration
+    float CTRL_INERTIA_UP_KMH = 0.20f;
+    float CTRL_INERTIA_DOWN_KMH = 0.20f;
 }; 
 
 struct TreadmillMetrics {
@@ -217,6 +231,14 @@ namespace NVSKeys {
     extern const char* PID_PULSE_CD;
     extern const char* PID_LP_MAX;
     extern const char* PID_COAST_TH;
+    extern const char* PID_BAND_IN;
+    extern const char* PID_BAND_OUT;
+    extern const char* CTRL_CMD_RATE;
+    extern const char* CTRL_UP_RATE;
+    extern const char* CTRL_DN_RATE;
+    extern const char* CTRL_RSP_MS;
+    extern const char* CTRL_INRT_UP;
+    extern const char* CTRL_INRT_DN;
 };
 
 // ============================================================================
@@ -229,7 +251,7 @@ extern BLEData bleData;
 extern TreadmillStoredGlobals storedGlobals;
 
 // Parameter for GPIO switch
-const uint32_t PULSE_US   = 50000;  // 50 ms Tastendruck
+const uint32_t PULSE_US   = 300000; // 300 ms Mindest-Tastendruck für zuverlässige Relaisauslösung
 const uint32_t GAP_US     = 60000; // 120 ms Mindestabstand
 const float    DEADBAND   = 0.05f;  // km/h – kleine Toleranz gegen Überschwingen
 

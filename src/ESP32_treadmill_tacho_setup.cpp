@@ -70,6 +70,14 @@ const char* NVSKeys::PID_I_CLAMP   = "pidIClamp";
 const char* NVSKeys::PID_PULSE_CD  = "pidPulseCD";
 const char* NVSKeys::PID_LP_MAX    = "pidLPMax";
 const char* NVSKeys::PID_COAST_TH  = "pidCoastTh";
+const char* NVSKeys::PID_BAND_IN   = "pidBandIn";
+const char* NVSKeys::PID_BAND_OUT  = "pidBandOut";
+const char* NVSKeys::CTRL_CMD_RATE = "cmdRate";
+const char* NVSKeys::CTRL_UP_RATE  = "upRate";
+const char* NVSKeys::CTRL_DN_RATE  = "dnRate";
+const char* NVSKeys::CTRL_RSP_MS   = "rspDelayMs";
+const char* NVSKeys::CTRL_INRT_UP  = "inrtUp";
+const char* NVSKeys::CTRL_INRT_DN  = "inrtDn";
 
 // Template function for putOrReplace - handles float, int, int32_t, uint32_t, int64_t, long
 template<typename T>
@@ -166,6 +174,14 @@ String saveSettings() {
     {NVSKeys::PID_PULSE_CD,  putOrReplace(prefs, NVSKeys::PID_PULSE_CD,  storedGlobals.PID_PULSE_COOLDOWN_MS)},
     {NVSKeys::PID_LP_MAX,    putOrReplace(prefs, NVSKeys::PID_LP_MAX,    storedGlobals.PID_LONG_PRESS_MAX_MS)},
     {NVSKeys::PID_COAST_TH,  putOrReplace(prefs, NVSKeys::PID_COAST_TH,  storedGlobals.PID_COAST_THRESHOLD)},
+    {NVSKeys::PID_BAND_IN,   putOrReplace(prefs, NVSKeys::PID_BAND_IN,   storedGlobals.PID_ERROR_BAND_ENTER_KMH)},
+    {NVSKeys::PID_BAND_OUT,  putOrReplace(prefs, NVSKeys::PID_BAND_OUT,  storedGlobals.PID_ERROR_BAND_EXIT_KMH)},
+    {NVSKeys::CTRL_CMD_RATE, putOrReplace(prefs, NVSKeys::CTRL_CMD_RATE, storedGlobals.CTRL_CMD_RATE_KMHPS)},
+    {NVSKeys::CTRL_UP_RATE,  putOrReplace(prefs, NVSKeys::CTRL_UP_RATE,  storedGlobals.CTRL_BELT_RATE_UP_KMHPS)},
+    {NVSKeys::CTRL_DN_RATE,  putOrReplace(prefs, NVSKeys::CTRL_DN_RATE,  storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS)},
+    {NVSKeys::CTRL_RSP_MS,   putOrReplace(prefs, NVSKeys::CTRL_RSP_MS,   storedGlobals.CTRL_RESPONSE_DELAY_MS)},
+    {NVSKeys::CTRL_INRT_UP,  putOrReplace(prefs, NVSKeys::CTRL_INRT_UP,  storedGlobals.CTRL_INERTIA_UP_KMH)},
+    {NVSKeys::CTRL_INRT_DN,  putOrReplace(prefs, NVSKeys::CTRL_INRT_DN,  storedGlobals.CTRL_INERTIA_DOWN_KMH)},
   };
 
   String out = "Settings saved:\r\n";
@@ -221,6 +237,14 @@ void loadSettings() {
   storedGlobals.PID_PULSE_COOLDOWN_MS= prefs.getUInt (NVSKeys::PID_PULSE_CD,  500);
   storedGlobals.PID_LONG_PRESS_MAX_MS= prefs.getUInt (NVSKeys::PID_LP_MAX,    15000);
   storedGlobals.PID_COAST_THRESHOLD  = prefs.getFloat(NVSKeys::PID_COAST_TH,  0.03f);
+  storedGlobals.PID_ERROR_BAND_ENTER_KMH = prefs.getFloat(NVSKeys::PID_BAND_IN,  0.35f);
+  storedGlobals.PID_ERROR_BAND_EXIT_KMH  = prefs.getFloat(NVSKeys::PID_BAND_OUT, 0.25f);
+  storedGlobals.CTRL_CMD_RATE_KMHPS      = prefs.getFloat(NVSKeys::CTRL_CMD_RATE, 1.0f / 1.39f);
+  storedGlobals.CTRL_BELT_RATE_UP_KMHPS  = prefs.getFloat(NVSKeys::CTRL_UP_RATE,  1.0f / 2.04f);
+  storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS= prefs.getFloat(NVSKeys::CTRL_DN_RATE,  1.0f / 2.04f);
+  storedGlobals.CTRL_RESPONSE_DELAY_MS   = prefs.getUInt (NVSKeys::CTRL_RSP_MS,   400);
+  storedGlobals.CTRL_INERTIA_UP_KMH      = prefs.getFloat(NVSKeys::CTRL_INRT_UP,  0.20f);
+  storedGlobals.CTRL_INERTIA_DOWN_KMH    = prefs.getFloat(NVSKeys::CTRL_INRT_DN,  0.20f);
 
   logPrintf("[NVS] Loaded PID: Kp=%.2f Ki=%.2f Ka=%.2f Kj=%.2f DZ=%.2f\n",
                 storedGlobals.PID_Kp, storedGlobals.PID_Ki, storedGlobals.PID_Ka,
@@ -245,6 +269,33 @@ void loadSettings() {
   if (storedGlobals.BAND_PULSE_MULTIPLIER > 100) storedGlobals.BAND_PULSE_MULTIPLIER = 100;
   if (storedGlobals.MOTOR_PULSE_MULTIPLIER < 1) storedGlobals.MOTOR_PULSE_MULTIPLIER = 1;
   if (storedGlobals.MOTOR_PULSE_MULTIPLIER > 100) storedGlobals.MOTOR_PULSE_MULTIPLIER = 100;
+
+  // Clamp control-model values to sane runtime ranges
+  if (storedGlobals.PID_ERROR_BAND_ENTER_KMH < 0.10f) storedGlobals.PID_ERROR_BAND_ENTER_KMH = 0.10f;
+  if (storedGlobals.PID_ERROR_BAND_ENTER_KMH > 1.00f) storedGlobals.PID_ERROR_BAND_ENTER_KMH = 1.00f;
+  if (storedGlobals.PID_ERROR_BAND_EXIT_KMH < 0.05f) storedGlobals.PID_ERROR_BAND_EXIT_KMH = 0.05f;
+  if (storedGlobals.PID_ERROR_BAND_EXIT_KMH >= storedGlobals.PID_ERROR_BAND_ENTER_KMH) {
+      storedGlobals.PID_ERROR_BAND_EXIT_KMH = storedGlobals.PID_ERROR_BAND_ENTER_KMH * 0.70f;
+  }
+
+  if (storedGlobals.CTRL_CMD_RATE_KMHPS < 0.10f || storedGlobals.CTRL_CMD_RATE_KMHPS > 5.0f) {
+      storedGlobals.CTRL_CMD_RATE_KMHPS = 1.0f / 1.39f;
+  }
+  if (storedGlobals.CTRL_BELT_RATE_UP_KMHPS < 0.05f || storedGlobals.CTRL_BELT_RATE_UP_KMHPS > 5.0f) {
+      storedGlobals.CTRL_BELT_RATE_UP_KMHPS = 1.0f / 2.04f;
+  }
+  if (storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS < 0.05f || storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS > 5.0f) {
+      storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS = 1.0f / 2.04f;
+  }
+  if (storedGlobals.CTRL_RESPONSE_DELAY_MS < 50 || storedGlobals.CTRL_RESPONSE_DELAY_MS > 5000) {
+      storedGlobals.CTRL_RESPONSE_DELAY_MS = 400;
+  }
+  if (storedGlobals.CTRL_INERTIA_UP_KMH < 0.0f || storedGlobals.CTRL_INERTIA_UP_KMH > 5.0f) {
+      storedGlobals.CTRL_INERTIA_UP_KMH = 0.20f;
+  }
+  if (storedGlobals.CTRL_INERTIA_DOWN_KMH < 0.0f || storedGlobals.CTRL_INERTIA_DOWN_KMH > 5.0f) {
+      storedGlobals.CTRL_INERTIA_DOWN_KMH = 0.20f;
+  }
 }
 
 void loadDefaultSettings() {
@@ -268,6 +319,24 @@ void loadDefaultSettings() {
     storedGlobals.MOTOR_TO_BELT_RATIO  = 0.413793;
     storedGlobals.FORCE_USE_MOTOR = true;
     storedGlobals.SENSOR_SOURCE_MODE = SENSOR_AUTO;
+    storedGlobals.PID_Kp = 1.0f;
+    storedGlobals.PID_Ki = 0.03f;
+    storedGlobals.PID_Ka = 2.0f;
+    storedGlobals.PID_Kj = 0.0f;
+    storedGlobals.PID_DEAD_ZONE = 0.15f;
+    storedGlobals.PID_LONG_PRESS_THRESH = 0.7f;
+    storedGlobals.PID_I_CLAMP = 3.0f;
+    storedGlobals.PID_PULSE_COOLDOWN_MS = 650;
+    storedGlobals.PID_LONG_PRESS_MAX_MS = 15000;
+    storedGlobals.PID_COAST_THRESHOLD = 0.03f;
+    storedGlobals.PID_ERROR_BAND_ENTER_KMH = 0.35f;
+    storedGlobals.PID_ERROR_BAND_EXIT_KMH = 0.25f;
+    storedGlobals.CTRL_CMD_RATE_KMHPS = 1.0f / 1.39f;
+    storedGlobals.CTRL_BELT_RATE_UP_KMHPS = 1.0f / 2.04f;
+    storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS = 1.0f / 2.04f;
+    storedGlobals.CTRL_RESPONSE_DELAY_MS = 400;
+    storedGlobals.CTRL_INERTIA_UP_KMH = 0.20f;
+    storedGlobals.CTRL_INERTIA_DOWN_KMH = 0.20f;
 }
 
 // Call this after loadSettings() / saveSettings()
@@ -511,4 +580,3 @@ void resetWorkout() {
 
     Serial.println("Workout reset (global)");
 }
-

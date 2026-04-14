@@ -43,10 +43,48 @@ float getCurrentSpeedRaw() {
 // Controller gains and thresholds are stored in storedGlobals (NVS-backed)
 // and can be tuned via the web settings dialog:
 //   PID_Kp, PID_Ki, PID_Ka, PID_Kj          — PIDAJ gains
-//   PID_DEAD_ZONE, PID_LONG_PRESS_THRESH     — action thresholds (km/h)
+//   PID_LONG_PRESS_THRESH                    — pulse/long-press split threshold (km/h)
+//   PID_DEAD_ZONE                            — legacy UI field (kept for compatibility)
 //   PID_I_CLAMP                               — anti-windup limit
 //   PID_PULSE_COOLDOWN_MS, PID_LONG_PRESS_MAX_MS — timing (ms)
 //   PID_COAST_THRESHOLD                       — motor settled threshold (m/s²)
+
+namespace {
+constexpr float DEFAULT_CMD_RATE_KMHPS = 1.0f / 1.39f;
+constexpr float DEFAULT_BELT_RATE_KMHPS = 1.0f / 2.04f;
+constexpr uint32_t DEFAULT_RESPONSE_DELAY_MS = 400;
+constexpr float DEFAULT_INERTIA_KMH = 0.20f;
+constexpr uint32_t MIN_RELAY_ON_MS = 300;
+constexpr uint32_t COAST_NEAR_MIN_MS = 900;  // stable settling near target
+constexpr uint32_t COAST_FAR_MIN_MS = 200;   // quick re-press when far from target
+constexpr float COAST_ERROR_NEAR_KMH = 0.25f;
+constexpr float COAST_ERROR_FAR_KMH = 1.00f;
+constexpr float COAST_FAST_RESUME_ERROR_KMH = 0.55f;
+constexpr float FORCE_LONG_PRESS_ERROR_KMH = 0.60f;
+constexpr float MIN_LONG_PRESS_THRESH_KMH = 0.60f;
+constexpr float MAX_LONG_PRESS_THRESH_KMH = 0.90f;
+constexpr float EARLY_RELEASE_PLAN_FRACTION = 0.70f;
+constexpr float PREDICTION_HORIZON_MIN_S = 0.30f;
+constexpr float PREDICTION_HORIZON_MAX_S = 0.80f;
+constexpr float LARGE_ERROR_CATCHUP_THRESHOLD_KMH = 2.0f;
+constexpr uint32_t LARGE_PRESS_CATCHUP_THRESHOLD_MS = 3500;
+constexpr uint32_t MAX_MODEL_CATCHUP_MS = 12000;
+constexpr uint32_t MIN_LARGE_RAMP_CATCHUP_MS = 1200;
+constexpr float MODEL_CATCHUP_GAIN = 1.60f;
+constexpr uint32_t COAST_TIMEOUT_EXTRA_MS = 3000;
+
+static float sanitizeRate(float value, float fallback) {
+    return (value > 0.05f && value < 5.0f) ? value : fallback;
+}
+
+static uint32_t sanitizeDelayMs(uint32_t value, uint32_t fallback) {
+    return (value >= 50 && value <= 5000) ? value : fallback;
+}
+
+static float sanitizeInertia(float value, float fallback) {
+    return (value >= 0.0f && value < 5.0f) ? value : fallback;
+}
+}  // namespace
 
 enum PidajState : uint8_t {
     PIDAJ_IDLE,
@@ -56,6 +94,7 @@ enum PidajState : uint8_t {
 };
 
 void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
+    (void)current_mps;
     static PidajState state = PIDAJ_IDLE;
     static bool wasRunning = false;
     static float integral = 0.0f;
@@ -65,6 +104,10 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     static uint32_t pressStartTime = 0;
     static uint8_t activePin = 0;
     static bool goingUp = false;
+    static bool inErrorBand = true;
+    static uint32_t dynamicPulseCooldownMs = 0;
+    static uint32_t plannedPressMs = 0;
+    static uint32_t pendingModelCatchupMs = 0;
     static uint32_t logTimer = 0;
 
     const uint32_t now = millis();
@@ -76,6 +119,10 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         lastTarget = -1.0f;
         lastTime_ms = now;
         activePin = 0;
+        inErrorBand = true;
+        dynamicPulseCooldownMs = 0;
+        plannedPressMs = 0;
+        pendingModelCatchupMs = 0;
     }
     wasRunning = metrics.isRunning && !metrics.isPaused;
 
@@ -90,6 +137,10 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         lastTarget = -1.0f;
         lastTime_ms = 0;
         activePin = 0;
+        inErrorBand = true;
+        dynamicPulseCooldownMs = 0;
+        plannedPressMs = 0;
+        pendingModelCatchupMs = 0;
         return;
     }
 
@@ -98,12 +149,21 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     // ---- Target change: reset integral, abort long press ----
     if (lastTarget < 0.0f || fabsf(targetSpeed_kmh - lastTarget) > 0.05f) {
         if (state == PIDAJ_LONG_PRESS && activePin != 0) {
+            const uint32_t heldMs = now - pressStartTime;
+            if (heldMs < MIN_RELAY_ON_MS) {
+                // Keep relay active until minimum actuation time is reached.
+                return;
+            }
             gpio_set_level((gpio_num_t)activePin, 1);
             state = PIDAJ_COAST;
             stateTime = now;
+            activePin = 0;
         }
         integral = 0.0f;
         lastTarget = targetSpeed_kmh;
+        inErrorBand = false;
+        plannedPressMs = 0;
+        pendingModelCatchupMs = 0;
         Serial.printf("[PIDAJ] New target: %.1f km/h\n", targetSpeed_kmh);
     }
 
@@ -116,8 +176,31 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     // ---- Sensor readings ----
     const float speed = getCurrentSpeedRaw();
     const float error = targetSpeed_kmh - speed;  // positive = too slow
+    const float errorAbs = fabsf(error);
     const float accel = metrics.acceleration * 3.6f;  // km/h per second
     const float jrk = metrics.jerk * 3.6f;            // km/h per second²
+
+    // ---- Control model (calibration-backed with safe fallbacks) ----
+    const float cmdRate = sanitizeRate(storedGlobals.CTRL_CMD_RATE_KMHPS, DEFAULT_CMD_RATE_KMHPS);
+    const float beltRateUp = sanitizeRate(storedGlobals.CTRL_BELT_RATE_UP_KMHPS, DEFAULT_BELT_RATE_KMHPS);
+    const float beltRateDown = sanitizeRate(storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS, DEFAULT_BELT_RATE_KMHPS);
+    const uint32_t responseDelayMs = sanitizeDelayMs(storedGlobals.CTRL_RESPONSE_DELAY_MS, DEFAULT_RESPONSE_DELAY_MS);
+    const float inertiaUpKmh = sanitizeInertia(storedGlobals.CTRL_INERTIA_UP_KMH, DEFAULT_INERTIA_KMH);
+    const float inertiaDownKmh = sanitizeInertia(storedGlobals.CTRL_INERTIA_DOWN_KMH, DEFAULT_INERTIA_KMH);
+
+    // ---- Error-band hysteresis (real speed tolerance, not control output) ----
+    float bandEnter = storedGlobals.PID_ERROR_BAND_ENTER_KMH;
+    float bandExit = storedGlobals.PID_ERROR_BAND_EXIT_KMH;
+    if (bandEnter < 0.10f) bandEnter = 0.10f;
+    if (bandEnter > 1.00f) bandEnter = 1.00f;
+    if (bandExit < 0.05f) bandExit = 0.05f;
+    if (bandExit >= bandEnter) bandExit = bandEnter * 0.70f;
+
+    if (inErrorBand) {
+        if (errorAbs >= bandEnter) inErrorBand = false;
+    } else {
+        if (errorAbs <= bandExit) inErrorBand = true;
+    }
 
     // ---- Read gains from storedGlobals (live-tunable via web UI) ----
     const float Kp = storedGlobals.PID_Kp;
@@ -131,8 +214,9 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     // ---- Periodic log ----
     if (now - logTimer > 2000) {
         logTimer = now;
-        Serial.printf("[PIDAJ] s=%d spd=%.1f tgt=%.1f err=%.2f I=%.2f A=%.2f J=%.2f out=%.2f\n",
+        Serial.printf("[PIDAJ] s=%d spd=%.1f tgt=%.1f err=%.2f band=%d I=%.2f A=%.2f J=%.2f out=%.2f\n",
                       (int)state, speed, targetSpeed_kmh, error,
+                      inErrorBand ? 1 : 0,
                       Ki * integral, -Ka * accel, -Kj * jrk, output);
     }
 
@@ -140,7 +224,14 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
     switch (state) {
 
     case PIDAJ_IDLE: {
-        // Accumulate integral only while idle
+        // Inside tolerance band, do nothing and bleed integral to avoid chatter
+        if (inErrorBand) {
+            integral *= 0.85f;
+            if (fabsf(integral) < 0.01f) integral = 0.0f;
+            return;
+        }
+
+        // Accumulate integral only outside tolerance band
         integral += error * dt;
         if (integral > storedGlobals.PID_I_CLAMP) integral = storedGlobals.PID_I_CLAMP;
         if (integral < -storedGlobals.PID_I_CLAMP) integral = -storedGlobals.PID_I_CLAMP;
@@ -149,50 +240,106 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
             integral = 0.0f;
         }
 
-        // Dead zone
-        if (fabsf(output) < storedGlobals.PID_DEAD_ZONE) return;
+        // Direction is determined by real speed error (not by derived output terms)
+        const bool wantUp = (error > 0.0f);
 
         // Speed limits
-        if (output > 0.0f && speed >= MAX_SPEED_KMH) return;
-        if (output < 0.0f && speed <= MIN_SPEED_KMH) return;
+        if (wantUp && speed >= MAX_SPEED_KMH) return;
+        if (!wantUp && speed <= MIN_SPEED_KMH) return;
 
-        goingUp = (output > 0.0f);
+        goingUp = wantUp;
         activePin = goingUp ? storedGlobals.SPEED_UP_PIN : storedGlobals.SPEED_DOWN_PIN;
         if (activePin == 0) return;
 
-        if (fabsf(output) >= storedGlobals.PID_LONG_PRESS_THRESH) {
+        float longPressThreshold = storedGlobals.PID_LONG_PRESS_THRESH;
+        if (longPressThreshold > MAX_LONG_PRESS_THRESH_KMH) {
+            // Prevent stale/aggressive UI settings from forcing pulse mode on large ramps.
+            longPressThreshold = MAX_LONG_PRESS_THRESH_KMH;
+        }
+        if (longPressThreshold < MIN_LONG_PRESS_THRESH_KMH) {
+            longPressThreshold = MIN_LONG_PRESS_THRESH_KMH;
+        }
+        float longPressFloor = bandEnter + 0.05f;
+        if (longPressFloor < MIN_LONG_PRESS_THRESH_KMH) {
+            longPressFloor = MIN_LONG_PRESS_THRESH_KMH;
+        }
+        if (longPressThreshold < longPressFloor) {
+            longPressThreshold = longPressFloor;
+        }
+
+        const bool forceLongPress = (errorAbs >= FORCE_LONG_PRESS_ERROR_KMH);
+        if (forceLongPress || (errorAbs >= longPressThreshold)) {
             // ---- Large error: long press (hold GPIO) ----
             gpio_set_level((gpio_num_t)activePin, 0);
             state = PIDAJ_LONG_PRESS;
             stateTime = now;
             pressStartTime = now;
-            Serial.printf("[PIDAJ] LONG %s: spd=%.1f tgt=%.1f out=%.2f\n",
-                          goingUp ? "UP" : "DOWN", speed, targetSpeed_kmh, output);
+            const float beltRate = goingUp ? beltRateUp : beltRateDown;
+            const float inertiaKmh = goingUp ? inertiaUpKmh : inertiaDownKmh;
+            float deltaForPress = errorAbs - inertiaKmh;
+            if (deltaForPress < 0.0f) deltaForPress = 0.0f;
+            plannedPressMs = responseDelayMs + (uint32_t)((deltaForPress / beltRate) * 1000.0f);
+            if (plannedPressMs < MIN_RELAY_ON_MS) plannedPressMs = MIN_RELAY_ON_MS;
+            if (plannedPressMs > storedGlobals.PID_LONG_PRESS_MAX_MS) {
+                plannedPressMs = storedGlobals.PID_LONG_PRESS_MAX_MS;
+            }
+
+            Serial.printf("[PIDAJ] LONG %s: spd=%.1f tgt=%.1f err=%.2f plan=%ums model(cmd=%.2f,up=%.2f,dn=%.2f,rsp=%u)\n",
+                          goingUp ? "UP" : "DOWN", speed, targetSpeed_kmh, error,
+                          plannedPressMs, cmdRate, beltRateUp, beltRateDown, responseDelayMs);
         } else {
             // ---- Small error: single pulse via writePress ----
             writePress(activePin, true);
             state = PIDAJ_PULSE_COOLDOWN;
             stateTime = now;
+            const float beltRate = goingUp ? beltRateUp : beltRateDown;
+            const uint32_t stepEffectMs = (uint32_t)((0.1f / beltRate) * 1000.0f);
+            dynamicPulseCooldownMs = responseDelayMs + stepEffectMs;
+            if (dynamicPulseCooldownMs < storedGlobals.PID_PULSE_COOLDOWN_MS) {
+                dynamicPulseCooldownMs = storedGlobals.PID_PULSE_COOLDOWN_MS;
+            }
+            if (dynamicPulseCooldownMs > 3000) dynamicPulseCooldownMs = 3000;
         }
         break;
     }
 
     case PIDAJ_LONG_PRESS: {
         const uint32_t pressElapsed = now - pressStartTime;
+        const float beltRate = goingUp ? beltRateUp : beltRateDown;
+        const float inertiaKmh = goingUp ? inertiaUpKmh : inertiaDownKmh;
+        const float responseDelayS = responseDelayMs / 1000.0f;
 
-        // Predict where motor will settle after release using A + J
-        // inertia_s = how long the motor continues after we let go
-        float inertia_s = storedGlobals.INERTIA_DELAY_MS / 1000.0f;
-        if (inertia_s < 0.2f) inertia_s = 0.5f;
+        // Predict where motor will settle after release using A + J plus
+        // calibrated inertia guard.
+        float predictionHorizonS = storedGlobals.INERTIA_DELAY_MS / 1000.0f;
+        if (predictionHorizonS < PREDICTION_HORIZON_MIN_S) predictionHorizonS = PREDICTION_HORIZON_MIN_S;
+        if (predictionHorizonS > PREDICTION_HORIZON_MAX_S) predictionHorizonS = PREDICTION_HORIZON_MAX_S;
 
-        // Second-order prediction: speed + velocity_trend * t + 0.5 * accel_trend * t²
-        float predicted = speed + accel * inertia_s + 0.5f * jrk * inertia_s * inertia_s;
+        float predicted = speed
+                        + accel * predictionHorizonS
+                        + 0.5f * jrk * predictionHorizonS * predictionHorizonS;
+        const float releaseGuardKmh = inertiaKmh + beltRate * responseDelayS * 0.25f;
+        const float releaseSpeed = goingUp ? (targetSpeed_kmh - releaseGuardKmh)
+                                           : (targetSpeed_kmh + releaseGuardKmh);
 
-        bool release = false;
-        if (goingUp) {
-            release = (predicted >= targetSpeed_kmh) || (speed >= MAX_SPEED_KMH);
-        } else {
-            release = (predicted <= targetSpeed_kmh) || (speed <= MIN_SPEED_KMH);
+        const bool releaseBySpeed = goingUp ? (speed >= releaseSpeed) : (speed <= releaseSpeed);
+        const bool releaseByPrediction = goingUp ? (predicted >= targetSpeed_kmh) : (predicted <= targetSpeed_kmh);
+        const bool releaseByCrossing = goingUp ? (error <= 0.0f) : (error >= 0.0f);
+        const bool releaseByPlan = (plannedPressMs > 0) && (pressElapsed >= plannedPressMs);
+        const bool minHoldReached = (pressElapsed >= MIN_RELAY_ON_MS);
+        const bool farFromTarget = (errorAbs >= FORCE_LONG_PRESS_ERROR_KMH);
+        uint32_t earlyReleaseAfterMs = MIN_RELAY_ON_MS;
+        if (plannedPressMs > 0) {
+            const uint32_t gate = (uint32_t)((float)plannedPressMs * EARLY_RELEASE_PLAN_FRACTION);
+            if (gate > earlyReleaseAfterMs) earlyReleaseAfterMs = gate;
+        }
+        const bool earlyReleaseWindowReached = (pressElapsed >= earlyReleaseAfterMs);
+
+        // Keep pressing for most of the planned duration to avoid short
+        // press/pause cycling in the ~1 km/h range.
+        bool release = releaseByPlan;
+        if (!farFromTarget && minHoldReached && earlyReleaseWindowReached) {
+            release = release || (releaseBySpeed || releaseByPrediction || releaseByCrossing);
         }
 
         // Safety timeout
@@ -202,37 +349,100 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         }
 
         if (release) {
+            pendingModelCatchupMs = 0;
+            const bool largeRamp = (errorAbs >= LARGE_ERROR_CATCHUP_THRESHOLD_KMH)
+                                || (pressElapsed >= LARGE_PRESS_CATCHUP_THRESHOLD_MS);
+            if (largeRamp && beltRate > 0.05f && cmdRate > beltRate) {
+                const uint32_t effectivePressMs = (pressElapsed > responseDelayMs)
+                                                ? (pressElapsed - responseDelayMs)
+                                                : 0;
+                const float effectivePressS = effectivePressMs / 1000.0f;
+                const float commandLeadKmh = (cmdRate - beltRate) * effectivePressS;
+                if (commandLeadKmh > 0.0f) {
+                    pendingModelCatchupMs = (uint32_t)(((commandLeadKmh / beltRate) * 1000.0f) * MODEL_CATCHUP_GAIN);
+                    if (pendingModelCatchupMs < MIN_LARGE_RAMP_CATCHUP_MS) {
+                        pendingModelCatchupMs = MIN_LARGE_RAMP_CATCHUP_MS;
+                    }
+                    if (pendingModelCatchupMs > MAX_MODEL_CATCHUP_MS) {
+                        pendingModelCatchupMs = MAX_MODEL_CATCHUP_MS;
+                    }
+                }
+            }
+
             gpio_set_level((gpio_num_t)activePin, 1);
-            Serial.printf("[PIDAJ] Released %s after %ums: spd=%.1f pred=%.1f tgt=%.1f a=%.2f j=%.2f\n",
+            Serial.printf("[PIDAJ] Released %s after %ums: spd=%.1f rel=%.1f pred=%.1f tgt=%.1f a=%.2f j=%.2f h=%.2f mc=%u (m=%d p=%d c=%d t=%d)\n",
                           goingUp ? "UP" : "DOWN", pressElapsed,
-                          speed, predicted, targetSpeed_kmh, accel, jrk);
+                          speed, releaseSpeed, predicted, targetSpeed_kmh, accel, jrk, predictionHorizonS,
+                          pendingModelCatchupMs,
+                          releaseBySpeed ? 1 : 0, releaseByPrediction ? 1 : 0,
+                          releaseByCrossing ? 1 : 0, releaseByPlan ? 1 : 0);
             state = PIDAJ_COAST;
             stateTime = now;
             activePin = 0;
+            plannedPressMs = 0;
         }
         break;
     }
 
     case PIDAJ_COAST: {
-        // Wait for motor to settle: acceleration near zero for at least 1.5s
+        // Dynamic coast:
+        // - far from target: short wait, then resume quickly
+        // - near target: longer wait and require low acceleration
         const uint32_t coastElapsed = now - stateTime;
-        const bool settled = (fabsf(metrics.acceleration) < storedGlobals.PID_COAST_THRESHOLD)
-                           && (coastElapsed >= 1500);
-        const bool timeout = (coastElapsed >= storedGlobals.INERTIA_DELAY_MS + 3000);
+        uint32_t dynamicMinCoastMs = COAST_NEAR_MIN_MS;
+        if (errorAbs >= COAST_ERROR_FAR_KMH) {
+            dynamicMinCoastMs = COAST_FAR_MIN_MS;
+        } else if (errorAbs > COAST_ERROR_NEAR_KMH) {
+            const float t = (errorAbs - COAST_ERROR_NEAR_KMH) /
+                            (COAST_ERROR_FAR_KMH - COAST_ERROR_NEAR_KMH);
+            dynamicMinCoastMs = (uint32_t)((float)COAST_NEAR_MIN_MS
+                                 - t * (float)(COAST_NEAR_MIN_MS - COAST_FAR_MIN_MS));
+        }
+
+        uint32_t responseAwareMinMs = responseDelayMs / 2;
+        if (responseAwareMinMs < 150) responseAwareMinMs = 150;
+        if (responseAwareMinMs > 800) responseAwareMinMs = 800;
+
+        const uint32_t minCoastMs = (dynamicMinCoastMs > responseAwareMinMs)
+                                  ? dynamicMinCoastMs
+                                  : responseAwareMinMs;
+        uint32_t effectiveMinCoastMs = minCoastMs;
+        if (pendingModelCatchupMs > 0) {
+            uint32_t modelCatchupMinMs = responseDelayMs + pendingModelCatchupMs;
+            if (modelCatchupMinMs > MAX_MODEL_CATCHUP_MS) modelCatchupMinMs = MAX_MODEL_CATCHUP_MS;
+            if (modelCatchupMinMs > effectiveMinCoastMs) {
+                effectiveMinCoastMs = modelCatchupMinMs;
+            }
+        }
+
+        const bool farFromTarget = (errorAbs >= COAST_FAST_RESUME_ERROR_KMH);
+        const bool settledByAccel = (fabsf(metrics.acceleration) < storedGlobals.PID_COAST_THRESHOLD);
+        const bool settled = (coastElapsed >= effectiveMinCoastMs) &&
+                             (farFromTarget || settledByAccel);
+        uint32_t timeoutMs = storedGlobals.INERTIA_DELAY_MS + COAST_TIMEOUT_EXTRA_MS;
+        const uint32_t modelAwareTimeoutMs = effectiveMinCoastMs + COAST_TIMEOUT_EXTRA_MS;
+        if (modelAwareTimeoutMs > timeoutMs) timeoutMs = modelAwareTimeoutMs;
+        const bool timeout = (coastElapsed >= timeoutMs);
 
         if (settled || timeout) {
             integral = 0.0f;  // fresh start after coast
+            inErrorBand = (errorAbs <= bandExit);
+            pendingModelCatchupMs = 0;
             state = PIDAJ_IDLE;
-            Serial.printf("[PIDAJ] Settled at %.1f km/h after %ums (target %.1f, err=%.2f)\n",
-                          speed, coastElapsed, targetSpeed_kmh, error);
+            Serial.printf("[PIDAJ] Coast done at %.1f km/h after %ums (min=%u, target %.1f, err=%.2f, fast=%d)\n",
+                          speed, coastElapsed, effectiveMinCoastMs, targetSpeed_kmh, error,
+                          farFromTarget ? 1 : 0);
         }
         break;
     }
 
     case PIDAJ_PULSE_COOLDOWN: {
         // Wait for pulse effect to become visible in sensor
-        if (now - stateTime >= storedGlobals.PID_PULSE_COOLDOWN_MS) {
+        const uint32_t cooldownMs = (dynamicPulseCooldownMs > 0) ? dynamicPulseCooldownMs
+                                                                  : storedGlobals.PID_PULSE_COOLDOWN_MS;
+        if (now - stateTime >= cooldownMs) {
             state = PIDAJ_IDLE;
+            dynamicPulseCooldownMs = 0;
         }
         break;
     }
@@ -279,4 +489,3 @@ void writePress(uint8_t pin, bool pressed) {
       Serial.println("ERROR PIN not defined");
   }
 }
-

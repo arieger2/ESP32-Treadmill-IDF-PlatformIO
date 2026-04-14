@@ -205,10 +205,7 @@ void setup() {
 }
 
 void loop() {
-    static uint32_t lastUpdate = 0;
     uint32_t now = millis();
-    uint32_t delta = now - lastUpdate;
-    lastUpdate = now;
 
     ElegantOTA.loop();   // required for OTA updates
     gWorkout.update(); // tick often
@@ -226,6 +223,11 @@ void loop() {
         
         // Update metrics from both sensors (functions check internally for new data)
         updateMetrics(metrics);
+        // Apply speed filter in loop context (not ISR!)
+        applySpeedFilter(metrics);
+
+        // Acceleration from motor sensor (always), real dt measured internally
+        calculateAcceleration(metrics);
     }
 
     // TEST MODE: Now handled automatically by on_timeout_cb ISR (no loop code needed)
@@ -242,47 +244,31 @@ void loop() {
                       kmh, metrics.workoutDistance, calls, (unsigned)test_isr_call_count);
     }
 
-    // FTMS status
-    static uint32_t connectAt = 0;
-    if (isNotificationEnabled(pFTMSStatus) && connectAt != UINT32_MAX) {
-        if (connectAt == 0) connectAt = now;
-        if (now - connectAt >= 1000) {
-            sendFTMSStatusUpdate(0x01);
-            connectAt = UINT32_MAX;
-        }
-    } else if (!isNotificationEnabled(pFTMSStatus)) {
-        connectAt = 0;
-    }
-
     // Speed control - ONLY when workout is active
     if (workoutStatus != WORKOUT_INACTIVE) {
         physicalSpeedControl(metrics.targetSpeed, metrics.mps);
     } 
-    /*else if ( !metrics.isRunning && workoutStatus != WORKOUT_INACTIVE ) {
-        // If workout is active but speed is zero, set status to INACTIVE
-        physicalSpeedControl(0.0f, 0.0f); // Ensure treadmill is stopped
-        workoutStatus = WORKOUT_INACTIVE;
-    } */
-    
+
     // Calibration state machine (non-blocking)
     updateCalibration();
 
-    // Update every 500ms
-    static uint32_t lastMetricsUpdate = 0;
-    
-    if (now - lastMetricsUpdate >= 500) {
-        lastMetricsUpdate = now;
+    // Update every 700ms
+    static uint32_t lastWirelessUpdate = 0;
+    static bool FTMS_STATUS_SENT = false;
+    if (now - lastWirelessUpdate >= 700) {
+        lastWirelessUpdate = now;
         wifiLoop();
-        
-        // Apply speed filter in loop context (not ISR!)
-        applySpeedFilter(metrics);
-
-        // Acceleration from motor sensor (always), real dt measured internally
-        calculateAcceleration(metrics);
         
         if (bleData.clientConnected) {
             sendFTMS_BLE_Data();
             sendHR_BLE_Data();  // Broadcast HR from belt to Zwift
+        }
+        // FTMS status
+        if (isNotificationEnabled(pFTMSStatus) && !FTMS_STATUS_SENT) {
+            sendFTMSStatusUpdate(0x01);
+            FTMS_STATUS_SENT = true;
+        } else if (!isNotificationEnabled(pFTMSStatus)) {
+            FTMS_STATUS_SENT = false;  // arm for next connection
         }
     }
     

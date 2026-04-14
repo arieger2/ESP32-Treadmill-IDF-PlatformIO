@@ -137,34 +137,17 @@ var SettingsApp;
         if (isNaN(ratio) || ratio <= 0.01 || ratio >= 10.0) {
             return { valid: false, error: 'Motor to belt ratio must be 0.01-10.0', fieldId: 'motorToBeltRatio' };
         }
-        // PIDAJ controller validation
-        var pidKp = parseFloat(data['pidKp']);
-        if (isNaN(pidKp) || pidKp < 0.1 || pidKp > 10.0) {
-            return { valid: false, error: 'PID Kp must be 0.1-10.0', fieldId: 'pidKp' };
+        // Active speed-controller validation
+        var pidBandEnter = parseFloat(data['pidErrorBandEnter']);
+        if (isNaN(pidBandEnter) || pidBandEnter < 0.10 || pidBandEnter > 1.00) {
+            return { valid: false, error: 'Error band enter must be 0.10-1.00 km/h', fieldId: 'pidErrorBandEnter' };
         }
-        var pidKi = parseFloat(data['pidKi']);
-        if (isNaN(pidKi) || pidKi < 0.0 || pidKi > 2.0) {
-            return { valid: false, error: 'PID Ki must be 0.0-2.0', fieldId: 'pidKi' };
+        var pidBandExit = parseFloat(data['pidErrorBandExit']);
+        if (isNaN(pidBandExit) || pidBandExit < 0.05 || pidBandExit > 0.95) {
+            return { valid: false, error: 'Error band exit must be 0.05-0.95 km/h', fieldId: 'pidErrorBandExit' };
         }
-        var pidKa = parseFloat(data['pidKa']);
-        if (isNaN(pidKa) || pidKa < 0.0 || pidKa > 10.0) {
-            return { valid: false, error: 'PID Ka must be 0.0-10.0', fieldId: 'pidKa' };
-        }
-        var pidKj = parseFloat(data['pidKj']);
-        if (isNaN(pidKj) || pidKj < 0.0 || pidKj > 5.0) {
-            return { valid: false, error: 'PID Kj must be 0.0-5.0', fieldId: 'pidKj' };
-        }
-        var pidDZ = parseFloat(data['pidDeadZone']);
-        if (isNaN(pidDZ) || pidDZ < 0.05 || pidDZ > 1.0) {
-            return { valid: false, error: 'Dead zone must be 0.05-1.0 km/h', fieldId: 'pidDeadZone' };
-        }
-        var pidLP = parseFloat(data['pidLongPressThresh']);
-        if (isNaN(pidLP) || pidLP < 0.3 || pidLP > 5.0) {
-            return { valid: false, error: 'Long press threshold must be 0.3-5.0 km/h', fieldId: 'pidLongPressThresh' };
-        }
-        var pidIC = parseFloat(data['pidIClamp']);
-        if (isNaN(pidIC) || pidIC < 0.5 || pidIC > 20.0) {
-            return { valid: false, error: 'Integral clamp must be 0.5-20.0', fieldId: 'pidIClamp' };
+        if (pidBandExit >= pidBandEnter) {
+            return { valid: false, error: 'Error band exit must be smaller than enter', fieldId: 'pidErrorBandExit' };
         }
         var pidPC = parseInt(data['pidPulseCooldown']);
         if (isNaN(pidPC) || pidPC < 100 || pidPC > 2000) {
@@ -177,6 +160,26 @@ var SettingsApp;
         var pidCT = parseFloat(data['pidCoastThreshold']);
         if (isNaN(pidCT) || pidCT < 0.01 || pidCT > 0.2) {
             return { valid: false, error: 'Coast threshold must be 0.01-0.2 m/s²', fieldId: 'pidCoastThreshold' };
+        }
+        var ctrlRsp = parseInt(data['ctrlResponseDelay']);
+        if (isNaN(ctrlRsp) || ctrlRsp < 50 || ctrlRsp > 5000) {
+            return { valid: false, error: 'Model response delay must be 50-5000 ms', fieldId: 'ctrlResponseDelay' };
+        }
+        var ctrlUp = parseFloat(data['ctrlBeltRateUp']);
+        if (isNaN(ctrlUp) || ctrlUp < 0.05 || ctrlUp > 5.0) {
+            return { valid: false, error: 'Belt rate up must be 0.05-5.0 km/h/s', fieldId: 'ctrlBeltRateUp' };
+        }
+        var ctrlDown = parseFloat(data['ctrlBeltRateDown']);
+        if (isNaN(ctrlDown) || ctrlDown < 0.05 || ctrlDown > 5.0) {
+            return { valid: false, error: 'Belt rate down must be 0.05-5.0 km/h/s', fieldId: 'ctrlBeltRateDown' };
+        }
+        var ctrlInertiaUp = parseFloat(data['ctrlInertiaUp']);
+        if (isNaN(ctrlInertiaUp) || ctrlInertiaUp < 0.0 || ctrlInertiaUp > 5.0) {
+            return { valid: false, error: 'Inertia guard up must be 0.0-5.0 km/h', fieldId: 'ctrlInertiaUp' };
+        }
+        var ctrlInertiaDown = parseFloat(data['ctrlInertiaDown']);
+        if (isNaN(ctrlInertiaDown) || ctrlInertiaDown < 0.0 || ctrlInertiaDown > 5.0) {
+            return { valid: false, error: 'Inertia guard down must be 0.0-5.0 km/h', fieldId: 'ctrlInertiaDown' };
         }
         return { valid: true }; // All validation passed
     }

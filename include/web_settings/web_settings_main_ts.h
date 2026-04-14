@@ -217,57 +217,62 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
           <div id="calibrationStatus" class="status"></div>
         </div>
 
-        <!-- PIDAJ Controller Tuning -->
+        <!-- Speed Controller Tuning -->
         <div class="section">
-          <h3><i class="fas fa-sliders-h"></i> PIDAJ Controller Tuning</h3>
+          <h3><i class="fas fa-sliders-h"></i> Speed Controller (Active Parameters)</h3>
           <div class="form-group">
-            <label>Kp (Proportional):</label>
-            <input type="number" id="pidKp" name="pidKp" step="0.1" min="0.1" max="10.0" value="%PID_KP%">
+            <label>Error Band Enter:</label>
+            <input type="number" id="pidErrorBandEnter" name="pidErrorBandEnter" step="0.01" min="0.10" max="1.00" value="%PID_ERROR_BAND_ENTER%">
+            <span class="unit">km/h (start correction outside this band)</span>
           </div>
           <div class="form-group">
-            <label>Ki (Integral):</label>
-            <input type="number" id="pidKi" name="pidKi" step="0.01" min="0.0" max="2.0" value="%PID_KI%">
-          </div>
-          <div class="form-group">
-            <label>Ka (Acceleration damping):</label>
-            <input type="number" id="pidKa" name="pidKa" step="0.1" min="0.0" max="10.0" value="%PID_KA%">
-          </div>
-          <div class="form-group">
-            <label>Kj (Jerk prediction):</label>
-            <input type="number" id="pidKj" name="pidKj" step="0.1" min="0.0" max="5.0" value="%PID_KJ%">
-          </div>
-          <div class="form-group">
-            <label>Dead Zone:</label>
-            <input type="number" id="pidDeadZone" name="pidDeadZone" step="0.01" min="0.05" max="1.0" value="%PID_DEAD_ZONE%">
-            <span class="unit">km/h</span>
-          </div>
-          <div class="form-group">
-            <label>Long Press Threshold:</label>
-            <input type="number" id="pidLongPressThresh" name="pidLongPressThresh" step="0.1" min="0.3" max="5.0" value="%PID_LONG_PRESS_THRESH%">
-            <span class="unit">km/h</span>
-          </div>
-          <div class="form-group">
-            <label>Integral Clamp:</label>
-            <input type="number" id="pidIClamp" name="pidIClamp" step="0.5" min="0.5" max="20.0" value="%PID_I_CLAMP%">
+            <label>Error Band Exit:</label>
+            <input type="number" id="pidErrorBandExit" name="pidErrorBandExit" step="0.01" min="0.05" max="0.95" value="%PID_ERROR_BAND_EXIT%">
+            <span class="unit">km/h (stop correction inside this band; must be smaller than Enter)</span>
           </div>
           <div class="form-group">
             <label>Pulse Cooldown:</label>
             <input type="number" id="pidPulseCooldown" name="pidPulseCooldown" step="50" min="100" max="2000" value="%PID_PULSE_COOLDOWN%">
-            <span class="unit">ms</span>
+            <span class="unit">ms (minimum wait after single pulse)</span>
           </div>
           <div class="form-group">
             <label>Long Press Max:</label>
             <input type="number" id="pidLongPressMax" name="pidLongPressMax" step="1000" min="3000" max="30000" value="%PID_LONG_PRESS_MAX%">
-            <span class="unit">ms</span>
+            <span class="unit">ms (safety cutoff)</span>
           </div>
           <div class="form-group">
             <label>Coast Threshold:</label>
             <input type="number" id="pidCoastThreshold" name="pidCoastThreshold" step="0.005" min="0.01" max="0.2" value="%PID_COAST_THRESHOLD%">
-            <span class="unit">m/s²</span>
+            <span class="unit">m/s² (acceleration threshold for settled motor)</span>
+          </div>
+          <div class="form-group">
+            <label>Model Response Delay:</label>
+            <input type="number" id="ctrlResponseDelay" name="ctrlResponseDelay" step="10" min="50" max="5000" value="%CTRL_RESPONSE_DELAY%">
+            <span class="unit">ms (delay until belt reacts)</span>
+          </div>
+          <div class="form-group">
+            <label>Belt Rate Up:</label>
+            <input type="number" id="ctrlBeltRateUp" name="ctrlBeltRateUp" step="0.01" min="0.05" max="5.0" value="%CTRL_BELT_RATE_UP%">
+            <span class="unit">km/h per second</span>
+          </div>
+          <div class="form-group">
+            <label>Belt Rate Down:</label>
+            <input type="number" id="ctrlBeltRateDown" name="ctrlBeltRateDown" step="0.01" min="0.05" max="5.0" value="%CTRL_BELT_RATE_DOWN%">
+            <span class="unit">km/h per second</span>
+          </div>
+          <div class="form-group">
+            <label>Inertia Guard Up:</label>
+            <input type="number" id="ctrlInertiaUp" name="ctrlInertiaUp" step="0.01" min="0.00" max="5.0" value="%CTRL_INERTIA_UP%">
+            <span class="unit">km/h (release guard for speeding up)</span>
+          </div>
+          <div class="form-group">
+            <label>Inertia Guard Down:</label>
+            <input type="number" id="ctrlInertiaDown" name="ctrlInertiaDown" step="0.01" min="0.00" max="5.0" value="%CTRL_INERTIA_DOWN%">
+            <span class="unit">km/h (release guard for slowing down)</span>
           </div>
           <div class="help-text">
-            <i class="fas fa-info-circle"></i> P=error, I=drift correction, A=acceleration damping, J=jerk prediction.
-            Large error (&gt;Long Press Threshold) uses long press, small error uses single pulses with cooldown.
+            <i class="fas fa-info-circle"></i> These are the parameters currently used directly by the active speed-control logic.
+            Legacy tuning fields (Kp/Ki/Ka/Kj, Dead Zone, Integral Clamp) are kept internally for compatibility, but not exposed here.
           </div>
         </div>
 

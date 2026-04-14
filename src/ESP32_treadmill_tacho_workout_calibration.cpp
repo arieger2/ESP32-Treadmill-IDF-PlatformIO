@@ -480,8 +480,23 @@ void updateCalibration() {
         }
         if (calResult.downCount > 0) avgDown /= calResult.downCount;
 
-        // Store to globals
+        // Store to globals used by runtime controller
         storedGlobals.INERTIA_DELAY_MS = (calResult.inertiaUp_ms + calResult.inertiaDown_ms) / 2;
+        if (avgUp > 0.05f && avgUp < 5.0f) {
+            storedGlobals.CTRL_BELT_RATE_UP_KMHPS = avgUp;
+        }
+        if (avgDown > 0.05f && avgDown < 5.0f) {
+            storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS = avgDown;
+        }
+        if (calResult.responseDelay_ms >= 50 && calResult.responseDelay_ms <= 5000) {
+            storedGlobals.CTRL_RESPONSE_DELAY_MS = calResult.responseDelay_ms;
+        }
+        if (calResult.inertiaUp_kmh >= 0.0f && calResult.inertiaUp_kmh < 5.0f) {
+            storedGlobals.CTRL_INERTIA_UP_KMH = calResult.inertiaUp_kmh;
+        }
+        if (calResult.inertiaDown_kmh >= 0.0f && calResult.inertiaDown_kmh < 5.0f) {
+            storedGlobals.CTRL_INERTIA_DOWN_KMH = calResult.inertiaDown_kmh;
+        }
 
         // Print summary
         Serial.printf("\n========================================\n");
@@ -506,6 +521,12 @@ void updateCalibration() {
         Serial.printf("[CAL] Avg UP rate: %.3f km/h/s\n", avgUp);
         Serial.printf("[CAL] Avg DOWN rate: %.3f km/h/s\n", avgDown);
         Serial.printf("[CAL] Avg inertia: %u ms\n", storedGlobals.INERTIA_DELAY_MS);
+        Serial.printf("[CAL] Controller model: up=%.3f down=%.3f rsp=%ums inrtUp=%.2f inrtDn=%.2f\n",
+                      storedGlobals.CTRL_BELT_RATE_UP_KMHPS,
+                      storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS,
+                      storedGlobals.CTRL_RESPONSE_DELAY_MS,
+                      storedGlobals.CTRL_INERTIA_UP_KMH,
+                      storedGlobals.CTRL_INERTIA_DOWN_KMH);
         Serial.printf("========================================\n");
 
         String result = saveSettings();
@@ -552,7 +573,6 @@ String getCalibrationStatus() {
     json += ",\"isCalibrated\":" + String(calResult.valid ? "true" : "false");
     json += ",\"upSamples\":" + String(calResult.upCount);
     json += ",\"downSamples\":" + String(calResult.downCount);
-    json += ",\"responseDelay\":" + String(calResult.responseDelay_ms);
     json += ",\"responseDelay\":" + String(calResult.responseDelay_ms);
     json += ",\"inertiaUp\":" + String(calResult.inertiaUp_kmh, 2);
     json += ",\"inertiaDown\":" + String(calResult.inertiaDown_kmh, 2);

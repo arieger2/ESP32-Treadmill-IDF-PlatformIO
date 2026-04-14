@@ -344,6 +344,24 @@ static void startMDNS() {
 // ============================================================================
 // Time Synchronization
 // ============================================================================
+
+// SNTP callback - fired by ESP-IDF SNTP task (not loop context), non-blocking
+static void ntp_sync_callback(struct timeval *tv) {
+    time_t now_t = tv->tv_sec;
+    struct tm timeinfo;
+    localtime_r(&now_t, &timeinfo);
+
+    // Apply CET/CEST offset (tzset() already called before configTime)
+    time_t local_time = now_t + 3600;
+    if (timeinfo.tm_isdst > 0) {
+        local_time += 3600;
+    }
+    setTime(local_time);
+    gTimeSynced = true;
+    Serial.printf("✅ NTP synced (UTC): %s", asctime(gmtime(&now_t)));
+    Serial.printf("   Local (CET/CEST): %s", asctime(&timeinfo));
+}
+
 static void syncTimeFromNetwork(bool force) {
     const uint32_t now = millis();
     if (!force && (now - gLastTimeSyncAttemptMs < 60000)) {
@@ -351,38 +369,13 @@ static void syncTimeFromNetwork(bool force) {
     }
     gLastTimeSyncAttemptMs = now;
 
-    Serial.println("Synchronizing time from NTP...");
-    // Set timezone FIRST for Europe/Berlin (CET/CEST)
+    Serial.println("Starting NTP sync (async)...");
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();
-    
-    // Sync with NTP - get UTC time and apply timezone offset manually for TimeLib
-    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
-    const uint32_t pollDelayMs = 100;  // Shorter delay to feed watchdog more often
-    const uint32_t maxAttempts = 50;   // 50 * 100ms = 5 seconds max
-    for (uint32_t i = 0; i < maxAttempts; i++) {
-        yield();  // Feed watchdog during NTP sync (sufficient for Arduino framework)
-        time_t now_t = time(nullptr);
-        if (now_t > 8 * 3600 * 2) {
-            // Get local time using the timezone
-            struct tm timeinfo;
-            localtime_r(&now_t, &timeinfo);
-            // Convert struct tm to time_t in local time for TimeLib
-            time_t local_time = now_t + 3600;  // Add 1 hour for CET (will be 2 in summer)
-            // Check if DST is active
-            if (timeinfo.tm_isdst > 0) {
-                local_time += 3600;  // Add another hour for CEST
-            }
-            setTime(local_time);
-            gTimeSynced = true;
-            Serial.printf("Time synchronized (UTC): %s", asctime(gmtime(&now_t)));
-            Serial.printf("Local time (CET/CEST): %s", asctime(&timeinfo));
-            return;
-        }
-        delay(pollDelayMs);
-    }
-    Serial.println("Time sync timeout");
+    sntp_set_time_sync_notification_cb(ntp_sync_callback);
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    // Returns immediately — ntp_sync_callback fires when SNTP task completes
 }
 
 // ============================================================================
