@@ -187,6 +187,9 @@ void initWebServer() {
       String ctrlBeltRateDownRaw = extractJsonValue(jsonString, "ctrlBeltRateDown");
       String ctrlInertiaUpRaw    = extractJsonValue(jsonString, "ctrlInertiaUp");
       String ctrlInertiaDownRaw  = extractJsonValue(jsonString, "ctrlInertiaDown");
+      String ctrlCmdRateRaw      = extractJsonValue(jsonString, "ctrlCmdRate");
+      String coastNearMsRaw      = extractJsonValue(jsonString, "coastNearMs");
+      String coastFarMsRaw       = extractJsonValue(jsonString, "coastFarMs");
 
       if (!validateSettings(wifiSSID, wifiPassword, bleDeviceName, interruptPin, motorInterruptPin,
                             speedUpPin, speedDownPin, inclineUpPin, inclineDownPin,
@@ -301,6 +304,26 @@ void initWebServer() {
           storedGlobals.CTRL_INERTIA_DOWN_KMH = ctrlInertiaDown;
         }
       }
+      if (ctrlCmdRateRaw.length() > 0) {
+        float ctrlCmdRate = ctrlCmdRateRaw.toFloat();
+        if (ctrlCmdRate >= 0.10f && ctrlCmdRate <= 5.0f) {
+          storedGlobals.CTRL_CMD_RATE_KMHPS = ctrlCmdRate;
+        }
+      }
+      if (coastNearMsRaw.length() > 0) {
+        uint32_t coastNearMs = coastNearMsRaw.toInt();
+        if (coastNearMs >= 200 && coastNearMs <= 5000) {
+          storedGlobals.COAST_NEAR_MIN_MS = coastNearMs;
+        }
+      }
+      if (coastFarMsRaw.length() > 0) {
+        uint32_t coastFarMs = coastFarMsRaw.toInt();
+        if (coastFarMs >= 50 && coastFarMs <= 2000) {
+          storedGlobals.COAST_FAR_MIN_MS = coastFarMs;
+        }
+      }
+      if (storedGlobals.COAST_FAR_MIN_MS >= storedGlobals.COAST_NEAR_MIN_MS)
+        storedGlobals.COAST_FAR_MIN_MS = storedGlobals.COAST_NEAR_MIN_MS / 2;
 
       // Update filter settings immediately
       // OLD SYSTEM REMOVED: Filter configuration no longer used

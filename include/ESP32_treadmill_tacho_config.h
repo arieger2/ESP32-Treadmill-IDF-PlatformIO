@@ -115,6 +115,8 @@ struct TreadmillStoredGlobals {
     uint32_t PID_PULSE_COOLDOWN_MS = 500;   // Cooldown between single pulses
     uint32_t PID_LONG_PRESS_MAX_MS = 15000; // Safety timeout for long press
     float PID_COAST_THRESHOLD = 0.03f;  // Acceleration threshold for motor settled (m/s²)
+    uint32_t COAST_NEAR_MIN_MS = 900;   // Min coast wait when near target (stable settle)
+    uint32_t COAST_FAR_MIN_MS  = 200;   // Min coast wait when far from target (quick re-press)
     float PID_ERROR_BAND_ENTER_KMH = 0.35f; // Enter control outside this error band
     float PID_ERROR_BAND_EXIT_KMH = 0.25f;  // Stop control inside this error band (hysteresis)
 
@@ -231,6 +233,8 @@ namespace NVSKeys {
     extern const char* PID_PULSE_CD;
     extern const char* PID_LP_MAX;
     extern const char* PID_COAST_TH;
+    extern const char* COAST_NEAR_MS;
+    extern const char* COAST_FAR_MS;
     extern const char* PID_BAND_IN;
     extern const char* PID_BAND_OUT;
     extern const char* CTRL_CMD_RATE;

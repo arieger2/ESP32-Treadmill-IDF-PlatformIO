@@ -161,6 +161,17 @@ var SettingsApp;
         if (isNaN(pidCT) || pidCT < 0.01 || pidCT > 0.2) {
             return { valid: false, error: 'Coast threshold must be 0.01-0.2 m/s²', fieldId: 'pidCoastThreshold' };
         }
+        var coastNear = parseInt(data['coastNearMs']);
+        if (isNaN(coastNear) || coastNear < 200 || coastNear > 5000) {
+            return { valid: false, error: 'Coast wait near target must be 200-5000 ms', fieldId: 'coastNearMs' };
+        }
+        var coastFar = parseInt(data['coastFarMs']);
+        if (isNaN(coastFar) || coastFar < 50 || coastFar > 2000) {
+            return { valid: false, error: 'Coast wait far from target must be 50-2000 ms', fieldId: 'coastFarMs' };
+        }
+        if (coastFar >= coastNear) {
+            return { valid: false, error: 'Coast far must be smaller than coast near', fieldId: 'coastFarMs' };
+        }
         var ctrlRsp = parseInt(data['ctrlResponseDelay']);
         if (isNaN(ctrlRsp) || ctrlRsp < 50 || ctrlRsp > 5000) {
             return { valid: false, error: 'Model response delay must be 50-5000 ms', fieldId: 'ctrlResponseDelay' };
@@ -180,6 +191,10 @@ var SettingsApp;
         var ctrlInertiaDown = parseFloat(data['ctrlInertiaDown']);
         if (isNaN(ctrlInertiaDown) || ctrlInertiaDown < 0.0 || ctrlInertiaDown > 5.0) {
             return { valid: false, error: 'Inertia guard down must be 0.0-5.0 km/h', fieldId: 'ctrlInertiaDown' };
+        }
+        var ctrlCmdRate = parseFloat(data['ctrlCmdRate']);
+        if (isNaN(ctrlCmdRate) || ctrlCmdRate < 0.10 || ctrlCmdRate > 5.0) {
+            return { valid: false, error: 'Command rate must be 0.10-5.0 km/h/s', fieldId: 'ctrlCmdRate' };
         }
         return { valid: true }; // All validation passed
     }

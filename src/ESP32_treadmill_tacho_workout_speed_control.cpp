@@ -55,8 +55,6 @@ constexpr float DEFAULT_BELT_RATE_KMHPS = 1.0f / 2.04f;
 constexpr uint32_t DEFAULT_RESPONSE_DELAY_MS = 400;
 constexpr float DEFAULT_INERTIA_KMH = 0.20f;
 constexpr uint32_t MIN_RELAY_ON_MS = 300;
-constexpr uint32_t COAST_NEAR_MIN_MS = 900;  // stable settling near target
-constexpr uint32_t COAST_FAR_MIN_MS = 200;   // quick re-press when far from target
 constexpr float COAST_ERROR_NEAR_KMH = 0.25f;
 constexpr float COAST_ERROR_FAR_KMH = 1.00f;
 constexpr float COAST_FAST_RESUME_ERROR_KMH = 0.55f;
@@ -389,14 +387,14 @@ void physicalSpeedControl(float targetSpeed_kmh, float current_mps) {
         // - far from target: short wait, then resume quickly
         // - near target: longer wait and require low acceleration
         const uint32_t coastElapsed = now - stateTime;
-        uint32_t dynamicMinCoastMs = COAST_NEAR_MIN_MS;
+        uint32_t dynamicMinCoastMs = storedGlobals.COAST_NEAR_MIN_MS;
         if (errorAbs >= COAST_ERROR_FAR_KMH) {
-            dynamicMinCoastMs = COAST_FAR_MIN_MS;
+            dynamicMinCoastMs = storedGlobals.COAST_FAR_MIN_MS;
         } else if (errorAbs > COAST_ERROR_NEAR_KMH) {
             const float t = (errorAbs - COAST_ERROR_NEAR_KMH) /
                             (COAST_ERROR_FAR_KMH - COAST_ERROR_NEAR_KMH);
-            dynamicMinCoastMs = (uint32_t)((float)COAST_NEAR_MIN_MS
-                                 - t * (float)(COAST_NEAR_MIN_MS - COAST_FAR_MIN_MS));
+            dynamicMinCoastMs = (uint32_t)((float)storedGlobals.COAST_NEAR_MIN_MS
+                                 - t * (float)(storedGlobals.COAST_NEAR_MIN_MS - storedGlobals.COAST_FAR_MIN_MS));
         }
 
         uint32_t responseAwareMinMs = responseDelayMs / 2;

@@ -246,6 +246,16 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             <span class="unit">m/s² (acceleration threshold for settled motor)</span>
           </div>
           <div class="form-group">
+            <label>Coast Wait Near Target:</label>
+            <input type="number" id="coastNearMs" name="coastNearMs" step="50" min="200" max="5000" value="%COAST_NEAR_MS%">
+            <span class="unit">ms (min coast time when near target)</span>
+          </div>
+          <div class="form-group">
+            <label>Coast Wait Far From Target:</label>
+            <input type="number" id="coastFarMs" name="coastFarMs" step="50" min="50" max="2000" value="%COAST_FAR_MS%">
+            <span class="unit">ms (min coast time when far from target)</span>
+          </div>
+          <div class="form-group">
             <label>Model Response Delay:</label>
             <input type="number" id="ctrlResponseDelay" name="ctrlResponseDelay" step="10" min="50" max="5000" value="%CTRL_RESPONSE_DELAY%">
             <span class="unit">ms (delay until belt reacts)</span>
@@ -269,6 +279,11 @@ static const char SETTINGS_HTML_TS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
             <label>Inertia Guard Down:</label>
             <input type="number" id="ctrlInertiaDown" name="ctrlInertiaDown" step="0.01" min="0.00" max="5.0" value="%CTRL_INERTIA_DOWN%">
             <span class="unit">km/h (release guard for slowing down)</span>
+          </div>
+          <div class="form-group">
+            <label>Command Rate:</label>
+            <input type="number" id="ctrlCmdRate" name="ctrlCmdRate" step="0.01" min="0.10" max="5.0" value="%CTRL_CMD_RATE%">
+            <span class="unit">km/h per second (display ramp rate)</span>
           </div>
           <div class="help-text">
             <i class="fas fa-info-circle"></i> These are the parameters currently used directly by the active speed-control logic.

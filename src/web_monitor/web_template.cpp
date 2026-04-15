@@ -72,6 +72,9 @@ String processTemplate(const String& var) {
   if (var == "CTRL_BELT_RATE_DOWN")   return String(storedGlobals.CTRL_BELT_RATE_DOWN_KMHPS, 3);
   if (var == "CTRL_INERTIA_UP")       return String(storedGlobals.CTRL_INERTIA_UP_KMH, 2);
   if (var == "CTRL_INERTIA_DOWN")     return String(storedGlobals.CTRL_INERTIA_DOWN_KMH, 2);
+  if (var == "CTRL_CMD_RATE")         return String(storedGlobals.CTRL_CMD_RATE_KMHPS, 3);
+  if (var == "COAST_NEAR_MS")         return String(storedGlobals.COAST_NEAR_MIN_MS);
+  if (var == "COAST_FAR_MS")          return String(storedGlobals.COAST_FAR_MIN_MS);
 
   if (var == "TESTDATABUTTONCLASS") return testdata ? "button-red" : "button-green";
 

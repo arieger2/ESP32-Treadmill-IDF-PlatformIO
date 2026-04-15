@@ -70,6 +70,8 @@ const char* NVSKeys::PID_I_CLAMP   = "pidIClamp";
 const char* NVSKeys::PID_PULSE_CD  = "pidPulseCD";
 const char* NVSKeys::PID_LP_MAX    = "pidLPMax";
 const char* NVSKeys::PID_COAST_TH  = "pidCoastTh";
+const char* NVSKeys::COAST_NEAR_MS = "coastNearMs";
+const char* NVSKeys::COAST_FAR_MS  = "coastFarMs";
 const char* NVSKeys::PID_BAND_IN   = "pidBandIn";
 const char* NVSKeys::PID_BAND_OUT  = "pidBandOut";
 const char* NVSKeys::CTRL_CMD_RATE = "cmdRate";
@@ -174,6 +176,8 @@ String saveSettings() {
     {NVSKeys::PID_PULSE_CD,  putOrReplace(prefs, NVSKeys::PID_PULSE_CD,  storedGlobals.PID_PULSE_COOLDOWN_MS)},
     {NVSKeys::PID_LP_MAX,    putOrReplace(prefs, NVSKeys::PID_LP_MAX,    storedGlobals.PID_LONG_PRESS_MAX_MS)},
     {NVSKeys::PID_COAST_TH,  putOrReplace(prefs, NVSKeys::PID_COAST_TH,  storedGlobals.PID_COAST_THRESHOLD)},
+    {NVSKeys::COAST_NEAR_MS, putOrReplace(prefs, NVSKeys::COAST_NEAR_MS, storedGlobals.COAST_NEAR_MIN_MS)},
+    {NVSKeys::COAST_FAR_MS,  putOrReplace(prefs, NVSKeys::COAST_FAR_MS,  storedGlobals.COAST_FAR_MIN_MS)},
     {NVSKeys::PID_BAND_IN,   putOrReplace(prefs, NVSKeys::PID_BAND_IN,   storedGlobals.PID_ERROR_BAND_ENTER_KMH)},
     {NVSKeys::PID_BAND_OUT,  putOrReplace(prefs, NVSKeys::PID_BAND_OUT,  storedGlobals.PID_ERROR_BAND_EXIT_KMH)},
     {NVSKeys::CTRL_CMD_RATE, putOrReplace(prefs, NVSKeys::CTRL_CMD_RATE, storedGlobals.CTRL_CMD_RATE_KMHPS)},
@@ -237,6 +241,8 @@ void loadSettings() {
   storedGlobals.PID_PULSE_COOLDOWN_MS= prefs.getUInt (NVSKeys::PID_PULSE_CD,  500);
   storedGlobals.PID_LONG_PRESS_MAX_MS= prefs.getUInt (NVSKeys::PID_LP_MAX,    15000);
   storedGlobals.PID_COAST_THRESHOLD  = prefs.getFloat(NVSKeys::PID_COAST_TH,  0.03f);
+  storedGlobals.COAST_NEAR_MIN_MS    = prefs.getUInt (NVSKeys::COAST_NEAR_MS, 900);
+  storedGlobals.COAST_FAR_MIN_MS     = prefs.getUInt (NVSKeys::COAST_FAR_MS,  200);
   storedGlobals.PID_ERROR_BAND_ENTER_KMH = prefs.getFloat(NVSKeys::PID_BAND_IN,  0.35f);
   storedGlobals.PID_ERROR_BAND_EXIT_KMH  = prefs.getFloat(NVSKeys::PID_BAND_OUT, 0.25f);
   storedGlobals.CTRL_CMD_RATE_KMHPS      = prefs.getFloat(NVSKeys::CTRL_CMD_RATE, 1.0f / 1.39f);
@@ -329,6 +335,8 @@ void loadDefaultSettings() {
     storedGlobals.PID_PULSE_COOLDOWN_MS = 650;
     storedGlobals.PID_LONG_PRESS_MAX_MS = 15000;
     storedGlobals.PID_COAST_THRESHOLD = 0.03f;
+    storedGlobals.COAST_NEAR_MIN_MS   = 900;
+    storedGlobals.COAST_FAR_MIN_MS    = 200;
     storedGlobals.PID_ERROR_BAND_ENTER_KMH = 0.35f;
     storedGlobals.PID_ERROR_BAND_EXIT_KMH = 0.25f;
     storedGlobals.CTRL_CMD_RATE_KMHPS = 1.0f / 1.39f;
