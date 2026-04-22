@@ -4,6 +4,13 @@
 
 uint8_t workoutStatus = WORKOUT_INACTIVE;
 
+namespace {
+constexpr float STOP_EXIT_SPEED_TOLERANCE_KMH = 0.25f;
+constexpr float STOP_EXIT_DROP_THRESHOLD_KMH = 0.03f;
+constexpr uint32_t STOP_EXIT_SAMPLE_MS = 200;
+constexpr uint32_t STOP_EXIT_STABLE_MS = 1200;
+}
+
 // Forward declarations for sensor selection
 extern uint8_t sensorSelection(bool init);
 
@@ -135,24 +142,77 @@ void WorkoutExecutor::stop() {
 }
 
 void WorkoutExecutor::update() {
-  if (_state != WorkoutState::Running) return;
+  const uint32_t n = _now();
+  const float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
+  static float stopPrevSpeed_kmh = 0.0f;
+  static uint32_t stopLastSample_ms = 0;
+  static uint32_t stopStableSince_ms = 0;
+  static bool stopSampleValid = false;
 
-  float currentSpeed_kmh = (metrics.mps + metrics.mpsOffset) * 3.6f;
-  static float avgSpeed = (currentSpeed_kmh + avgSpeed) / 2.0f; // simple moving average to prevent noise-triggered pauses
+  // Stop mode is a two-phase state:
+  // 1) press Stop -> target ramps down to minimum speed
+  // 2) once speed has settled at minimum, leave workout mode completely
+  if (workoutStatus == WORKOUT_STOPPED) {
+    if (n - stopLastSample_ms >= STOP_EXIT_SAMPLE_MS) {
+      stopLastSample_ms = n;
+
+      if (!stopSampleValid) {
+        stopPrevSpeed_kmh = currentSpeed_kmh;
+        stopSampleValid = true;
+      }
+
+      const float speedDrop_kmh = stopPrevSpeed_kmh - currentSpeed_kmh;
+      stopPrevSpeed_kmh = currentSpeed_kmh;
+
+      float stopTargetKmh = metrics.targetSpeed;
+      if (stopTargetKmh < MIN_SPEED_KMH) stopTargetKmh = MIN_SPEED_KMH;
+
+      const bool nearMinimum = (currentSpeed_kmh <= (stopTargetKmh + STOP_EXIT_SPEED_TOLERANCE_KMH));
+      const bool stillSlowing = (speedDrop_kmh > STOP_EXIT_DROP_THRESHOLD_KMH);
+      if (nearMinimum && !stillSlowing) {
+        if (stopStableSince_ms == 0) stopStableSince_ms = n;
+      } else {
+        stopStableSince_ms = 0;
+      }
+    }
+
+    if (stopStableSince_ms != 0 && (n - stopStableSince_ms) >= STOP_EXIT_STABLE_MS) {
+      _state = WorkoutState::Idle;
+      _lastError = "";
+      _workoutStart_ms = 0;
+      _pauseStart_ms = 0;
+      _pausedTotal_ms = 0;
+      _currentIndex = 0;
+      _stepStart_ms = 0;
+      workoutStatus = WORKOUT_INACTIVE;
+      metrics.targetSpeed = 0.0f;
+      metrics.targetInclination = 0.0f;
+      metrics.controlRequested = false;
+
+      stopPrevSpeed_kmh = 0.0f;
+      stopLastSample_ms = 0;
+      stopStableSince_ms = 0;
+      stopSampleValid = false;
+
+      Serial.printf("[Workout] Stop settled at %.1f km/h - leaving workout mode\n", currentSpeed_kmh);
+      return;
+    }
+  } else {
+    stopPrevSpeed_kmh = 0.0f;
+    stopLastSample_ms = 0;
+    stopStableSince_ms = 0;
+    stopSampleValid = false;
+  }
+
+  if (_state != WorkoutState::Running) return;
 
   // Auto-pause if treadmill is turned off (speed = 0)
   if (!metrics.isRunning) {
     Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
     pause();
     return;
-  } else if (workoutStatus == WORKOUT_STOPPED && (currentSpeed_kmh - avgSpeed) < 0.3f) {
-    clear();
-    workoutStatus = WORKOUT_INACTIVE;
-    metrics.targetSpeed = 0.0f;
-    return;
   }
 
-  uint32_t n = _now();
   const WorkoutStep& st = _steps[_currentIndex];
   uint32_t elapsedStep_ms = n - _stepStart_ms - _pausedTotal_ms;
   if (elapsedStep_ms >= st.duration_s * 1000UL) _advanceStep();
