@@ -351,6 +351,7 @@ void loadDefaultSettings() {
 void printSettings() {
   logPrint("===== TREADMILL SETTINGS (loaded) =====\n");
   logPrintf("WiFi SSID             : %s\r\n", storedGlobals.WIFI_SSID.c_str());
+  logPrintf("WiFi Password         : %s\r\n", storedGlobals.WIFI_PASSWORD.c_str());
   logPrintf("BLE Device Name       : %s\r\n", storedGlobals.BLE_DEVICE_NAME.c_str());
   logPrint("\n");
 

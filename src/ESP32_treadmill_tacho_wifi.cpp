@@ -265,6 +265,9 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
             case WIFI_REASON_ASSOC_FAIL: reason_str = "ASSOC_FAIL"; break;
             case WIFI_REASON_HANDSHAKE_TIMEOUT: reason_str = "HANDSHAKE_TIMEOUT"; break;
             case WIFI_REASON_CONNECTION_FAIL: reason_str = "CONNECTION_FAIL"; break;
+            case 210: reason_str = "NO_AP_FOUND_W_COMPATIBLE_SECURITY"; break;
+            case 211: reason_str = "NO_AP_FOUND_IN_AUTHMODE_THRESHOLD"; break;
+            case 212: reason_str = "NO_AP_FOUND_IN_RSSI_THRESHOLD"; break;
             default: break;
         }
         
@@ -436,9 +439,9 @@ static void wifiInitSTA() {
     strncpy((char*)wifi_config.sta.password, storedGlobals.WIFI_PASSWORD.c_str(), 
             sizeof(wifi_config.sta.password) - 1);
     
-    // WPA2/WPA3 transition support with PMF for AUTH_EXPIRE fix
-    // WIFI_AUTH_WPA2_WPA3_PSK accepts WPA2-only, WPA3-only, and WPA2/WPA3 transition APs
-    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_WPA3_PSK;
+    // WPA/WPA2/WPA3 compatibility - WIFI_AUTH_WPA_WPA2_PSK accepts WPA1, WPA2, and mixed-mode APs
+    // Avoids WIFI_REASON_NO_AP_FOUND_IN_AUTHMODE_THRESHOLD (211) on older/mixed routers
+    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA_WPA2_PSK;
     wifi_config.sta.pmf_cfg.capable = true;
     wifi_config.sta.pmf_cfg.required = false;
     
@@ -471,7 +474,7 @@ static void wifiInitSTA() {
     
     gUserDisconnect = false;  // Now allow event handler to work
     
-    Serial.printf("  Connecting to '%s'...\n", storedGlobals.WIFI_SSID.c_str());
+    Serial.printf("  Connecting to '%s' (pwd: '%s')...\n", storedGlobals.WIFI_SSID.c_str(), storedGlobals.WIFI_PASSWORD.c_str());
     wifiMgr.connectionAttempts++;
 }
 
