@@ -322,9 +322,12 @@ var WorkoutApp;
             }
             t0 += step.d;
         }
-        // Current position marker
-        if (state.elapsed_s) {
-            var xn = pad + (state.elapsed_s / total) * w;
+        // Current position marker (time or distance based)
+        var progressValue = state.duration_mode === 'distance'
+            ? Number(state.elapsed_m || 0)
+            : Number(state.elapsed_s || 0);
+        if (progressValue > 0) {
+            var xn = pad + (progressValue / total) * w;
             ctx.strokeStyle = '#d0021b';
             ctx.lineWidth = 2;
             ctx.beginPath();
