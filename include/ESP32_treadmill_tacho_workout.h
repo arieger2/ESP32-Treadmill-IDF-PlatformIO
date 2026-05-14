@@ -13,22 +13,29 @@ void bleSetTreadmillInclinePct(float inclinePct);
 void physicalSpeedControl(float targetSpeed_kmh, float current_Mps);
 
 struct WorkoutStep {
-  uint32_t duration_s = 0;   // seconds
+  uint32_t duration_value = 0; // seconds (time mode) or meters (distance mode)
   float    speed_kph  = 0.0; // target speed
   float    incline_pct= 0.0; // target incline (%)
   String   label;            // optional
 };
 
+enum class WorkoutDurationMode : uint8_t { Time, Distance };
+
 enum class WorkoutState { Idle, Running, Paused, Finished, Error };
 
 struct WorkoutProgress {
   WorkoutState state = WorkoutState::Idle;
+  WorkoutDurationMode duration_mode = WorkoutDurationMode::Time;
   uint32_t total_s = 0;
   uint32_t elapsed_s = 0;
+  uint32_t total_m = 0;
+  uint32_t elapsed_m = 0;
 
   uint32_t step_index = 0;
   uint32_t step_elapsed_s = 0;
   uint32_t step_remaining_s = 0;
+  uint32_t step_elapsed_m = 0;
+  uint32_t step_remaining_m = 0;
 
   float  current_speed_kph   = 0.0f;
   float  current_incline_pct = 0.0f;
@@ -84,6 +91,7 @@ private:
   // Runtime state
   std::vector<WorkoutStep> _steps;
   WorkoutState _state = WorkoutState::Idle;
+  WorkoutDurationMode _durationMode = WorkoutDurationMode::Time;
   String _lastError;
   float speed_scale_ = 1.0f;   // NEW: scales all step speeds (kph)
 
@@ -93,6 +101,8 @@ private:
 
   uint32_t _currentIndex = 0;
   uint32_t _stepStart_ms  = 0;
+  float _stepStartDistance_m = 0.0f;
+  uint32_t _runningLostSince_ms = 0;
 
   // Parsing
   bool _parseZwo(const String& xml);
@@ -140,4 +150,3 @@ void updateCalibration();
 // Get current calibration status as JSON string
 // Returns: JSON object with state, message, speeds, and rates
 String getCalibrationStatus();
-

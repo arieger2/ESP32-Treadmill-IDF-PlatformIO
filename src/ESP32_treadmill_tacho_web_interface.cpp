@@ -403,11 +403,16 @@ void initWebServer() {
       pr.state == WorkoutState::Finished ? "Finished" : "Error";
 
     doc["state"]            = st;
+    doc["duration_mode"]    = (pr.duration_mode == WorkoutDurationMode::Distance) ? "distance" : "time";
     doc["total_s"]          = pr.total_s;
     doc["elapsed_s"]        = pr.elapsed_s;
+    doc["total_m"]          = pr.total_m;
+    doc["elapsed_m"]        = pr.elapsed_m;
     doc["step_index"]       = pr.step_index;
     doc["step_elapsed_s"]   = pr.step_elapsed_s;
     doc["step_remaining_s"] = pr.step_remaining_s;
+    doc["step_elapsed_m"]   = pr.step_elapsed_m;
+    doc["step_remaining_m"] = pr.step_remaining_m;
     doc["speed_kph"]        = pr.current_speed_kph * gWorkout.getSpeedScale();
     doc["incline_pct"]      = pr.current_incline_pct;
     doc["label"]            = pr.current_label;
@@ -418,7 +423,7 @@ void initWebServer() {
       JsonArray steps = doc["steps"].to<JsonArray>();
       for (const auto& s : gWorkout.steps()) {
         JsonObject o = steps.add<JsonObject>();
-        o["d"] = s.duration_s;
+        o["d"] = s.duration_value;
         o["v"] = s.speed_kph * gWorkout.getSpeedScale();
         o["i"] = s.incline_pct;
         o["l"] = s.label;

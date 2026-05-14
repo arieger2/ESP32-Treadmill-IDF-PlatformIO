@@ -9,6 +9,7 @@ constexpr float STOP_EXIT_SPEED_TOLERANCE_KMH = 0.25f;
 constexpr float STOP_EXIT_DROP_THRESHOLD_KMH = 0.03f;
 constexpr uint32_t STOP_EXIT_SAMPLE_MS = 200;
 constexpr uint32_t STOP_EXIT_STABLE_MS = 1200;
+constexpr uint32_t AUTO_PAUSE_GRACE_MS = 2500;
 }
 
 // Forward declarations for sensor selection
@@ -54,14 +55,30 @@ void WorkoutExecutor::clear() {
   workoutStatus = WORKOUT_STOPPED;
   _steps.clear();
   _state = WorkoutState::Idle;
+  _durationMode = WorkoutDurationMode::Time;
   _lastError = "";
   _workoutStart_ms = _pauseStart_ms = _pausedTotal_ms = 0;
   _currentIndex = 0;
   _stepStart_ms = 0;
+  _stepStartDistance_m = 0.0f;
+  _runningLostSince_ms = 0;
 }
 
 bool WorkoutExecutor::loadFromZwoString(const String& xml) {
   clear();
+
+  // Read <durationType>time|distance</durationType>
+  int dtStart = xml.indexOf("<durationType>");
+  if (dtStart >= 0) {
+    dtStart += String("<durationType>").length();
+    int dtEnd = xml.indexOf("</durationType>", dtStart);
+    if (dtEnd > dtStart) {
+      String v = xml.substring(dtStart, dtEnd);
+      v.trim();
+      v.toLowerCase();
+      _durationMode = (v == "distance") ? WorkoutDurationMode::Distance : WorkoutDurationMode::Time;
+    }
+  }
 
   // Read <thresholdSecPerKm> (for Power→speed mapping)
   int a = xml.indexOf("<thresholdSecPerKm>");
@@ -102,6 +119,8 @@ void WorkoutExecutor::start() {
   _pausedTotal_ms  = 0;
   _currentIndex    = 0;
   _stepStart_ms    = _workoutStart_ms;
+  _stepStartDistance_m = metrics.workoutDistance;
+  _runningLostSince_ms = 0;
   _applyTargets(_steps[_currentIndex]);
   if (onStepBegin) onStepBegin(_steps[_currentIndex], _currentIndex);
 }
@@ -110,6 +129,7 @@ void WorkoutExecutor::pause() {
   workoutStatus = WORKOUT_RUNNING;
   if (_state == WorkoutState::Running) { 
     _state = WorkoutState::Paused; _pauseStart_ms = _now(); 
+    _runningLostSince_ms = 0;
     if (metrics.isRunning) {
       bleSetTreadmillSpeedKph(MIN_SPEED_KMH);  // Minimum treadmill speed
       bleSetTreadmillInclinePct(0.0f);
@@ -128,6 +148,7 @@ void WorkoutExecutor::resume() {
     uint32_t n = _now();
     _pausedTotal_ms += (n - _pauseStart_ms);
     _pauseStart_ms = 0;
+    _runningLostSince_ms = 0;
     _state = WorkoutState::Running;
     _applyTargets(_steps[_currentIndex]); // safety - reapply current targets
   }
@@ -184,6 +205,8 @@ void WorkoutExecutor::update() {
       _pausedTotal_ms = 0;
       _currentIndex = 0;
       _stepStart_ms = 0;
+      _stepStartDistance_m = 0.0f;
+      _runningLostSince_ms = 0;
       workoutStatus = WORKOUT_INACTIVE;
       metrics.targetSpeed = 0.0f;
       metrics.targetInclination = 0.0f;
@@ -206,28 +229,45 @@ void WorkoutExecutor::update() {
 
   if (_state != WorkoutState::Running) return;
 
-  // Auto-pause if treadmill is turned off (speed = 0)
+  // Auto-pause if treadmill is turned off (speed = 0), with grace period
   if (!metrics.isRunning) {
-    Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
-    pause();
+    if (_runningLostSince_ms == 0) {
+      _runningLostSince_ms = n;
+    } else if ((n - _runningLostSince_ms) >= AUTO_PAUSE_GRACE_MS) {
+      Serial.println("[Workout] Treadmill stopped - auto-pausing workout");
+      pause();
+    }
     return;
   }
+  _runningLostSince_ms = 0;
 
   const WorkoutStep& st = _steps[_currentIndex];
-  uint32_t elapsedStep_ms = n - _stepStart_ms - _pausedTotal_ms;
-  if (elapsedStep_ms >= st.duration_s * 1000UL) _advanceStep();
+  if (_durationMode == WorkoutDurationMode::Distance) {
+    float elapsedStep_m = metrics.workoutDistance - _stepStartDistance_m;
+    if (elapsedStep_m < 0.0f) elapsedStep_m = 0.0f;
+    if (elapsedStep_m >= (float)st.duration_value) _advanceStep();
+  } else {
+    uint32_t elapsedStep_ms = n - _stepStart_ms - _pausedTotal_ms;
+    if (elapsedStep_ms >= st.duration_value * 1000UL) _advanceStep();
+  }
 }
 
 WorkoutProgress WorkoutExecutor::getProgress() const {
   WorkoutProgress p;
   p.state = _state;
-  uint32_t total_s = 0; for (const auto& s : _steps) total_s += s.duration_s; p.total_s = total_s;
+  p.duration_mode = _durationMode;
+  uint32_t total_value = 0;
+  for (const auto& s : _steps) total_value += s.duration_value;
+  if (_durationMode == WorkoutDurationMode::Distance) p.total_m = total_value;
+  else p.total_s = total_value;
 
   if (_state == WorkoutState::Idle || _state == WorkoutState::Error || _state == WorkoutState::Finished) {
     if (_state == WorkoutState::Finished) {
-      p.elapsed_s = p.total_s; // Show full duration when finished
+      if (_durationMode == WorkoutDurationMode::Distance) p.elapsed_m = p.total_m;
+      else p.elapsed_s = p.total_s;
     } else {
       p.elapsed_s = 0;
+      p.elapsed_m = 0;
     }
     if (_state == WorkoutState::Error) p.error = _lastError;
     return p;
@@ -241,8 +281,17 @@ WorkoutProgress WorkoutExecutor::getProgress() const {
     totalPaused += (n - _pauseStart_ms);
   }
 
-  // Calculate elapsed time by subtracting paused time
-  p.elapsed_s = (n > _workoutStart_ms) ? ((n - _workoutStart_ms - totalPaused) / 1000UL) : 0;
+  if (_durationMode == WorkoutDurationMode::Distance) {
+    uint32_t done_m = 0;
+    for (uint32_t i = 0; i < _currentIndex && i < _steps.size(); ++i) done_m += _steps[i].duration_value;
+    float stepDelta_m = metrics.workoutDistance - _stepStartDistance_m;
+    if (stepDelta_m < 0.0f) stepDelta_m = 0.0f;
+    done_m += (uint32_t)stepDelta_m;
+    p.elapsed_m = done_m;
+  } else {
+    // Calculate elapsed time by subtracting paused time
+    p.elapsed_s = (n > _workoutStart_ms) ? ((n - _workoutStart_ms - totalPaused) / 1000UL) : 0;
+  }
 
   if (_currentIndex >= _steps.size()) {
     p.state = WorkoutState::Finished;
@@ -258,8 +307,15 @@ WorkoutProgress WorkoutExecutor::getProgress() const {
   if (_state == WorkoutState::Paused && _pauseStart_ms > 0) {
     stepPausedTime += (n - _pauseStart_ms);
   }
-  p.step_elapsed_s   = (n > _stepStart_ms) ? ((n - _stepStart_ms - stepPausedTime) / 1000UL) : 0;
-  p.step_remaining_s = (st.duration_s > p.step_elapsed_s) ? (st.duration_s - p.step_elapsed_s) : 0;
+  if (_durationMode == WorkoutDurationMode::Distance) {
+    float stepElapsed_m = metrics.workoutDistance - _stepStartDistance_m;
+    if (stepElapsed_m < 0.0f) stepElapsed_m = 0.0f;
+    p.step_elapsed_m = (uint32_t)stepElapsed_m;
+    p.step_remaining_m = (st.duration_value > p.step_elapsed_m) ? (st.duration_value - p.step_elapsed_m) : 0;
+  } else {
+    p.step_elapsed_s   = (n > _stepStart_ms) ? ((n - _stepStart_ms - stepPausedTime) / 1000UL) : 0;
+    p.step_remaining_s = (st.duration_value > p.step_elapsed_s) ? (st.duration_value - p.step_elapsed_s) : 0;
+  }
   p.current_speed_kph   = st.speed_kph;
   p.current_incline_pct = st.incline_pct;
   p.current_label       = st.label;
@@ -278,6 +334,7 @@ void WorkoutExecutor::_advanceStep() {
   if (_currentIndex + 1 < _steps.size()) {
     _currentIndex += 1;
     _stepStart_ms   = _now();
+    _stepStartDistance_m = metrics.workoutDistance;
     _pausedTotal_ms = 0;
     _applyTargets(_steps[_currentIndex]);
     if (onStepBegin) onStepBegin(_steps[_currentIndex], _currentIndex);
@@ -292,7 +349,7 @@ bool WorkoutExecutor::_parseZwo(const String& xml) {
 
   auto push = [this](uint32_t dur, float spKph, float incl, const char* label) {
     if (!dur) return;
-    WorkoutStep s; s.duration_s = dur; s.speed_kph = spKph; s.incline_pct = incl; s.label = label ? label : "";
+    WorkoutStep s; s.duration_value = dur; s.speed_kph = spKph; s.incline_pct = incl; s.label = label ? label : "";
     this->_steps.push_back(s);
   };
   auto pushRamp = [&](uint32_t dur, float v0, float v1, float incl, const char* label) {

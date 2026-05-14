@@ -20,7 +20,7 @@ namespace WorkoutApp {
 
   /** Single workout step/interval */
   export interface WorkoutStep {
-    d: number;  // Duration in seconds
+    d: number;  // Duration value (seconds in time mode, meters in distance mode)
     v: number;  // Speed in km/h
     i: number;  // Incline in percent
     l?: string; // Label (optional)
@@ -29,9 +29,11 @@ namespace WorkoutApp {
   /** Complete workout state from server */
   export interface WorkoutStateResponse {
     state: WorkoutState;
+    duration_mode?: 'time' | 'distance';
     steps: WorkoutStep[];
     step_index: number;
     elapsed_s: number;
+    elapsed_m?: number;
     speed_kph: number;
     incline_pct: number;
     error?: string;
