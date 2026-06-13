@@ -19,14 +19,19 @@ void sendRSC_BLE_Data() {
   float    mps       = metrics.mpsSmooth + metrics.mpsOffset;
   uint16_t instSpeed = (uint16_t)(mps * 256.0f);
 
-  // flags: bit0=Instantaneous Cadence present
-  uint8_t flags = 0x01;
+  // flags: bit1=Total Distance present (cadence is mandatory, no flag needed)
+  uint8_t  flags       = 0x02;
+  uint32_t totalDistDm = (uint32_t)(metrics.workoutDistance * 10.0f); // 1/10 m (decimeters)
 
-  uint8_t pkt[4] = {
+  uint8_t pkt[8] = {
     flags,
     (uint8_t)(instSpeed & 0xFF),
     (uint8_t)(instSpeed >> 8),
-    cadence
+    cadence,
+    (uint8_t)(totalDistDm & 0xFF),
+    (uint8_t)((totalDistDm >> 8) & 0xFF),
+    (uint8_t)((totalDistDm >> 16) & 0xFF),
+    (uint8_t)((totalDistDm >> 24) & 0xFF)
   };
 
   pRSCMeasurement->setValue(pkt, sizeof(pkt));
@@ -34,10 +39,10 @@ void sendRSC_BLE_Data() {
 
   static int dbg = 0;
   if (++dbg % 100 == 0) {
-    Serial.printf("📊 RSC → MyWoosh: Speed=%.1f m/s, Cadence=%u spm, Belt RPM=%.1f\r\n",
-                  mps, cadence, metrics.rpm);
-    Serial.printf("   RSC Packet: [%02X %02X %02X %02X]  Flags=0x%02X\r\n",
-                  pkt[0], pkt[1], pkt[2], pkt[3], flags);
+    Serial.printf("📊 RSC → Garmin: Speed=%.1f m/s, Cadence=%u spm, Distance=%.1f m\r\n",
+                  mps, cadence, metrics.workoutDistance);
+    Serial.printf("   RSC Packet: [%02X %02X %02X %02X %02X %02X %02X %02X]  Flags=0x%02X\r\n",
+                  pkt[0], pkt[1], pkt[2], pkt[3], pkt[4], pkt[5], pkt[6], pkt[7], flags);
   }
 }
 

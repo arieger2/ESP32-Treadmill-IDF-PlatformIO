@@ -116,14 +116,14 @@ void initBLE_RSC() {
 
     NimBLEService* pRSCService = pServer->createService(RSC_SERVICE_UUID);
 
-    // RSC Feature (bit0: Instant Cadence supported)
+    // RSC Feature (bit1: Total Distance supported)
     NimBLECharacteristic* pRSCFeature = pRSCService->createCharacteristic(
       RSC_FEATURE_UUID, NIMBLE_PROPERTY::READ
     );
-    uint16_t rscFeatures = 0x0001;
+    uint16_t rscFeatures = 0x0002;
     pRSCFeature->setValue((uint8_t*)&rscFeatures, 2);
-    Serial.printf("✅ RSC Features: 0x%04X (Cadence supported: %s)\r\n",
-                  rscFeatures, (rscFeatures & 0x0001) ? "YES" : "NO");
+    Serial.printf("✅ RSC Features: 0x%04X (Total Distance supported: %s)\r\n",
+                  rscFeatures, (rscFeatures & 0x0002) ? "YES" : "NO");
     Serial.println();
 
     // Measurement (notify)
@@ -131,7 +131,7 @@ void initBLE_RSC() {
       RSC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY
     );
 
-    Serial.println("✅ RSC Service created - Cadence transmission enabled");
+    Serial.println("✅ RSC Service created - Speed, Cadence, Distance transmission enabled");
   } catch (...) {
     Serial.println("❌ RSC initialization failed");
   }
