@@ -116,14 +116,16 @@ void initBLE_RSC() {
 
     NimBLEService* pRSCService = pServer->createService(RSC_SERVICE_UUID);
 
-    // RSC Feature (bit1: Total Distance supported)
+    // RSC Feature: bit1=Total Distance supported, bit2=Walking/Running Status supported
     NimBLECharacteristic* pRSCFeature = pRSCService->createCharacteristic(
       RSC_FEATURE_UUID, NIMBLE_PROPERTY::READ
     );
-    uint16_t rscFeatures = 0x0002;
+    uint16_t rscFeatures = 0x0006;
     pRSCFeature->setValue((uint8_t*)&rscFeatures, 2);
-    Serial.printf("✅ RSC Features: 0x%04X (Total Distance supported: %s)\r\n",
-                  rscFeatures, (rscFeatures & 0x0002) ? "YES" : "NO");
+    Serial.printf("✅ RSC Features: 0x%04X (Total Distance: %s, Running Status: %s)\r\n",
+                  rscFeatures,
+                  (rscFeatures & 0x0002) ? "YES" : "NO",
+                  (rscFeatures & 0x0004) ? "YES" : "NO");
     Serial.println();
 
     // Measurement (notify)
@@ -199,6 +201,7 @@ void BLEAdvertising_init() {
     advData.setName(storedGlobals.BLE_DEVICE_NAME.c_str());
     advData.addServiceUUID(FTMS_SERVICE_UUID);
     advData.setFlags(0x06);
+    advData.setAppearance(0x0441); // Running Walking Sensor: In-Shoe (Garmin Foot Pod)
     adv->setAdvertisementData(advData);
 
     // Scan response data

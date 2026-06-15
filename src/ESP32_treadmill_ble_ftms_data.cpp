@@ -19,8 +19,8 @@ void sendRSC_BLE_Data() {
   float    mps       = metrics.mpsSmooth + metrics.mpsOffset;
   uint16_t instSpeed = (uint16_t)(mps * 256.0f);
 
-  // flags: bit1=Total Distance present (cadence is mandatory, no flag needed)
-  uint8_t  flags       = 0x02;
+  // flags: bit1=Total Distance present, bit2=Running (1=Running, 0=Walking)
+  uint8_t  flags       = 0x06;
   uint32_t totalDistDm = (uint32_t)(metrics.workoutDistance * 10.0f); // 1/10 m (decimeters)
 
   uint8_t pkt[8] = {
@@ -87,12 +87,18 @@ void sendFTMS_BLE_Data() {
     float    speedKmh            = (metrics.mpsSmooth + metrics.mpsOffset) * 3.6f;
     uint16_t instantaneousSpeed  = (uint16_t)(speedKmh * 100.0f); // 0.01 km/h
     uint16_t averageSpeed        = instantaneousSpeed;
-    uint32_t totalDistanceMeters = (uint32_t)metrics.workoutDistance; // float meters -> uint32_t
+    uint32_t totalDistanceMeters = (uint32_t)metrics.workoutDistance;
     int16_t  inclinationDeciPct  = (int16_t)(metrics.currentInclination * 10.0f);
     uint16_t elapsedTimeSec      = (uint16_t)((millis() - metrics.sessionStartTime) / 1000);
+    // Pace: min/km = 60 / speed_kmh, unit = 1 min/km, clamped to 253
+    uint8_t  instPace = (speedKmh > 0.1f)
+                          ? (uint8_t)fminf(253.0f, roundf(60.0f / speedKmh))
+                          : 0;
 
-    // flags: Average Speed + Total Distance + Inclination + Elapsed Time
-    uint16_t flags = 0x0066;
+    // Flags per FTMS spec:
+    //   bit1=Average Speed, bit2=Total Distance, bit3=Inclination+Ramp Angle,
+    //   bit5=Pace (inst+avg), bit9=Elapsed Time
+    uint16_t flags = 0x022E;
 
     ftmsData[idx++] = flags & 0xFF;
     ftmsData[idx++] = (flags >> 8) & 0xFF;
@@ -107,9 +113,17 @@ void sendFTMS_BLE_Data() {
     ftmsData[idx++] = (uint8_t)((totalDistanceMeters >> 8) & 0xFF);
     ftmsData[idx++] = (uint8_t)((totalDistanceMeters >> 16) & 0xFF);
 
+    // bit3: Inclination (0.1%) + Ramp Angle (0.1°) — Ramp Angle not available, send 0
     ftmsData[idx++] = (uint8_t)(inclinationDeciPct & 0xFF);
     ftmsData[idx++] = (uint8_t)((inclinationDeciPct >> 8) & 0xFF);
+    ftmsData[idx++] = 0x00; // Ramp Angle low byte
+    ftmsData[idx++] = 0x00; // Ramp Angle high byte
 
+    // bit5: Instantaneous Pace + Average Pace (each uint8, min/km)
+    ftmsData[idx++] = instPace;
+    ftmsData[idx++] = instPace; // average = instantaneous (same source)
+
+    // bit9: Elapsed Time (s)
     ftmsData[idx++] = (uint8_t)(elapsedTimeSec & 0xFF);
     ftmsData[idx++] = (uint8_t)((elapsedTimeSec >> 8) & 0xFF);
 
@@ -118,8 +132,9 @@ void sendFTMS_BLE_Data() {
 
     static int dbg = 0;
     if (++dbg % 200 == 0) {
-      Serial.printf("📈 FTMS → MyWoosh: Speed=%.1f km/h, Distance=%u m, Incline=%.1f%%, Time=%us\r\n",
-                    speedKmh, (unsigned)totalDistanceMeters, metrics.currentInclination, (unsigned)elapsedTimeSec);
+      Serial.printf("📈 FTMS: Speed=%.1f km/h, Pace=%u min/km, Distance=%u m, Incline=%.1f%%, Time=%us\r\n",
+                    speedKmh, instPace, (unsigned)totalDistanceMeters,
+                    metrics.currentInclination, (unsigned)elapsedTimeSec);
     }
   }
 }
