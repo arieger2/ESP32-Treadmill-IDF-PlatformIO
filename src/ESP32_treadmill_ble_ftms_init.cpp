@@ -133,6 +133,14 @@ void initBLE_RSC() {
       RSC_MEASUREMENT_UUID, NIMBLE_PROPERTY::NOTIFY
     );
 
+    // Sensor Location (0x2A5D): optional per spec, aber Garmin erwartet sie
+    // Werte: 0=Other, 1=Top of Shoe, 2=In Shoe, 3=Hip, ...
+    NimBLECharacteristic* pSensorLocation = pRSCService->createCharacteristic(
+      NimBLEUUID((uint16_t)0x2A5D), NIMBLE_PROPERTY::READ
+    );
+    uint8_t sensorLocation = 2; // In Shoe – passend zur Appearance 0x0441
+    pSensorLocation->setValue(&sensorLocation, 1);
+
     Serial.println("✅ RSC Service created - Speed, Cadence, Distance transmission enabled");
   } catch (...) {
     Serial.println("❌ RSC initialization failed");
@@ -196,17 +204,19 @@ void BLEAdvertising_init() {
     NimBLEAdvertising* adv = pServer->getAdvertising();
     adv->stop();
 
-    // Primary advertising data
+    // Primary ADV: Flags + Appearance + beide Service-UUIDs
+    // Garmin scannt passiv → sieht nur Primary ADV, nie Scan Response.
+    // RSC (0x1814) MUSS hier stehen, sonst findet Garmin das Gerät nicht.
     NimBLEAdvertisementData advData;
-    advData.setName(storedGlobals.BLE_DEVICE_NAME.c_str());
-    advData.addServiceUUID(FTMS_SERVICE_UUID);
     advData.setFlags(0x06);
-    advData.setAppearance(0x0441); // Running Walking Sensor: In-Shoe (Garmin Foot Pod)
+    advData.setAppearance(0x0441); // Running Walking Sensor: In-Shoe
+    advData.addServiceUUID(FTMS_SERVICE_UUID);
+    advData.addServiceUUID(RSC_SERVICE_UUID);
     adv->setAdvertisementData(advData);
 
-    // Scan response data
+    // Scan response: Name + HR (sehen aktive Scanner wie Smartphones/Apps)
     NimBLEAdvertisementData scanData;
-    scanData.addServiceUUID(RSC_SERVICE_UUID);
+    scanData.setName(storedGlobals.BLE_DEVICE_NAME.c_str());
     if (pHRMeasurement) {
       scanData.addServiceUUID(NimBLEUUID((uint16_t)0x180D));
     }
